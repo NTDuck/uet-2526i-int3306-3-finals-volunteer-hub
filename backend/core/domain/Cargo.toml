@@ -7,6 +7,9 @@ repository.workspace = true
 publish.workspace = true
 
 [dependencies]
+aliases = { path = "../../aliases" }
+
+bon = { workspace = true }
 
 [lints]
 workspace = true

@@ -1,14 +1,12 @@
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
+pub mod result {
+    pub type Fallible<T = ()> = ::core::result::Result<T, ::anyhow::Error>;
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+pub mod time {
+    pub type Timestamp = ::chrono::NaiveDateTime;
+    pub type Interval = ::chrono::Duration;
+}
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
+pub mod string {
+    pub type String = ::std::borrow::Cow<'static, str>;
 }
