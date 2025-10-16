@@ -17,6 +17,7 @@ impl ::core::ops::Deref for Uuid {
     }
 }
 
+#[derive(::core::fmt::Debug, ::core::clone::Clone)]
 #[derive(::bon::Builder)]
 pub struct Event {
     pub id: Uuid,
@@ -24,6 +25,21 @@ pub struct Event {
     pub description: ::aliases::string::String,
     pub location: ::aliases::string::String,
     pub timestamp: ::aliases::time::Timestamp,
+
+    pub status: EventStatus,
+}
+
+#[derive(::core::fmt::Debug, ::core::clone::Clone)]
+pub enum EventStatus {
+    Created {
+        manager_id: Uuid,
+    },
+    Approved {
+        administrator_id: Uuid,
+    },
+    Completed {
+        timestamp: ::aliases::time::Timestamp,
+    },
 }
 
 #[derive(::bon::Builder)]
@@ -32,9 +48,29 @@ pub struct EventChannel {
 
 }
 
+// #[derive(::bon::Builder)]
+// pub struct Post {
+//     pub id: Uuid,
+//     pub comments: ...,
+//     pub likes: ...,
+// }
+
 #[derive(::bon::Builder)]
-pub struct Post {
-    pub id: Uuid,
-    pub comments: ...,
-    pub likes: ...,
+pub struct Volunteer {
+    pub email: ::aliases::string::String,
+    pub password_digest: ::aliases::string::String,
 }
+
+#[derive(::bon::Builder)]
+pub struct EventManager {
+    pub email: ::aliases::string::String,
+    pub password_digest: ::aliases::string::String,
+}
+
+#[derive(::bon::Builder)]
+pub struct Administrator {
+    pub email: ::aliases::string::String,
+    pub password_digest: ::aliases::string::String,
+}
+
+// Note that validating emial & password is domain logic!

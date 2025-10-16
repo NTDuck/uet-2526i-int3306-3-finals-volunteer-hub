@@ -2,7 +2,6 @@
 
 # Notes
 - Domain
-	- User
 	- Volunteer
 	- Manager
 	- Administrator
