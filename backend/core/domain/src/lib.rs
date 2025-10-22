@@ -36,18 +36,21 @@ pub struct Post {
 
 #[derive(::bon::Builder)]
 pub struct Volunteer {
+    pub username: ::aliases::string::String,
     pub email: Email,
     pub password: PasswordDigest,
 }
 
 #[derive(::bon::Builder)]
 pub struct EventManager {
+    pub username: ::aliases::string::String,
     pub email: Email,
     pub password: PasswordDigest,
 }
 
 #[derive(::bon::Builder)]
 pub struct Administrator {
+    pub username: ::aliases::string::String,
     pub email: Email,
     pub password: PasswordDigest,
 }
