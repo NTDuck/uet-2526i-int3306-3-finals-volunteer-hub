@@ -1,5 +1,6 @@
 #[derive(::core::fmt::Debug, ::core::clone::Clone)]
 #[derive(::bon::Builder)]
+#[builder(on(::aliases::string::String, into))]
 pub struct Event {
     pub id: Uuid,
     pub name: ::aliases::string::String,
@@ -24,17 +25,14 @@ pub enum EventStatus {
 }
 
 #[derive(::bon::Builder)]
-pub struct EventChannel {
+pub struct Channel {
     pub id: Uuid,
-
 }
 
-// #[derive(::bon::Builder)]
-// pub struct Post {
-//     pub id: Uuid,
-//     pub comments: ...,
-//     pub likes: ...,
-// }
+#[derive(::bon::Builder)]
+pub struct Post {
+    pub id: Uuid,
+}
 
 #[derive(::bon::Builder)]
 pub struct Volunteer {
