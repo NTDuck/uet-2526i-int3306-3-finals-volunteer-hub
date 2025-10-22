@@ -10,7 +10,9 @@ publish.workspace = true
 aliases = { path = "../../aliases" }
 
 bon = { workspace = true }
+once_cell = { workspace = true }
 thiserror = { workspace = true }
+regex = { workspace = true }
 
 [lints]
 workspace = true
