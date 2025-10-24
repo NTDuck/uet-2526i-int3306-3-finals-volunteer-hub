@@ -71,6 +71,66 @@ pub enum VolunteerSignUpErrResponse {
 
 }
 
+#[async_trait]
+pub trait EventManagerSignUpBoundary {
+    async fn apply(self: ::std::sync::Arc<Self>, request: EventManagerSignUpRequest) -> ::aliases::result::Fallible<EventManagerSignUpResponse>;
+}
+
+#[derive(::core::fmt::Debug, ::core::clone::Clone)]
+#[derive(::bon::Builder)]
+#[builder(on(::aliases::string::String, into))]
+#[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
+#[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
+pub struct EventManagerSignUpRequest {
+    
+}
+
+pub type EventManagerSignUpResponse = ::core::result::Result<EventManagerSignUpOkResponse, ::std::vec::Vec<EventManagerSignUpErrResponse>>;
+
+pub type EventManagerSignUpOkResponse = ();
+
+#[derive(::core::fmt::Debug, ::core::clone::Clone)]
+#[derive(::thiserror::Error)]
+#[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase", rename_all_fields = "kebab-case"))]
+#[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
+#[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
+pub enum EventManagerSignUpErrResponse {
+
+}
+
+#[async_trait]
+pub trait AdministratorSignUpBoundary {
+    async fn apply(self: ::std::sync::Arc<Self>, request: AdministratorSignUpRequest) -> ::aliases::result::Fallible<AdministratorSignUpResponse>;
+}
+
+#[derive(::core::fmt::Debug, ::core::clone::Clone)]
+#[derive(::bon::Builder)]
+#[builder(on(::aliases::string::String, into))]
+#[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
+#[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
+pub struct AdministratorSignUpRequest {
+    
+}
+
+pub type AdministratorSignUpResponse = ::core::result::Result<VolunteerSignUpOkResponse, ::std::vec::Vec<VolunteerSignUpErrResponse>>;
+
+pub type AdministratorSignUpOkResponse = ();
+
+#[derive(::core::fmt::Debug, ::core::clone::Clone)]
+#[derive(::thiserror::Error)]
+#[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase", rename_all_fields = "kebab-case"))]
+#[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
+#[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
+pub enum AdministratorSignUpErrResponse {
+
+}
+
 pub mod models {
 
 }
