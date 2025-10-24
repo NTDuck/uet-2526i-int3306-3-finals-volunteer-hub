@@ -38,7 +38,18 @@ pub struct SignInOkResponse {
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
 pub enum SignInErrResponse {
+    #[error("User with username {username} not found")]
+    UsernameNotFound {
+        username: ::aliases::string::String,
+    },
 
+    #[error("User with email {email} not found")]
+    EmailNotFound {
+        email: ::aliases::string::String,
+    },
+
+    #[error("Password does not match")]
+    PasswordMismatch,
 }
 
 #[async_trait]
@@ -54,7 +65,12 @@ pub trait VolunteerSignUpBoundary {
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
 pub struct VolunteerSignUpRequest {
-    
+    pub username: ::aliases::string::String,
+    pub email: ::aliases::string::String,
+    pub password: ::aliases::string::String,
+
+    pub first_name: ::aliases::string::String,
+    pub last_name: ::aliases::string::String,
 }
 
 pub type VolunteerSignUpResponse = ::core::result::Result<VolunteerSignUpOkResponse, ::std::vec::Vec<VolunteerSignUpErrResponse>>;
@@ -84,7 +100,12 @@ pub trait EventManagerSignUpBoundary {
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
 pub struct EventManagerSignUpRequest {
-    
+    pub username: ::aliases::string::String,
+    pub email: ::aliases::string::String,
+    pub password: ::aliases::string::String,
+
+    pub first_name: ::aliases::string::String,
+    pub last_name: ::aliases::string::String,
 }
 
 pub type EventManagerSignUpResponse = ::core::result::Result<EventManagerSignUpOkResponse, ::std::vec::Vec<EventManagerSignUpErrResponse>>;
@@ -114,10 +135,15 @@ pub trait AdministratorSignUpBoundary {
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
 pub struct AdministratorSignUpRequest {
-    
+    pub username: ::aliases::string::String,
+    pub email: ::aliases::string::String,
+    pub password: ::aliases::string::String,
+
+    pub first_name: ::aliases::string::String,
+    pub last_name: ::aliases::string::String,
 }
 
-pub type AdministratorSignUpResponse = ::core::result::Result<VolunteerSignUpOkResponse, ::std::vec::Vec<VolunteerSignUpErrResponse>>;
+pub type AdministratorSignUpResponse = ::core::result::Result<AdministratorSignUpOkResponse, ::std::vec::Vec<AdministratorSignUpErrResponse>>;
 
 pub type AdministratorSignUpOkResponse = ();
 

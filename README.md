@@ -17,7 +17,7 @@
 			- View events: newly announced/created?, having new posts, popular events (increasing fast: members, likes)
 	- Volunteer
 		- View events + by chrono/category
-		- Subcribe to event (recv confirmation noti)
+		- Subcribe to event (recv confirmation noti)  // simple return, noti doesnt persist
 		- Unsubscribe to event (before it happens)
 		- View participated events + completion status
 		- || Web push API for certain momentos (subscribed approved, completion status)

@@ -39,6 +39,9 @@ pub struct Volunteer {
     pub username: ::aliases::string::String,
     pub email: Email,
     pub password: PasswordDigest,
+
+    pub first_name: ::aliases::string::String,
+    pub last_name: ::aliases::string::String,
 }
 
 #[derive(::bon::Builder)]
@@ -46,6 +49,9 @@ pub struct EventManager {
     pub username: ::aliases::string::String,
     pub email: Email,
     pub password: PasswordDigest,
+
+    pub first_name: ::aliases::string::String,
+    pub last_name: ::aliases::string::String,
 }
 
 #[derive(::bon::Builder)]
@@ -53,6 +59,9 @@ pub struct Administrator {
     pub username: ::aliases::string::String,
     pub email: Email,
     pub password: PasswordDigest,
+
+    pub first_name: ::aliases::string::String,
+    pub last_name: ::aliases::string::String,
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::core::cmp::Eq, ::core::cmp::PartialEq, ::core::cmp::Ord, ::core::cmp::PartialOrd)]
