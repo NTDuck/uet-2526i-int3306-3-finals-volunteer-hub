@@ -1,5 +1,8 @@
 use ::async_trait::async_trait;
 
+#[cfg(feature = "wasm-bindings")]
+use ::wasm_bindgen::prelude::*;
+
 #[async_trait]
 pub trait SignInBoundary {
     async fn apply(self: ::std::sync::Arc<Self>, request: SignInRequest) -> ::aliases::result::Fallible<SignInResponse>;
@@ -27,7 +30,6 @@ pub type SignInResponse = ::core::result::Result<SignInOkResponse, ::std::vec::V
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
 pub struct SignInOkResponse {
-    #[cfg_attr(feature = "wasm-bindings", wasm_bindgen(readonly))]
     pub token: ::aliases::string::String,
 }
 
@@ -48,13 +50,18 @@ pub enum SignInErrResponse {
         email: ::aliases::string::String,
     },
 
+    #[error("Invalid username or email format: {username_or_email}")]
+    UsernameOrEmailInvalid {
+        username_or_email: ::aliases::string::String,
+    },
+
     #[error("Password does not match")]
     PasswordMismatch,
 }
 
 #[async_trait]
-pub trait VolunteerSignUpBoundary {
-    async fn apply(self: ::std::sync::Arc<Self>, request: VolunteerSignUpRequest) -> ::aliases::result::Fallible<VolunteerSignUpResponse>;
+pub trait SignUpBoundary {
+    async fn apply(self: ::std::sync::Arc<Self>, request: SignUpRequest) -> ::aliases::result::Fallible<SignUpResponse>;
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone)]
@@ -64,7 +71,7 @@ pub trait VolunteerSignUpBoundary {
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
-pub struct VolunteerSignUpRequest {
+pub struct SignUpRequest {
     pub username: ::aliases::string::String,
     pub email: ::aliases::string::String,
     pub password: ::aliases::string::String,
@@ -73,44 +80,9 @@ pub struct VolunteerSignUpRequest {
     pub last_name: ::aliases::string::String,
 }
 
-pub type VolunteerSignUpResponse = ::core::result::Result<VolunteerSignUpOkResponse, ::std::vec::Vec<VolunteerSignUpErrResponse>>;
+pub type SignUpResponse = ::core::result::Result<SignUpOkResponse, ::std::vec::Vec<SignUpErrResponse>>;
 
-pub type VolunteerSignUpOkResponse = ();
-
-#[derive(::core::fmt::Debug, ::core::clone::Clone)]
-#[derive(::thiserror::Error)]
-#[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-#[cfg_attr(feature = "serde", serde(rename_all = "camelCase", rename_all_fields = "kebab-case"))]
-#[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
-#[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
-pub enum VolunteerSignUpErrResponse {
-
-}
-
-#[async_trait]
-pub trait EventManagerSignUpBoundary {
-    async fn apply(self: ::std::sync::Arc<Self>, request: EventManagerSignUpRequest) -> ::aliases::result::Fallible<EventManagerSignUpResponse>;
-}
-
-#[derive(::core::fmt::Debug, ::core::clone::Clone)]
-#[derive(::bon::Builder)]
-#[builder(on(::aliases::string::String, into))]
-#[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
-#[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
-#[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
-pub struct EventManagerSignUpRequest {
-    pub username: ::aliases::string::String,
-    pub email: ::aliases::string::String,
-    pub password: ::aliases::string::String,
-
-    pub first_name: ::aliases::string::String,
-    pub last_name: ::aliases::string::String,
-}
-
-pub type EventManagerSignUpResponse = ::core::result::Result<EventManagerSignUpOkResponse, ::std::vec::Vec<EventManagerSignUpErrResponse>>;
-
-pub type EventManagerSignUpOkResponse = ();
+pub type SignUpOkResponse = ();
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone)]
 #[derive(::thiserror::Error)]
@@ -118,45 +90,19 @@ pub type EventManagerSignUpOkResponse = ();
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase", rename_all_fields = "kebab-case"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
-pub enum EventManagerSignUpErrResponse {
-
-}
-
-#[async_trait]
-pub trait AdministratorSignUpBoundary {
-    async fn apply(self: ::std::sync::Arc<Self>, request: AdministratorSignUpRequest) -> ::aliases::result::Fallible<AdministratorSignUpResponse>;
-}
-
-#[derive(::core::fmt::Debug, ::core::clone::Clone)]
-#[derive(::bon::Builder)]
-#[builder(on(::aliases::string::String, into))]
-#[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
-#[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
-#[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
-pub struct AdministratorSignUpRequest {
-    pub username: ::aliases::string::String,
-    pub email: ::aliases::string::String,
-    pub password: ::aliases::string::String,
-
-    pub first_name: ::aliases::string::String,
-    pub last_name: ::aliases::string::String,
-}
-
-pub type AdministratorSignUpResponse = ::core::result::Result<AdministratorSignUpOkResponse, ::std::vec::Vec<AdministratorSignUpErrResponse>>;
-
-pub type AdministratorSignUpOkResponse = ();
-
-#[derive(::core::fmt::Debug, ::core::clone::Clone)]
-#[derive(::thiserror::Error)]
-#[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-#[cfg_attr(feature = "serde", serde(rename_all = "camelCase", rename_all_fields = "kebab-case"))]
-#[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
-#[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
-pub enum AdministratorSignUpErrResponse {
+pub enum SignUpErrResponse {
 
 }
 
 pub mod models {
-
+    #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
+    #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+    #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+    #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
+    #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
+    pub enum UserRole {
+        Volunteer,
+        EventManager,
+        Administrator,
+    }
 }

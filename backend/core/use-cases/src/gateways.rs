@@ -6,61 +6,44 @@ pub trait EventRepository {
 }
 
 #[async_trait]
-pub trait VolunteerRepository {
-    // something to find option<id> based on username or email
+pub trait UserRepository {
+    async fn get_by_id(self: ::std::sync::Arc<Self>, id: ::domain::Uuid) -> ::aliases::result::Fallible<::core::option::Option<::domain::User>>;
+    async fn get_by_username(self: ::std::sync::Arc<Self>, username: ::domain::Username) -> ::aliases::result::Fallible<::core::option::Option<::domain::User>>;
+    async fn get_by_email(self: ::std::sync::Arc<Self>, email: ::domain::Email) -> ::aliases::result::Fallible<::core::option::Option<::domain::User>>;
+
+    async fn contains_id(self: ::std::sync::Arc<Self>, id: ::domain::Uuid) -> ::aliases::result::Fallible<bool> {
+        ::aliases::result::Fallible::Ok(self.get_by_id(id).await?.is_some())
+    }
+
+    async fn contains_username(self: ::std::sync::Arc<Self>, username: ::domain::Username) -> ::aliases::result::Fallible<bool> {
+        ::aliases::result::Fallible::Ok(self.get_by_username(username).await?.is_some())
+    }
+
+    async fn contains_email(self: ::std::sync::Arc<Self>, email: ::domain::Email) -> ::aliases::result::Fallible<bool> {
+        ::aliases::result::Fallible::Ok(self.get_by_email(email).await?.is_some())
+    }
+}
+
+#[async_trait]
+pub trait AuthenticationTokenGenerator {
+    async fn generate(self: ::std::sync::Arc<Self>, payload: (::domain::Uuid, ::domain::UserRole, ::aliases::time::Timestamp)) -> ::aliases::result::Fallible<::aliases::string::String>;
+
+    async fn get_payload(self: ::std::sync::Arc<Self>, token: ::aliases::string::String) -> ::aliases::result::Fallible<::core::option::Option<(::domain::Uuid, ::domain::UserRole, ::aliases::time::Timestamp)>>;
+
+    async fn get_user_id(self: ::std::sync::Arc<Self>, token: ::aliases::string::String) -> ::aliases::result::Fallible<::core::option::Option<::domain::Uuid>> {
+        ::aliases::result::Fallible::Ok(self.get_payload(token).await?.map(|(user_id, _, _)| user_id))
+    }
+
+    async fn get_user_role(self: ::std::sync::Arc<Self>, token: ::aliases::string::String) -> ::aliases::result::Fallible<::core::option::Option<::domain::UserRole>> {
+        ::aliases::result::Fallible::Ok(self.get_payload(token).await?.map(|(_, user_role, _)| user_role))
+    }
+
+    async fn get_expiry_timestamp(self: ::std::sync::Arc<Self>, token: ::aliases::string::String) -> ::aliases::result::Fallible<::core::option::Option<::aliases::time::Timestamp>> {
+        ::aliases::result::Fallible::Ok(self.get_payload(token).await?.map(|(_, _, expiry_timestamp)| expiry_timestamp))
+    }
     
-    async fn get_by_id(self: ::std::sync::Arc<Self>, id: ::domain::Uuid) -> ::aliases::result::Fallible<::core::option::Option<::domain::Volunteer>>;
-    async fn get_by_username(self: ::std::sync::Arc<Self>, username: ::aliases::string::String) -> ::aliases::result::Fallible<::core::option::Option<::domain::Volunteer>>;
-    async fn get_by_email(self: ::std::sync::Arc<Self>, email: ::aliases::string::String) -> ::aliases::result::Fallible<::core::option::Option<::domain::Volunteer>>;
-
-    async fn contains_id(self: ::std::sync::Arc<Self>, id: ::domain::Uuid) -> ::aliases::result::Fallible<bool> {
-        ::aliases::result::Fallible::Ok(self.get_by_id(id).await?.is_some())
-    }
-
-    async fn contains_username(self: ::std::sync::Arc<Self>, username: ::aliases::string::String) -> ::aliases::result::Fallible<bool> {
-        ::aliases::result::Fallible::Ok(self.get_by_username(username).await?.is_some())
-    }
-
-    async fn contains_email(self: ::std::sync::Arc<Self>, email: ::aliases::string::String) -> ::aliases::result::Fallible<bool> {
-        ::aliases::result::Fallible::Ok(self.get_by_email(email).await?.is_some())
-    }
-}
-
-#[async_trait]
-pub trait EventManagerRepository {
-    async fn get_by_id(self: ::std::sync::Arc<Self>, id: ::domain::Uuid) -> ::aliases::result::Fallible<::core::option::Option<::domain::EventManager>>;
-    async fn get_by_username(self: ::std::sync::Arc<Self>, username: ::aliases::string::String) -> ::aliases::result::Fallible<::core::option::Option<::domain::EventManager>>;
-    async fn get_by_email(self: ::std::sync::Arc<Self>, email: ::aliases::string::String) -> ::aliases::result::Fallible<::core::option::Option<::domain::EventManager>>;
-
-    async fn contains_id(self: ::std::sync::Arc<Self>, id: ::domain::Uuid) -> ::aliases::result::Fallible<bool> {
-        ::aliases::result::Fallible::Ok(self.get_by_id(id).await?.is_some())
-    }
-
-    async fn contains_username(self: ::std::sync::Arc<Self>, username: ::aliases::string::String) -> ::aliases::result::Fallible<bool> {
-        ::aliases::result::Fallible::Ok(self.get_by_username(username).await?.is_some())
-    }
-
-    async fn contains_email(self: ::std::sync::Arc<Self>, email: ::aliases::string::String) -> ::aliases::result::Fallible<bool> {
-        ::aliases::result::Fallible::Ok(self.get_by_email(email).await?.is_some())
-    }
-}
-
-#[async_trait]
-pub trait AdministratorRepository {
-    async fn get_by_id(self: ::std::sync::Arc<Self>, id: ::domain::Uuid) -> ::aliases::result::Fallible<::core::option::Option<::domain::Administrator>>;
-    async fn get_by_username(self: ::std::sync::Arc<Self>, username: ::aliases::string::String) -> ::aliases::result::Fallible<::core::option::Option<::domain::Administrator>>;
-    async fn get_by_email(self: ::std::sync::Arc<Self>, email: ::aliases::string::String) -> ::aliases::result::Fallible<::core::option::Option<::domain::Administrator>>;
-
-    async fn contains_id(self: ::std::sync::Arc<Self>, id: ::domain::Uuid) -> ::aliases::result::Fallible<bool> {
-        ::aliases::result::Fallible::Ok(self.get_by_id(id).await?.is_some())
-    }
-
-    async fn contains_username(self: ::std::sync::Arc<Self>, username: ::aliases::string::String) -> ::aliases::result::Fallible<bool> {
-        ::aliases::result::Fallible::Ok(self.get_by_username(username).await?.is_some())
-    }
-
-    async fn contains_email(self: ::std::sync::Arc<Self>, email: ::aliases::string::String) -> ::aliases::result::Fallible<bool> {
-        ::aliases::result::Fallible::Ok(self.get_by_email(email).await?.is_some())
+    async fn verify(self: ::std::sync::Arc<Self>, token: ::aliases::string::String) -> ::aliases::result::Fallible<bool> {
+        ::aliases::result::Fallible::Ok(self.get_payload(token).await?.is_some())
     }
 }
 
