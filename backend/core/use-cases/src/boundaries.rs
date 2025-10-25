@@ -10,7 +10,7 @@ pub trait SignInBoundary {
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone)]
 #[derive(::bon::Builder)]
-#[builder(on(::aliases::string::String, into))]
+#[builder(on(_, into))]
 #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
@@ -24,36 +24,31 @@ pub type SignInResponse = ::core::result::Result<SignInOkResponse, ::std::vec::V
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone)]
 #[derive(::bon::Builder)]
-#[builder(on(::aliases::string::String, into))]
+#[builder(on(_, into))]
 #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
 pub struct SignInOkResponse {
+    pub user_role: crate::boundaries::models::UserRole,
     pub token: ::aliases::string::String,
 }
 
-#[derive(::core::fmt::Debug, ::core::clone::Clone)]
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
 #[derive(::thiserror::Error)]
 #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase", rename_all_fields = "kebab-case"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
 pub enum SignInErrResponse {
-    #[error("User with username {username} not found")]
-    UsernameNotFound {
-        username: ::aliases::string::String,
-    },
+    #[error("User with username not found")]
+    UsernameNotFound,
 
-    #[error("User with email {email} not found")]
-    EmailNotFound {
-        email: ::aliases::string::String,
-    },
+    #[error("User with email not found")]
+    EmailNotFound,
 
-    #[error("Invalid username or email format: {username_or_email}")]
-    UsernameOrEmailInvalid {
-        username_or_email: ::aliases::string::String,
-    },
+    #[error("Invalid username or email format")]
+    UsernameOrEmailInvalid,
 
     #[error("Invalid password")]
     PasswordInvalid,
@@ -69,12 +64,14 @@ pub trait SignUpBoundary {
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone)]
 #[derive(::bon::Builder)]
-#[builder(on(::aliases::string::String, into))]
+#[builder(on(_, into))]
 #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
 pub struct SignUpRequest {
+    pub user_role: crate::boundaries::models::UserRole,
+
     pub username: ::aliases::string::String,
     pub email: ::aliases::string::String,
     pub password: ::aliases::string::String,
@@ -87,14 +84,27 @@ pub type SignUpResponse = ::core::result::Result<SignUpOkResponse, ::std::vec::V
 
 pub type SignUpOkResponse = ();
 
-#[derive(::core::fmt::Debug, ::core::clone::Clone)]
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
 #[derive(::thiserror::Error)]
 #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase", rename_all_fields = "kebab-case"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
 pub enum SignUpErrResponse {
+    #[error("Invalid username format")]
+    UsernameInvalid,
 
+    #[error("Invalid email format")]
+    EmailInvalid,
+
+    #[error("Invalid password format")]
+    PasswordInvalid,
+
+    #[error("User with username already exists")]
+    UsernameAlreadyExists,
+
+    #[error("User with email already exists")]
+    EmailAlreadyExists,
 }
 
 pub mod models {
@@ -107,5 +117,25 @@ pub mod models {
         Volunteer,
         EventManager,
         Administrator,
+    }
+
+    impl ::core::convert::From<::domain::UserRole> for UserRole {
+        fn from(value: ::domain::UserRole) -> Self {
+            match value {
+                ::domain::UserRole::Volunteer => Self::Volunteer,
+                ::domain::UserRole::EventManager => Self::EventManager,
+                ::domain::UserRole::Administrator => Self::Administrator,
+            }
+        }
+    }
+
+    impl ::core::convert::From<UserRole> for ::domain::UserRole {
+        fn from(value: UserRole) -> Self {
+            match value {
+                UserRole::Volunteer => Self::Volunteer,
+                UserRole::EventManager => Self::EventManager,
+                UserRole::Administrator => Self::Administrator,
+            }
+        }
     }
 }

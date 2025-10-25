@@ -7,6 +7,8 @@ pub trait EventRepository {
 
 #[async_trait]
 pub trait UserRepository {
+    async fn save(self: ::std::sync::Arc<Self>, user: ::domain::User) -> ::aliases::result::Fallible;
+
     async fn get_by_id(self: ::std::sync::Arc<Self>, id: ::domain::Uuid) -> ::aliases::result::Fallible<::core::option::Option<::domain::User>>;
     async fn get_by_username(self: ::std::sync::Arc<Self>, username: ::domain::Username) -> ::aliases::result::Fallible<::core::option::Option<::domain::User>>;
     async fn get_by_email(self: ::std::sync::Arc<Self>, email: ::domain::Email) -> ::aliases::result::Fallible<::core::option::Option<::domain::User>>;
@@ -22,6 +24,11 @@ pub trait UserRepository {
     async fn contains_email(self: ::std::sync::Arc<Self>, email: ::domain::Email) -> ::aliases::result::Fallible<bool> {
         ::aliases::result::Fallible::Ok(self.get_by_email(email).await?.is_some())
     }
+}
+
+#[async_trait]
+pub trait UuidGenerator {
+    async fn generate(self: ::std::sync::Arc<Self>) -> ::aliases::result::Fallible<::domain::Uuid>;
 }
 
 #[async_trait]

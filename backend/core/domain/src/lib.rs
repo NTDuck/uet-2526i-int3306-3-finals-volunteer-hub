@@ -1,6 +1,6 @@
 #[derive(::core::fmt::Debug, ::core::clone::Clone)]
 #[derive(::bon::Builder)]
-#[builder(on(::aliases::string::String, into))]
+#[builder(on(_, into))]
 pub struct Event {
     pub id: Uuid,
     pub name: ::aliases::string::String,
@@ -38,6 +38,7 @@ pub struct Post {
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone)]
 #[derive(::bon::Builder)]
+#[builder(on(_, into))]
 pub struct User {
     pub id: Uuid,
     pub role: UserRole,
@@ -81,7 +82,7 @@ pub struct Username(::aliases::string::String);
 
 #[::bon::bon]
 impl Username {
-    #[builder(on(::aliases::string::String, into))]
+    #[builder(on(_, into))]
     pub fn new(value: ::aliases::string::String) -> ::core::result::Result<Self, UsernameBuilderError> {
         let value = Self::normalize(value);
         Self::validate(value).map(Self)
@@ -128,7 +129,7 @@ pub struct Email(::aliases::string::String);
 
 #[::bon::bon]
 impl Email {
-    #[builder(on(::aliases::string::String, into))]
+    #[builder(on(_, into))]
     pub fn new(value: ::aliases::string::String) -> ::core::result::Result<Self, EmailBuilderError> {
         let value = Self::normalize(value);
         Self::validate(value).map(Self)
@@ -180,7 +181,7 @@ pub struct Password(::aliases::string::String);
 
 #[::bon::bon]
 impl Password {
-    #[builder(on(::aliases::string::String, into))]
+    #[builder(on(_, into))]
     pub fn new(value: ::aliases::string::String) -> ::core::result::Result<Self, PasswordBuilderError> {
         let value = Self::normalize(value);
         Self::validate(value).map(Self)
