@@ -10,7 +10,6 @@
 	- EventChannel (like Facebook wall)
 - Use cases
 	- Common
-		*** auth uses jwt, see tomfooollery | rust also has jwt crate
 		- Create account
 		- Sign in (email, pw)
 		- Dashboard

@@ -29,6 +29,8 @@ pub trait UserRepository {
 #[async_trait]
 pub trait UuidGenerator {
     async fn generate(self: ::std::sync::Arc<Self>) -> ::aliases::result::Fallible<::domain::Uuid>;
+
+    async fn get_timestamp(self: ::std::sync::Arc<Self>, uuid: &::domain::Uuid) -> ::aliases::result::Fallible<::aliases::time::Timestamp>;
 }
 
 #[async_trait]

@@ -16,7 +16,6 @@ domain = { path = "../domain" }
 
 async-trait = { workspace = true }
 bon = { workspace = true }
-futures = { workspace = true }
 serde = { workspace = true, optional = true }
 tsify = { version = "0.5.5", features = ["js"], default-features = false, optional = true }
 wasm-bindgen = { version = "=0.2.102", optional = true }  # jsr:@deno/wasmbuild@0.19.3
