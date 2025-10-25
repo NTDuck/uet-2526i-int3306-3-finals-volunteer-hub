@@ -39,11 +39,12 @@ pub struct Post {
 #[derive(::core::fmt::Debug, ::core::clone::Clone)]
 #[derive(::bon::Builder)]
 pub struct User {
+    pub id: Uuid,
+    pub role: UserRole,
+
     pub username: Username,
     pub email: Email,
     pub password: PasswordDigest,
-
-    pub role: UserRole,
 
     pub first_name: ::aliases::string::String,
     pub last_name: ::aliases::string::String,

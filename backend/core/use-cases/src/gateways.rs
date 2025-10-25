@@ -26,20 +26,20 @@ pub trait UserRepository {
 
 #[async_trait]
 pub trait AuthenticationTokenGenerator {
-    async fn generate(self: ::std::sync::Arc<Self>, payload: (::domain::Uuid, ::domain::UserRole, ::aliases::time::Timestamp)) -> ::aliases::result::Fallible<::aliases::string::String>;
+    async fn generate(self: ::std::sync::Arc<Self>, payload: self::models::AuthenticationTokenPayload) -> ::aliases::result::Fallible<::aliases::string::String>;
 
-    async fn get_payload(self: ::std::sync::Arc<Self>, token: ::aliases::string::String) -> ::aliases::result::Fallible<::core::option::Option<(::domain::Uuid, ::domain::UserRole, ::aliases::time::Timestamp)>>;
+    async fn get_payload(self: ::std::sync::Arc<Self>, token: ::aliases::string::String) -> ::aliases::result::Fallible<::core::option::Option<self::models::AuthenticationTokenPayload>>;
 
     async fn get_user_id(self: ::std::sync::Arc<Self>, token: ::aliases::string::String) -> ::aliases::result::Fallible<::core::option::Option<::domain::Uuid>> {
-        ::aliases::result::Fallible::Ok(self.get_payload(token).await?.map(|(user_id, _, _)| user_id))
+        ::aliases::result::Fallible::Ok(self.get_payload(token).await?.map(|payload| payload.user_id))
     }
 
     async fn get_user_role(self: ::std::sync::Arc<Self>, token: ::aliases::string::String) -> ::aliases::result::Fallible<::core::option::Option<::domain::UserRole>> {
-        ::aliases::result::Fallible::Ok(self.get_payload(token).await?.map(|(_, user_role, _)| user_role))
+        ::aliases::result::Fallible::Ok(self.get_payload(token).await?.map(|payload| payload.user_role))
     }
 
     async fn get_expiry_timestamp(self: ::std::sync::Arc<Self>, token: ::aliases::string::String) -> ::aliases::result::Fallible<::core::option::Option<::aliases::time::Timestamp>> {
-        ::aliases::result::Fallible::Ok(self.get_payload(token).await?.map(|(_, _, expiry_timestamp)| expiry_timestamp))
+        ::aliases::result::Fallible::Ok(self.get_payload(token).await?.map(|payload| payload.expiry_timestamp))
     }
     
     async fn verify(self: ::std::sync::Arc<Self>, token: ::aliases::string::String) -> ::aliases::result::Fallible<bool> {
@@ -53,5 +53,15 @@ pub trait PasswordHasher {
 
     async fn verify(self: ::std::sync::Arc<Self>, password: ::domain::Password, digest: ::domain::PasswordDigest) -> ::aliases::result::Fallible<bool> {
         ::aliases::result::Fallible::Ok(self.hash(password).await? == digest)
+    }
+}
+
+pub mod models {
+    #[derive(::core::fmt::Debug, ::core::clone::Clone)]
+    #[derive(::bon::Builder)]
+    pub struct AuthenticationTokenPayload {
+        pub user_id: ::domain::Uuid,
+        pub user_role: ::domain::UserRole,
+        pub expiry_timestamp: ::aliases::time::Timestamp,
     }
 }

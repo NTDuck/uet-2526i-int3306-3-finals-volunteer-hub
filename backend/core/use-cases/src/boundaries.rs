@@ -55,6 +55,9 @@ pub enum SignInErrResponse {
         username_or_email: ::aliases::string::String,
     },
 
+    #[error("Invalid password")]
+    PasswordInvalid,
+
     #[error("Password does not match")]
     PasswordMismatch,
 }
