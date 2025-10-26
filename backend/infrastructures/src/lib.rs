@@ -70,7 +70,9 @@ impl<'pepper> PasswordHasher for Argon2PasswordHasher<'pepper> {
     async fn hash(self: ::std::sync::Arc<Self>, password: ::domain::Password) -> ::aliases::result::Fallible<::domain::PasswordDigest> {
         use ::argon2::PasswordHasher as _;
 
-        let salt = ::password_hash::SaltString::generate(&mut ::rand_core::OsRng);
+        // TODO: make `::argon2::password_hash::rand_core::OsError` implement `::std::error::Error`
+        // `unwrap()` for now, should propagate with `?` later
+        let salt = ::argon2::password_hash::SaltString::try_from_rng(&mut ::argon2::password_hash::rand_core::OsRng).unwrap();
         let digest = self.context.hash_password(password.as_bytes(), &salt)?;
 
         ::aliases::result::Fallible::Ok(digest.to_string().into())
@@ -79,7 +81,7 @@ impl<'pepper> PasswordHasher for Argon2PasswordHasher<'pepper> {
     async fn verify(self: ::std::sync::Arc<Self>, password: ::domain::Password, digest: ::domain::PasswordDigest) -> ::aliases::result::Fallible<bool> {
         use ::argon2::PasswordVerifier as _;
 
-        let digest = ::password_hash::PasswordHash::new(&digest)?;
+        let digest = ::argon2::password_hash::PasswordHash::new(&digest)?;
         
         ::aliases::result::Fallible::Ok(self.context.verify_password(password.as_bytes(), &digest).is_ok())
     }

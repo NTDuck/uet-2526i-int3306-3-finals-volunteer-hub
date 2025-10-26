@@ -1,5 +1,6 @@
 pub mod result {
-    pub type Fallible<T = ()> = ::core::result::Result<T, ::anyhow::Error>;
+    pub type Error = ::anyhow::Error;
+    pub type Fallible<T = ()> = ::core::result::Result<T, Error>;
 }
 
 pub mod time {
