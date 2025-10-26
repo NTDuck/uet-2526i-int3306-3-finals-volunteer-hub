@@ -66,11 +66,48 @@ pub trait PasswordHasher {
 }
 
 pub mod models {
-    #[derive(::core::fmt::Debug, ::core::clone::Clone)]
+    #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
     #[derive(::bon::Builder)]
+    #[builder(on(_, into))]
+    #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+    #[cfg_attr(feature = "serde", serde(from = "__AuthenticationTokenPayload", into = "__AuthenticationTokenPayload", rename_all = "camelCase"))]
+    #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
+    #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
     pub struct AuthenticationTokenPayload {
         pub user_id: ::domain::Uuid,
         pub user_role: ::domain::UserRole,
         pub expiry_timestamp: ::aliases::time::Timestamp,
+    }
+
+    #[cfg(feature = "serde")]
+    #[derive(::serde::Serialize, ::serde::Deserialize)]
+    #[derive(::bon::Builder)]
+    #[builder(on(_, into))]
+    struct __AuthenticationTokenPayload {
+        pub user_id: crate::boundaries::models::Uuid,
+        pub user_role: crate::boundaries::models::UserRole,
+        pub expiry_timestamp: ::aliases::time::Timestamp,
+    }
+
+    #[cfg(feature = "serde")]
+    impl ::core::convert::From<__AuthenticationTokenPayload> for AuthenticationTokenPayload {
+        fn from(value: __AuthenticationTokenPayload) -> Self {
+            Self::builder()
+                .user_id(value.user_id)
+                .user_role(value.user_role)
+                .expiry_timestamp(value.expiry_timestamp)
+                .build()
+        }
+    }
+
+    #[cfg(feature = "serde")]
+    impl ::core::convert::From<AuthenticationTokenPayload> for __AuthenticationTokenPayload {
+        fn from(value: AuthenticationTokenPayload) -> Self {
+            Self::builder()
+                .user_id(value.user_id)
+                .user_role(value.user_role)
+                .expiry_timestamp(value.expiry_timestamp)
+                .build()
+        }
     }
 }

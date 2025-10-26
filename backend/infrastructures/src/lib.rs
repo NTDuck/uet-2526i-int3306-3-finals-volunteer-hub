@@ -59,6 +59,31 @@ enum UuidIntoTimestampError {
     OutOfRange,
 }
 
+#[derive(::bon::Builder)]
+pub struct JsonWebTokenGenerator<Key> {
+    key: Key, // expects something like `::hmac::Hmac<::sha2::Sha256>`
+}
+
+#[async_trait]
+impl<Key> AuthenticationTokenGenerator for JsonWebTokenGenerator<Key>
+where
+    Key: ::jwt::SigningAlgorithm + ::jwt::VerifyingAlgorithm + ::core::marker::Send + ::core::marker::Sync,
+{
+    async fn generate(self: ::std::sync::Arc<Self>, payload: ::use_cases::gateways::models::AuthenticationTokenPayload) -> ::aliases::result::Fallible<::aliases::string::String> {
+        use ::jwt::SignWithKey as _;
+
+        let token = payload.sign_with_key(&self.key)?;
+        ::aliases::result::Fallible::Ok(token.into())
+    }
+
+    async fn get_payload(self: ::std::sync::Arc<Self>, token: ::aliases::string::String) -> ::aliases::result::Fallible<::core::option::Option<::use_cases::gateways::models::AuthenticationTokenPayload>> {
+        use ::jwt::VerifyWithKey as _;
+
+        let payload = token.verify_with_key(&self.key)?;
+        ::aliases::result::Fallible::Ok(payload)
+    }
+}
+
 // Could consider using sha2
 #[derive(::bon::Builder)]
 pub struct Argon2PasswordHasher<'pepper> {

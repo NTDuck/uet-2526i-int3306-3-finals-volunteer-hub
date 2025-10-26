@@ -30,7 +30,7 @@ pub type SignInResponse = ::core::result::Result<SignInOkResponse, ::std::vec::V
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
 pub struct SignInOkResponse {
-    pub user_role: crate::boundaries::models::UserRole,
+    pub user_role: self::models::UserRole,
     pub token: ::aliases::string::String,
 }
 
@@ -70,7 +70,7 @@ pub trait SignUpBoundary {
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
 pub struct SignUpRequest {
-    pub user_role: crate::boundaries::models::UserRole,
+    pub user_role: self::models::UserRole,
 
     pub username: ::aliases::string::String,
     pub email: ::aliases::string::String,
@@ -136,6 +136,41 @@ pub mod models {
                 UserRole::EventManager => Self::EventManager,
                 UserRole::Administrator => Self::Administrator,
             }
+        }
+    }
+
+    #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::core::cmp::Eq, ::core::cmp::PartialEq, ::core::cmp::Ord, ::core::cmp::PartialOrd)]
+    #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+    #[cfg_attr(feature = "serde", serde(transparent))]
+    #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
+    #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
+    pub struct Uuid([u8; 16]);
+
+    #[::bon::bon]
+    impl Uuid {
+        #[builder]
+        pub fn new(value: [u8; 16]) -> Self {
+            Self(value)
+        }
+    }
+
+    impl ::core::ops::Deref for Uuid {
+        type Target = [u8; 16];
+        
+        fn deref(&self) -> &Self::Target {
+            &self.0
+        }
+    }
+
+    impl ::core::convert::From<::domain::Uuid> for Uuid {
+        fn from(value: ::domain::Uuid) -> Self {
+            Self::builder().value(*value).build()
+        }
+    }
+
+    impl ::core::convert::From<Uuid> for ::domain::Uuid {
+        fn from(value: Uuid) -> Self {
+            Self::builder().value(*value).build()
         }
     }
 }
