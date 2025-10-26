@@ -58,3 +58,29 @@ enum UuidIntoTimestampError {
     #[error("Out-of-range number of seconds and/or invalid nanosecond")]
     OutOfRange,
 }
+
+// Could consider using sha2
+#[derive(::bon::Builder)]
+pub struct Argon2PasswordHasher<'pepper> {
+    context: ::argon2::Argon2<'pepper>,
+}
+
+#[async_trait]
+impl<'pepper> PasswordHasher for Argon2PasswordHasher<'pepper> {
+    async fn hash(self: ::std::sync::Arc<Self>, password: ::domain::Password) -> ::aliases::result::Fallible<::domain::PasswordDigest> {
+        use ::argon2::PasswordHasher as _;
+
+        let salt = ::password_hash::SaltString::generate(&mut ::rand_core::OsRng);
+        let digest = self.context.hash_password(password.as_bytes(), &salt)?;
+
+        ::aliases::result::Fallible::Ok(digest.to_string().into())
+    }
+
+    async fn verify(self: ::std::sync::Arc<Self>, password: ::domain::Password, digest: ::domain::PasswordDigest) -> ::aliases::result::Fallible<bool> {
+        use ::argon2::PasswordVerifier as _;
+
+        let digest = ::password_hash::PasswordHash::new(&digest)?;
+        
+        ::aliases::result::Fallible::Ok(self.context.verify_password(password.as_bytes(), &digest).is_ok())
+    }
+}
