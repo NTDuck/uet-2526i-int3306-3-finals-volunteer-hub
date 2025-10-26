@@ -58,7 +58,7 @@ pub enum UserRole {
     Administrator,
 }
 
-#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::core::cmp::Eq, ::core::cmp::PartialEq, ::core::cmp::Ord, ::core::cmp::PartialOrd)]
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::core::cmp::Eq, ::core::cmp::PartialEq, ::core::cmp::Ord, ::core::cmp::PartialOrd, ::core::hash::Hash)]
 pub struct Uuid([u8; 16]);
 
 #[::bon::bon]
@@ -77,7 +77,7 @@ impl ::core::ops::Deref for Uuid {
     }
 }
 
-#[derive(::core::fmt::Debug, ::core::clone::Clone)]
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::cmp::Eq, ::core::cmp::PartialEq, ::core::cmp::Ord, ::core::cmp::PartialOrd, ::core::hash::Hash)]
 pub struct Username(::aliases::string::String);
 
 #[::bon::bon]
@@ -124,7 +124,7 @@ pub enum UsernameBuilderError {
     InvalidFormat,
 }
 
-#[derive(::core::fmt::Debug, ::core::clone::Clone)]
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::cmp::Eq, ::core::cmp::PartialEq, ::core::cmp::Ord, ::core::cmp::PartialOrd, ::core::hash::Hash)]
 pub struct Email(::aliases::string::String);
 
 #[::bon::bon]

@@ -1,6 +1,65 @@
 use ::async_trait::async_trait;
 use ::use_cases::gateways::*;
 
+#[derive(::bon::Builder)]
+pub struct InMemoryUserRepository {
+    #[builder(default, with = |value: ::std::collections::BTreeMap<::core::cmp::Reverse<::domain::Uuid>, ::domain::User>| ::tokio::sync::Mutex::new(value))]
+    users_by_ids: ::tokio::sync::Mutex<::std::collections::BTreeMap<::core::cmp::Reverse<::domain::Uuid>, ::domain::User>>,
+
+    #[builder(default, with = |value: ::std::collections::HashMap<::domain::Username, ::domain::User>| ::tokio::sync::Mutex::new(value))]
+    users_by_usernames: ::tokio::sync::Mutex<::std::collections::HashMap<::domain::Username, ::domain::User>>,
+
+    #[builder(default, with = |value: ::std::collections::HashMap<::domain::Email, ::domain::User>| ::tokio::sync::Mutex::new(value))]
+    users_by_emails: ::tokio::sync::Mutex<::std::collections::HashMap<::domain::Email, ::domain::User>>,
+}
+
+#[async_trait]
+impl UserRepository for InMemoryUserRepository {
+    async fn save(self: ::std::sync::Arc<Self>, user: ::domain::User) -> ::aliases::result::Fallible {
+        self.users_by_ids.lock().await.insert(::core::cmp::Reverse(user.id), user.clone());
+        self.users_by_usernames.lock().await.insert(user.username.clone(), user.clone());
+        self.users_by_emails.lock().await.insert(user.email.clone(), user.clone());
+
+        ::aliases::result::Fallible::Ok(())
+    }
+
+    async fn get_by_id(self: ::std::sync::Arc<Self>, id: ::domain::Uuid) -> ::aliases::result::Fallible<::core::option::Option<::domain::User>> {
+        let user = self.users_by_ids.lock().await.get(&::core::cmp::Reverse(id)).cloned();
+
+        ::aliases::result::Fallible::Ok(user)
+    }
+
+    async fn get_by_username(self: ::std::sync::Arc<Self>, username: ::domain::Username) -> ::aliases::result::Fallible<::core::option::Option<::domain::User>> {
+        let user = self.users_by_usernames.lock().await.get(&username).cloned();
+
+        ::aliases::result::Fallible::Ok(user)
+    }
+
+    async fn get_by_email(self: ::std::sync::Arc<Self>, email: ::domain::Email) -> ::aliases::result::Fallible<::core::option::Option<::domain::User>> {
+        let user = self.users_by_emails.lock().await.get(&email).cloned();
+
+        ::aliases::result::Fallible::Ok(user)
+    }
+
+    async fn contains_id(self: ::std::sync::Arc<Self>, id: ::domain::Uuid) -> ::aliases::result::Fallible<bool> {
+        let contains = self.users_by_ids.lock().await.contains_key(&::core::cmp::Reverse(id));
+
+        ::aliases::result::Fallible::Ok(contains)
+    }
+
+    async fn contains_username(self: ::std::sync::Arc<Self>, username: ::domain::Username) -> ::aliases::result::Fallible<bool> {
+        let contains = self.users_by_usernames.lock().await.contains_key(&username);
+
+        ::aliases::result::Fallible::Ok(contains)
+    }
+
+    async fn contains_email(self: ::std::sync::Arc<Self>, email: ::domain::Email) -> ::aliases::result::Fallible<bool> {
+        let contains = self.users_by_emails.lock().await.contains_key(&email);
+
+        ::aliases::result::Fallible::Ok(contains)
+    }
+}
+
 pub struct UuidV7Generator;
 
 #[::bon::bon]
