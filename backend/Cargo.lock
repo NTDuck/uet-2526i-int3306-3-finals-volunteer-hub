@@ -295,6 +295,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "dotenvy"
+version = "0.15.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1aaf95b3e5c8f23aa320147307562d361db0ae0d51242340f558153b4eb2439b"
+
+[[package]]
 name = "either"
 version = "1.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -392,10 +398,8 @@ dependencies = [
  "bon",
  "chrono",
  "domain",
- "hmac",
  "jwt",
  "serde",
- "sha2",
  "thiserror",
  "tokio",
  "use-cases",
@@ -825,6 +829,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "wasm-bindgen-futures"
+version = "0.4.52"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9c0a08ecf5d99d5604a6666a70b3cde6ab7cc6142f5e641a8ef48fc744ce8854"
+dependencies = [
+ "cfg-if",
+ "js-sys",
+ "once_cell",
+ "wasm-bindgen",
+ "web-sys",
+]
+
+[[package]]
 name = "wasm-bindgen-macro"
 version = "0.2.102"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -859,6 +876,31 @@ dependencies = [
 [[package]]
 name = "wasm-bindings"
 version = "0.1.0"
+dependencies = [
+ "aliases",
+ "bon",
+ "domain",
+ "dotenvy",
+ "hmac",
+ "infrastructures",
+ "serde",
+ "serde-wasm-bindgen",
+ "sha2",
+ "tsify",
+ "use-cases",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+]
+
+[[package]]
+name = "web-sys"
+version = "0.3.79"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "50462a022f46851b81d5441d1a6f5bac0b21a1d72d64bd4906fbdd4bf7230ec7"
+dependencies = [
+ "js-sys",
+ "wasm-bindgen",
+]
 
 [[package]]
 name = "windows-core"

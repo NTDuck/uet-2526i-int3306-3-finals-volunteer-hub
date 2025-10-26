@@ -143,9 +143,9 @@ where
     }
 }
 
-// Could consider using sha2
 #[derive(::bon::Builder)]
 pub struct Argon2PasswordHasher<'pepper> {
+    #[builder(default)]
     context: ::argon2::Argon2<'pepper>,
 }
 
