@@ -878,6 +878,7 @@ name = "wasm-bindings"
 version = "0.1.0"
 dependencies = [
  "aliases",
+ "argon2",
  "bon",
  "domain",
  "dotenvy",

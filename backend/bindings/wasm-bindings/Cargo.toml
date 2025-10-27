@@ -14,6 +14,7 @@ infrastructures = { path = "../../infrastructures" }
 
 bon = { workspace = true }
 
+argon2 = { version = "0.6.0-rc.1", features = ["std", "parallel", "zeroize"] }
 hmac = { version = "0.12.1" }
 sha2 = { version = "0.10.9" }
 dotenvy = { version = "0.15.7" }  # suggested in lieu of `dotenv` as of security advisory RUSTSEC-2021-0141
