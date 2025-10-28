@@ -85,6 +85,7 @@ impl Gateways {
 
 pub type JsPromise<T = ()> = ::core::result::Result<T, ::wasm_bindgen::JsValue>;
 
+#[allow(dead_code)]
 pub(crate) trait FallibleExt<T = ()> {
     fn into_js(self) -> JsPromise<T>;
 }
@@ -93,13 +94,6 @@ impl<T> FallibleExt<T> for ::aliases::result::Fallible<T> {
     fn into_js(self) -> JsPromise<T> {
         self.map_err(|error| ::wasm_bindgen::JsValue::from_str(&error.to_string()))
     }
-}
-
-#[derive(::serde::Serialize, ::serde::Deserialize)]
-#[serde(untagged)]
-enum Coerced {
-    Unrecoverable(::wasm_bindgen::JsValue),
-    Recoverable(::std::vec::Vec<::wasm_bindgen::JsValue>),
 }
 
 pub(crate) trait NestedFallibleExt<T = ()> {
@@ -115,6 +109,6 @@ where
             .and_then(|inner| inner
                 .map_err(|errors|
                     errors.into_iter().map(|error| ::wasm_bindgen::JsValue::from_str(&error.to_string())).collect::<::std::vec::Vec<_>>())
-                .map_err(|errors| ::wasm_bindgen::JsValue::from_serde(errors)))
+                .map_err(::core::convert::Into::into))
     }
 }
