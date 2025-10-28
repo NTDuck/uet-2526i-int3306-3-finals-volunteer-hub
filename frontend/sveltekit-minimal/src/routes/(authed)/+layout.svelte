@@ -2,9 +2,8 @@
   let { children } = $props();
 </script>
 
-<nav>
-  <a href="/login">log-in</a>
-  <a href="/dashboard">dashboard</a>
-</nav>
-
 {@render children?.()}
+
+<form method="POST" action="/logout">
+  <button>log-out</button>
+</form>

@@ -11,14 +11,13 @@
 		"strict": true,
 		"moduleResolution": "bundler",
 
-		// Intellisense support
-		"baseUrl": ".",
-		"paths": {
-			"@volunteer-hub": [
-				"../../backend/bindings/output/volunteer-hub.js"
-			],
-		},
-	}
+		// "baseUrl": ".",
+		// "paths": {
+		// 	"@volunteer-hub": [
+		// 		"../../backend/bindings/output/volunteer-hub.js",
+		// 	],
+		// },
+	},
 	// Path aliases are handled by https://svelte.dev/docs/kit/configuration#alias
 	// except $lib which is handled by https://svelte.dev/docs/kit/configuration#files
 	//
