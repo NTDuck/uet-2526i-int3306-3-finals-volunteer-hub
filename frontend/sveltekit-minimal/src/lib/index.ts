@@ -1,1 +1,3 @@
-// place files you want to import through the `$lib` alias in this folder.
+import { Application } from "@volunteer-hub";
+
+export const app: Application = new Application();
