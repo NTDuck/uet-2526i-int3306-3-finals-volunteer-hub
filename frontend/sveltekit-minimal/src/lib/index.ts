@@ -1,3 +1,3 @@
-import { Application } from "$volunteer-hub";
+import { Application } from "@volunteer-hub";
 
-export const app: Application = new Application();
+export const app: Application = await Application.new();

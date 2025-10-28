@@ -16,9 +16,9 @@ pub struct Application {
 
 #[wasm_bindgen]
 impl Application {
-    #[wasm_bindgen(constructor)]
-    pub fn new() -> Self {
-        Gateways::new().unwrap().into()
+    #[wasm_bindgen]
+    pub async fn new() -> Promise<Self> {
+        Gateways::new().await.into_promise().map(::core::convert::Into::into)
     }
 
     #[wasm_bindgen(js_name = signIn)]
@@ -62,7 +62,7 @@ struct Gateways {
 }
 
 impl Gateways {
-    pub fn new() -> ::aliases::result::Fallible<Self> {
+    pub async fn new() -> ::aliases::result::Fallible<Self> {
         use ::hmac::Mac as _;
 
         ::dotenvy::from_filename("../../.env")?;
