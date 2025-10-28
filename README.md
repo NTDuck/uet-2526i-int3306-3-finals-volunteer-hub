@@ -1,5 +1,22 @@
 # uet-2526i-int3306-3-finals-volunteer-hub
 
+## Deps
+- [Rust](https://rust-lang.org/tools/install/)
+- [wasm-pack](https://drager.github.io/wasm-pack/)
+    basically `cargo install wasm-pack`
+- [Deno](https://docs.deno.com/runtime/getting_started/installation/)
+
+## How to install
+```cmd
+cd ./frontend/sveltekit-minimal && deno install
+```
+
+## How to run
+```cmd
+deno task bind-wasm
+deno task dev-sveltekit-minimal
+```
+
 # Notes
 - Domain
 	- Volunteer
