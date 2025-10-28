@@ -26,6 +26,10 @@ uuid = { version = "1.18.1", features = ["v7"] }
 # Using `uuid` on `wasm32-unknown-unknown` requires
 # a source of randomness from [`js`, `rng-getrandom`, `rng-rand`]
 uuid = { version = "1.18.1", features = ["v7", "js"] }
+# `getrandom` is a transitive dependency of `argon2`
+# Using `getrandom` on `wasm32-unknown-unknown` requires
+# explicitly enabling feature flag `wasm_js`
+getrandom = { version = "*", features = ["wasm_js"]}
 
 [lints]
 workspace = true
