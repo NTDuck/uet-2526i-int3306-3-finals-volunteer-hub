@@ -22,13 +22,13 @@ impl Application {
     }
 
     #[wasm_bindgen(js_name = signIn)]
-    pub async fn sign_in(&self, request: SignInRequest) -> JsPromise<SignInOkResponse> {
-        NestedFallibleExt::into_js(::std::sync::Arc::clone(&self.sign_in_boundary).apply(request).await)
+    pub async fn sign_in(&self, request: SignInRequest) -> Promise<SignInOkResponse> {
+        ::std::sync::Arc::clone(&self.sign_in_boundary).apply(request).await.into_promise()
     }
 
     #[wasm_bindgen(js_name = signUp)]
-    pub async fn sign_up(&self, request: SignUpRequest) -> JsPromise<SignUpOkResponse> {
-        NestedFallibleExt::into_js(::std::sync::Arc::clone(&self.sign_up_boundary).apply(request).await)
+    pub async fn sign_up(&self, request: SignUpRequest) -> Promise<SignUpOkResponse> {
+        ::std::sync::Arc::clone(&self.sign_up_boundary).apply(request).await.into_promise()
     }
 }
 
@@ -83,32 +83,28 @@ impl Gateways {
     }
 }
 
-pub type JsPromise<T = ()> = ::core::result::Result<T, ::wasm_bindgen::JsValue>;
+pub type Promise<T = ()> = ::core::result::Result<T, ::wasm_bindgen::JsValue>;
 
-#[allow(dead_code)]
-pub(crate) trait FallibleExt<T = ()> {
-    fn into_js(self) -> JsPromise<T>;
+trait FallibleExt<T = ()> {
+    fn into_promise(self) -> Promise<T>;
 }
 
 impl<T> FallibleExt<T> for ::aliases::result::Fallible<T> {
-    fn into_js(self) -> JsPromise<T> {
+    fn into_promise(self) -> Promise<T> {
         self.map_err(|error| ::wasm_bindgen::JsValue::from_str(&error.to_string()))
     }
 }
 
-pub(crate) trait NestedFallibleExt<T = ()> {
-    fn into_js(self) -> JsPromise<T>;
-}
-
-impl<T, E> NestedFallibleExt<T> for ::aliases::result::Fallible<::core::result::Result<T, ::std::vec::Vec<E>>>
+impl<T, E> FallibleExt<T> for ::aliases::result::Fallible<::core::result::Result<T, ::std::vec::Vec<E>>>
 where
     E: ::core::error::Error,
 {
-    fn into_js(self) -> JsPromise<T> {
+    fn into_promise(self) -> Promise<T> {
         self.map_err(|error| ::wasm_bindgen::JsValue::from_str(&error.to_string()))
             .and_then(|inner| inner
-                .map_err(|errors|
-                    errors.into_iter().map(|error| ::wasm_bindgen::JsValue::from_str(&error.to_string())).collect::<::std::vec::Vec<_>>())
+                .map_err(|errors| errors.into_iter()
+                    .map(|error| ::wasm_bindgen::JsValue::from_str(&error.to_string()))
+                    .collect::<::std::vec::Vec<_>>())
                 .map_err(::core::convert::Into::into))
     }
 }
