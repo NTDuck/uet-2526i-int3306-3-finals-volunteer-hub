@@ -4,7 +4,7 @@ members = [
     "./core/domain",
     "./core/use-cases",
     "./infrastructures",
-    "./bindings/*", "bindings/wasm-bindings",
+    "./bindings/*",
 ]
 exclude = [
     "./bindings/output",
