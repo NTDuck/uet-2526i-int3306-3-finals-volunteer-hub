@@ -1,22 +1,38 @@
-import { redirect } from "@sveltejs/kit";
+import { redirect, fail } from "@sveltejs/kit";
 import type { RequestEvent } from "@sveltejs/kit";
 import type { Actions } from "$types";
 
-// import { app } from "$lib";
+import { getApp } from "$lib/server";
 
 export const actions: Actions = {
-	default: async ({ request, cookies, url }: RequestEvent) => {
-		// const formData = await request.formData();
-		
-		// const { token } = await app.signIn({
-		// 	usernameOrEmail: formData.get("usernameOrEmail"),
-		// 	password: formData.get("password"),
-		// });
+  default: async ({ request, cookies, url }: RequestEvent) => {
+  	console.log("Dog");
+  	
+	const app = await getApp();
+	const formData = await request.formData();
 
-		const token = (await request.formData()).get("usernameOrEmail") as string;
+	console.log("I'm here!");
+	
+	try {
+	  const { token } = await app.signIn({
+		usernameOrEmail: formData.get("usernameOrEmail"),
+		password: formData.get("password"),
+      });
 
-		cookies.set("auth-token", token, { path: "/" });
+      console.log(token);
 
-		redirect(303, url.searchParams.get("redirect") ?? "/");
-	},
+	  cookies.set("auth-token", token, { path: "/" });
+
+	  throw redirect(303, url.searchParams.get("redirect") ?? "/");
+	
+	} catch (error) {
+      return fail(400, {
+      	message: error,  // TODO: Beautify
+      	formData: {
+      	  usernameOrEmail: formData.get("usernameOrEmail") ?? "",
+      	  password: formData.get("password") ?? "",
+      	},
+      });
+	}
+  },
 } satisfies Actions;

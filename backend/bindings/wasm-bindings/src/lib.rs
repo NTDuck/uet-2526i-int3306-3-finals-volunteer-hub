@@ -17,8 +17,12 @@ pub struct Application {
 #[wasm_bindgen]
 impl Application {
     #[wasm_bindgen]
-    pub async fn new() -> Promise<Self> {
-        Gateways::new().await.into_promise().map(::core::convert::Into::into)
+    pub async fn create() -> Promise<Self> {
+        Self::new().await.into_promise()
+    }
+
+    async fn new() -> ::aliases::result::Fallible<Self> {
+        Gateways::new().await.map(::core::convert::Into::into)
     }
 
     #[wasm_bindgen(js_name = signIn)]
@@ -62,10 +66,13 @@ struct Gateways {
 }
 
 impl Gateways {
-    pub async fn new() -> ::aliases::result::Fallible<Self> {
+    async fn new() -> ::aliases::result::Fallible<Self> {
         use ::hmac::Mac as _;
 
         ::dotenvy::from_filename("../../.env")?;
+
+        println!("{}",::std::env::var("JWT_SECRET_KEY")?);
+        println!("{}",::std::env::var("ARGON2_SECRET_KEY")?);
 
         ::aliases::result::Fallible::Ok(Self::builder()
             .user_repository(::std::sync::Arc::new(InMemoryUserRepository::builder().build()))
