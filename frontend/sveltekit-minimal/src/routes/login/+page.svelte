@@ -1,19 +1,30 @@
 <script lang="ts">
-  let { data, form } = $props();
+  import type { PageData } from "$types";
+
+  let { data, form } = $props() satisfies {
+    data: PageData,
+    form: {
+      error: string,
+      data: {
+        usernameOrEmail: string,
+        password: string,
+      }
+    },
+  };
 </script>
 
 <h1>log-in!</h1>
 
 <form method="POST">
   <label for="username-or-email">username/email</label>
-  <input type="text" name="username-or-email" value={form?.data.usernameOrEmail ?? "nuh uh"} required>
+  <input type="text" name="username-or-email" value={form?.data.usernameOrEmail ?? ""} required>
 
   <label for="password">password</label>
-  <input type="password" name="password" value={form?.data.password ?? "nuh uh"} required>
+  <input type="password" name="password" value={form?.data.password ?? ""} required>
 
   <button type="submit">log-in</button>
 </form>
 
 {#if form?.error}
-  <p>{form.error}</p>
+  <p style="color: red;">{form.error}</p>
 {/if}

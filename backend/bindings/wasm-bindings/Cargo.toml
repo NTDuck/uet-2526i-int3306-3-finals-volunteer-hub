@@ -19,8 +19,7 @@ hmac = { version = "0.12.1" }
 sha2 = { version = "0.10.9" }
 dotenvy = { version = "0.15.7" }  # suggested in lieu of `dotenv` as of security advisory RUSTSEC-2021-0141
 tracing = { workspace = true }
-tracing-subscriber = { version = "0.3.20", features = ["env-filter"] }
-tracing-appender = { version = "0.2.3" }
+tracing-wasm = "0.2.1"
 
 # [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen = { version = "=0.2.102", features = ["strict-macro"] }  # jsr:@deno/wasmbuild@0.19.3
