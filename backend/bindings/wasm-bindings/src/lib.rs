@@ -69,20 +69,31 @@ impl Gateways {
     async fn new() -> ::aliases::result::Fallible<Self> {
         use ::hmac::Mac as _;
 
-        ::dotenvy::from_filename("../../.env")?;
+        // let logger = ::tracing_appender::rolling::never("/logs/wasm-bindings/", ".log");
+        // let (logger, _logger_guard) = ::tracing_appender::non_blocking(logger);
 
-        println!("{}",::std::env::var("JWT_SECRET_KEY")?);
-        println!("{}",::std::env::var("ARGON2_SECRET_KEY")?);
+        // ::tracing_subscriber::fmt()
+        //     .with_writer(logger)
+        //     .with_env_filter(::tracing_subscriber::EnvFilter::try_from_default_env()?)
+        //     .with_ansi(false)
+        //     .init();
+
+        // ::dotenvy::from_filename("../../.env")?;
+
+        // ::tracing::debug!("{}",::std::env::var("JWT_SECRET_KEY")?);
+        // ::tracing::debug!("{}",::std::env::var("ARGON2_SECRET_KEY")?);
 
         ::aliases::result::Fallible::Ok(Self::builder()
             .user_repository(::std::sync::Arc::new(InMemoryUserRepository::builder().build()))
             .uuid_generator(::std::sync::Arc::new(UuidV7Generator::builder().build()))
             .auth_token_generator(::std::sync::Arc::new(JsonWebTokenGenerator::builder()
-                .key(::hmac::Hmac::<::sha2::Sha256>::new_from_slice(::std::env::var("JWT_SECRET_KEY")?.as_bytes())?)
+                .key(::hmac::Hmac::<::sha2::Sha256>::new_from_slice("root".as_bytes())?)
+                // .key(::hmac::Hmac::<::sha2::Sha256>::new_from_slice(::std::env::var("JWT_SECRET_KEY")?.as_bytes())?)
                 .build()))
             .password_hasher(::std::sync::Arc::new(Argon2PasswordHasher::builder()
                 .context(::argon2::Argon2::new_with_secret(
-                    ::std::boxed::Box::leak(::std::env::var("ARGON2_SECRET_KEY")?.into_boxed_str()).as_bytes(),
+                    "root".as_bytes(),
+                    // ::std::boxed::Box::leak(::std::env::var("ARGON2_SECRET_KEY")?.into_boxed_str()).as_bytes(),
                     ::argon2::Algorithm::Argon2id, ::argon2::Version::V0x13,
                     ::argon2::Params::default())?)
                 .build()))

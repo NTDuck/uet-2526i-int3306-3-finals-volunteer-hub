@@ -9,11 +9,11 @@ export async function getApp(): Promise<Application> {
 		
 		try {
 			app = await Application.create();
+			console.log("App created");
 		} catch (error) {
+			console.log("ERROR ERROR ERROR FUCK FUCK FUCK");
 			console.log(error);
 		}
-
-		console.log("App created!");
 	}
 
 	return app;
