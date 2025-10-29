@@ -15,7 +15,7 @@
     "format-sveltekit-minimal": "cd ./frontend/sveltekit-minimal && deno task format",
     "lint-sveltekit-minimal": "cd ./frontend/sveltekit-minimal && deno task lint",
     
-    "bind-wasm": "wasm-pack build ./backend/bindings/wasm-bindings --out-dir ../output --out-name volunteer-hub --target deno"
+    "build-wasm": "wasm-pack build ./backend/bindings/wasm-bindings --out-dir ../output --out-name volunteer-hub --target deno"
   },
   "imports": {
     "@std/assert": "jsr:@std/assert@1"

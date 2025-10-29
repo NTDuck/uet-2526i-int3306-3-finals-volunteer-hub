@@ -1,6 +1,7 @@
 {
   "version": "5",
   "specifiers": {
+    "npm:@deno/svelte-adapter@0.1": "0.1.0_@sveltejs+kit@2.44.0__@sveltejs+vite-plugin-svelte@6.2.1___svelte@5.40.0____acorn@8.15.0___vite@7.1.9____@types+node@24.7.2____picomatch@4.0.3___@types+node@24.7.2__svelte@5.40.0___acorn@8.15.0__vite@7.1.9___@types+node@24.7.2___picomatch@4.0.3__acorn@8.15.0__@types+node@24.7.2_@sveltejs+vite-plugin-svelte@6.2.1__svelte@5.40.0___acorn@8.15.0__vite@7.1.9___@types+node@24.7.2___picomatch@4.0.3__@types+node@24.7.2_svelte@5.40.0__acorn@8.15.0_vite@7.1.9__@types+node@24.7.2__picomatch@4.0.3_@types+node@24.7.2",
     "npm:@eslint/compat@^1.4.0": "1.4.0_eslint@9.37.0",
     "npm:@eslint/js@^9.36.0": "9.37.0",
     "npm:@sveltejs/adapter-auto@^6.1.0": "6.1.1_@sveltejs+kit@2.44.0__@sveltejs+vite-plugin-svelte@6.2.1___svelte@5.40.0____acorn@8.15.0___vite@7.1.9____@types+node@24.7.2____picomatch@4.0.3___@types+node@24.7.2__svelte@5.40.0___acorn@8.15.0__vite@7.1.9___@types+node@24.7.2___picomatch@4.0.3__acorn@8.15.0__@types+node@24.7.2_@sveltejs+vite-plugin-svelte@6.2.1__svelte@5.40.0___acorn@8.15.0__vite@7.1.9___@types+node@24.7.2___picomatch@4.0.3__@types+node@24.7.2_svelte@5.40.0__acorn@8.15.0_vite@7.1.9__@types+node@24.7.2__picomatch@4.0.3_@types+node@24.7.2",
@@ -20,6 +21,19 @@
     "npm:vite@^7.1.7": "7.1.9_@types+node@24.7.2_picomatch@4.0.3"
   },
   "npm": {
+    "@deno/experimental-route-config@0.0.5": {
+      "integrity": "sha512-0PN4qij3sC3Qm8WbiOBGlOQz8WtB0AENGkzsTHOYyPenf40iW7OGFid8QT3L8lGApnz3t6ufET0c2XgagV8Jjw==",
+      "dependencies": [
+        "urlpattern-polyfill"
+      ]
+    },
+    "@deno/svelte-adapter@0.1.0_@sveltejs+kit@2.44.0__@sveltejs+vite-plugin-svelte@6.2.1___svelte@5.40.0____acorn@8.15.0___vite@7.1.9____@types+node@24.7.2____picomatch@4.0.3___@types+node@24.7.2__svelte@5.40.0___acorn@8.15.0__vite@7.1.9___@types+node@24.7.2___picomatch@4.0.3__acorn@8.15.0__@types+node@24.7.2_@sveltejs+vite-plugin-svelte@6.2.1__svelte@5.40.0___acorn@8.15.0__vite@7.1.9___@types+node@24.7.2___picomatch@4.0.3__@types+node@24.7.2_svelte@5.40.0__acorn@8.15.0_vite@7.1.9__@types+node@24.7.2__picomatch@4.0.3_@types+node@24.7.2": {
+      "integrity": "sha512-fx4Kj1lSx1rJvjtPr3cXO7qKveI1vUyGW8jX+clJHQEqEeIDnEcBW0FpMZEVORPlay2SGydQWSGbwh4j2iENzg==",
+      "dependencies": [
+        "@deno/experimental-route-config",
+        "@sveltejs/kit"
+      ]
+    },
     "@esbuild/aix-ppc64@0.25.11": {
       "integrity": "sha512-Xt1dOL13m8u0WE8iplx9Ibbm+hFAO0GsU2P34UNoDGvZYkY8ifSiy6Zuc1lYxfG7svWE2fzqCUmFp5HCn51gJg==",
       "os": ["aix"],
@@ -1345,6 +1359,9 @@
         "punycode"
       ]
     },
+    "urlpattern-polyfill@10.1.0": {
+      "integrity": "sha512-IGjKp/o0NL3Bso1PymYURCJxMPNAf/ILOpendP9f5B6e1rTJgdgiOvgfoT8VxCAdY+Wisb9uhGaJJf3yZ2V9nw=="
+    },
     "util-deprecate@1.0.2": {
       "integrity": "sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw=="
     },
@@ -1399,6 +1416,7 @@
   "workspace": {
     "packageJson": {
       "dependencies": [
+        "npm:@deno/svelte-adapter@0.1",
         "npm:@eslint/compat@^1.4.0",
         "npm:@eslint/js@^9.36.0",
         "npm:@sveltejs/adapter-auto@^6.1.0",

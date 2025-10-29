@@ -18,7 +18,9 @@ pub struct Application {
 impl Application {
     #[wasm_bindgen]
     pub async fn create() -> Promise<Self> {
-        Self::new().await.into_promise()
+        Self::new().await
+            .inspect_err(|error| ::tracing::error!("{}", error))  // Saves hours of debugging
+            .into_promise()
     }
 
     async fn new() -> ::aliases::result::Fallible<Self> {
@@ -80,25 +82,30 @@ impl Gateways {
 
         ::tracing_wasm::try_set_as_global_default()?;
 
-        // ::dotenvy::from_filename("../../.env")?;
+        /*
+        NOTE TO SELF
+        apparently dotenvy uses ::std::fs shit under the hood
+        so it does not work when wasm stuff
+        consider alternative???
+        .env not working is mimimimimimi
+         */
+        // ::dotenvy::from_filename(::core::concat!(::core::env!("CARGO_WORKSPACE_DIR"), ".env"))?;
 
-        ::tracing::debug!("{}", ::std::env!("CARGO_MANIFEST_DIR"));
-        ::tracing::debug!("{}", ::std::env!("CARGO_WORKSPACE_DIR"));
-
-        // ::tracing::debug!("{}",::std::env::var("JWT_SECRET_KEY")?);
-        // ::tracing::debug!("{}",::std::env::var("ARGON2_SECRET_KEY")?);
+        ::tracing::debug!("{}", ::core::concat!(::core::env!("CARGO_WORKSPACE_DIR"), ".env"));
+        // ::tracing::debug!("{}", ::std::env::var("JWT_SECRET_KEY")?);
+        // ::tracing::debug!("{}", ::std::env::var("ARGON2_SECRET_KEY")?);
 
         ::aliases::result::Fallible::Ok(Self::builder()
             .user_repository(::std::sync::Arc::new(InMemoryUserRepository::builder().build()))
             .uuid_generator(::std::sync::Arc::new(UuidV7Generator::builder().build()))
             .auth_token_generator(::std::sync::Arc::new(JsonWebTokenGenerator::builder()
-                // .key(::hmac::Hmac::<::sha2::Sha256>::new_from_slice("root".as_bytes())?)
-                .key(::hmac::Hmac::<::sha2::Sha256>::new_from_slice(::std::env::var("JWT_SECRET_KEY")?.as_bytes())?)
+                .key(::hmac::Hmac::<::sha2::Sha256>::new_from_slice("root".as_bytes())?)
+                // .key(::hmac::Hmac::<::sha2::Sha256>::new_from_slice(::std::env::var("JWT_SECRET_KEY")?.as_bytes())?)
                 .build()))
             .password_hasher(::std::sync::Arc::new(Argon2PasswordHasher::builder()
                 .context(::argon2::Argon2::new_with_secret(
-                    // "root".as_bytes(),
-                    ::std::boxed::Box::leak(::std::env::var("ARGON2_SECRET_KEY")?.into_boxed_str()).as_bytes(),
+                    "root".as_bytes(),
+                    // ::std::boxed::Box::leak(::std::env::var("ARGON2_SECRET_KEY")?.into_boxed_str()).as_bytes(),
                     ::argon2::Algorithm::Argon2id, ::argon2::Version::V0x13,
                     ::argon2::Params::default())?)
                 .build()))
