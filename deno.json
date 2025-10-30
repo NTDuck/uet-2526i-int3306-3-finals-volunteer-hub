@@ -14,7 +14,7 @@
     "check:watch-sveltekit-minimal": "cd ./frontend/sveltekit-minimal && deno task check:watch",
     "format-sveltekit-minimal": "cd ./frontend/sveltekit-minimal && deno task format",
     "lint-sveltekit-minimal": "cd ./frontend/sveltekit-minimal && deno task lint",
-    
+
     "build-wasm": "wasm-pack build ./backend/bindings/wasm-bindings --out-dir ../output --out-name volunteer-hub --target deno"
   },
   "imports": {
