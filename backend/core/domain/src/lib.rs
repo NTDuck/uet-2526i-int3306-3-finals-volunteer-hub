@@ -62,7 +62,7 @@ pub enum UserRole {
     ::core::cmp::PartialEq,
     ::core::cmp::Ord,
     ::core::cmp::PartialOrd,
-    ::core::hash::Hash,
+    ::core::hash::Hash
 )]
 pub struct Uuid([u8; 16]);
 
@@ -89,16 +89,14 @@ impl ::core::ops::Deref for Uuid {
     ::core::cmp::PartialEq,
     ::core::cmp::Ord,
     ::core::cmp::PartialOrd,
-    ::core::hash::Hash,
+    ::core::hash::Hash
 )]
 pub struct Username(::aliases::string::String);
 
 #[::bon::bon]
 impl Username {
     #[builder(on(_, into))]
-    pub fn new(
-        value: ::aliases::string::String,
-    ) -> ::core::result::Result<Self, UsernameBuilderError> {
+    pub fn new(value: ::aliases::string::String) -> ::core::result::Result<Self, UsernameBuilderError> {
         let value = Self::normalize(value);
         Self::validate(value).map(Self)
     }
@@ -136,7 +134,10 @@ impl ::core::ops::Deref for Username {
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::thiserror::Error)]
 pub enum UsernameBuilderError {
-    #[error("Invalid username format: must be between 4 and 16 characters; lowercase letters, digits, underscores, or hyphens only")]
+    #[error(
+        "Invalid username format: must be between 4 and 16 characters; lowercase letters, digits, underscores, or \
+         hyphens only"
+    )]
     InvalidFormat,
 }
 
@@ -147,16 +148,14 @@ pub enum UsernameBuilderError {
     ::core::cmp::PartialEq,
     ::core::cmp::Ord,
     ::core::cmp::PartialOrd,
-    ::core::hash::Hash,
+    ::core::hash::Hash
 )]
 pub struct Email(::aliases::string::String);
 
 #[::bon::bon]
 impl Email {
     #[builder(on(_, into))]
-    pub fn new(
-        value: ::aliases::string::String,
-    ) -> ::core::result::Result<Self, EmailBuilderError> {
+    pub fn new(value: ::aliases::string::String) -> ::core::result::Result<Self, EmailBuilderError> {
         let value = Self::normalize(value);
         Self::validate(value).map(Self)
     }
@@ -215,9 +214,7 @@ pub struct Password(::aliases::string::String);
 #[::bon::bon]
 impl Password {
     #[builder(on(_, into))]
-    pub fn new(
-        value: ::aliases::string::String,
-    ) -> ::core::result::Result<Self, PasswordBuilderError> {
+    pub fn new(value: ::aliases::string::String) -> ::core::result::Result<Self, PasswordBuilderError> {
         let value = Self::normalize(value);
         Self::validate(value).map(Self)
     }

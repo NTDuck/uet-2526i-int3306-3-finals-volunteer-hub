@@ -1,14 +1,11 @@
 use ::async_trait::async_trait;
-
 #[cfg(feature = "wasm-bindings")]
 use ::wasm_bindgen::prelude::*;
 
 #[async_trait]
 pub trait SignInBoundary {
-    async fn apply(
-        self: ::std::sync::Arc<Self>,
-        request: SignInRequest,
-    ) -> ::aliases::result::Fallible<SignInResponse>;
+    async fn apply(self: ::std::sync::Arc<Self>, request: SignInRequest)
+        -> ::aliases::result::Fallible<SignInResponse>;
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
@@ -22,8 +19,7 @@ pub struct SignInRequest {
     pub password: ::aliases::string::String,
 }
 
-pub type SignInResponse =
-    ::core::result::Result<SignInOkResponse, ::std::vec::Vec<SignInErrResponse>>;
+pub type SignInResponse = ::core::result::Result<SignInOkResponse, ::std::vec::Vec<SignInErrResponse>>;
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
 #[builder(on(_, into))]
@@ -38,10 +34,7 @@ pub struct SignInOkResponse {
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::thiserror::Error)]
 #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-#[cfg_attr(
-    feature = "serde",
-    serde(rename_all = "camelCase", rename_all_fields = "kebab-case")
-)]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase", rename_all_fields = "kebab-case"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
 pub enum SignInErrResponse {
@@ -63,10 +56,8 @@ pub enum SignInErrResponse {
 
 #[async_trait]
 pub trait SignUpBoundary {
-    async fn apply(
-        self: ::std::sync::Arc<Self>,
-        request: SignUpRequest,
-    ) -> ::aliases::result::Fallible<SignUpResponse>;
+    async fn apply(self: ::std::sync::Arc<Self>, request: SignUpRequest)
+        -> ::aliases::result::Fallible<SignUpResponse>;
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
@@ -86,17 +77,13 @@ pub struct SignUpRequest {
     pub last_name: ::aliases::string::String,
 }
 
-pub type SignUpResponse =
-    ::core::result::Result<SignUpOkResponse, ::std::vec::Vec<SignUpErrResponse>>;
+pub type SignUpResponse = ::core::result::Result<SignUpOkResponse, ::std::vec::Vec<SignUpErrResponse>>;
 
 pub type SignUpOkResponse = ();
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::thiserror::Error)]
 #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-#[cfg_attr(
-    feature = "serde",
-    serde(rename_all = "camelCase", rename_all_fields = "kebab-case")
-)]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase", rename_all_fields = "kebab-case"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
 pub enum SignUpErrResponse {
@@ -155,7 +142,7 @@ pub mod models {
         ::core::cmp::Eq,
         ::core::cmp::PartialEq,
         ::core::cmp::Ord,
-        ::core::cmp::PartialOrd,
+        ::core::cmp::PartialOrd
     )]
     #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(transparent))]

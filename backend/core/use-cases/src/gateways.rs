@@ -5,42 +5,29 @@ pub trait EventRepository {}
 
 #[async_trait]
 pub trait UserRepository {
-    async fn save(
-        self: ::std::sync::Arc<Self>,
-        user: ::domain::User,
-    ) -> ::aliases::result::Fallible;
+    async fn save(self: ::std::sync::Arc<Self>, user: ::domain::User) -> ::aliases::result::Fallible;
 
     async fn get_by_id(
-        self: ::std::sync::Arc<Self>,
-        id: ::domain::Uuid,
+        self: ::std::sync::Arc<Self>, id: ::domain::Uuid,
     ) -> ::aliases::result::Fallible<::core::option::Option<::domain::User>>;
     async fn get_by_username(
-        self: ::std::sync::Arc<Self>,
-        username: ::domain::Username,
+        self: ::std::sync::Arc<Self>, username: ::domain::Username,
     ) -> ::aliases::result::Fallible<::core::option::Option<::domain::User>>;
     async fn get_by_email(
-        self: ::std::sync::Arc<Self>,
-        email: ::domain::Email,
+        self: ::std::sync::Arc<Self>, email: ::domain::Email,
     ) -> ::aliases::result::Fallible<::core::option::Option<::domain::User>>;
 
-    async fn contains_id(
-        self: ::std::sync::Arc<Self>,
-        id: ::domain::Uuid,
-    ) -> ::aliases::result::Fallible<bool> {
+    async fn contains_id(self: ::std::sync::Arc<Self>, id: ::domain::Uuid) -> ::aliases::result::Fallible<bool> {
         ::aliases::result::Fallible::Ok(self.get_by_id(id).await?.is_some())
     }
 
     async fn contains_username(
-        self: ::std::sync::Arc<Self>,
-        username: ::domain::Username,
+        self: ::std::sync::Arc<Self>, username: ::domain::Username,
     ) -> ::aliases::result::Fallible<bool> {
         ::aliases::result::Fallible::Ok(self.get_by_username(username).await?.is_some())
     }
 
-    async fn contains_email(
-        self: ::std::sync::Arc<Self>,
-        email: ::domain::Email,
-    ) -> ::aliases::result::Fallible<bool> {
+    async fn contains_email(self: ::std::sync::Arc<Self>, email: ::domain::Email) -> ::aliases::result::Fallible<bool> {
         ::aliases::result::Fallible::Ok(self.get_by_email(email).await?.is_some())
     }
 }
@@ -50,59 +37,40 @@ pub trait UuidGenerator {
     async fn generate(self: ::std::sync::Arc<Self>) -> ::aliases::result::Fallible<::domain::Uuid>;
 
     async fn get_timestamp(
-        self: ::std::sync::Arc<Self>,
-        uuid: &::domain::Uuid,
+        self: ::std::sync::Arc<Self>, uuid: &::domain::Uuid,
     ) -> ::aliases::result::Fallible<::aliases::time::Timestamp>;
 }
 
 #[async_trait]
 pub trait AuthenticationTokenGenerator {
     async fn generate(
-        self: ::std::sync::Arc<Self>,
-        payload: self::models::AuthenticationTokenPayload,
+        self: ::std::sync::Arc<Self>, payload: self::models::AuthenticationTokenPayload,
     ) -> ::aliases::result::Fallible<::aliases::string::String>;
 
     async fn get_payload(
-        self: ::std::sync::Arc<Self>,
-        token: ::aliases::string::String,
+        self: ::std::sync::Arc<Self>, token: ::aliases::string::String,
     ) -> ::aliases::result::Fallible<::core::option::Option<self::models::AuthenticationTokenPayload>>;
 
     async fn get_user_id(
-        self: ::std::sync::Arc<Self>,
-        token: ::aliases::string::String,
+        self: ::std::sync::Arc<Self>, token: ::aliases::string::String,
     ) -> ::aliases::result::Fallible<::core::option::Option<::domain::Uuid>> {
-        ::aliases::result::Fallible::Ok(
-            self.get_payload(token)
-                .await?
-                .map(|payload| payload.user_id),
-        )
+        ::aliases::result::Fallible::Ok(self.get_payload(token).await?.map(|payload| payload.user_id))
     }
 
     async fn get_user_role(
-        self: ::std::sync::Arc<Self>,
-        token: ::aliases::string::String,
+        self: ::std::sync::Arc<Self>, token: ::aliases::string::String,
     ) -> ::aliases::result::Fallible<::core::option::Option<::domain::UserRole>> {
-        ::aliases::result::Fallible::Ok(
-            self.get_payload(token)
-                .await?
-                .map(|payload| payload.user_role),
-        )
+        ::aliases::result::Fallible::Ok(self.get_payload(token).await?.map(|payload| payload.user_role))
     }
 
     async fn get_expiry_timestamp(
-        self: ::std::sync::Arc<Self>,
-        token: ::aliases::string::String,
+        self: ::std::sync::Arc<Self>, token: ::aliases::string::String,
     ) -> ::aliases::result::Fallible<::core::option::Option<::aliases::time::Timestamp>> {
-        ::aliases::result::Fallible::Ok(
-            self.get_payload(token)
-                .await?
-                .map(|payload| payload.expiry_timestamp),
-        )
+        ::aliases::result::Fallible::Ok(self.get_payload(token).await?.map(|payload| payload.expiry_timestamp))
     }
 
     async fn verify(
-        self: ::std::sync::Arc<Self>,
-        token: ::aliases::string::String,
+        self: ::std::sync::Arc<Self>, token: ::aliases::string::String,
     ) -> ::aliases::result::Fallible<bool> {
         ::aliases::result::Fallible::Ok(self.get_payload(token).await?.is_some())
     }
@@ -111,14 +79,11 @@ pub trait AuthenticationTokenGenerator {
 #[async_trait]
 pub trait PasswordHasher {
     async fn hash(
-        self: ::std::sync::Arc<Self>,
-        password: ::domain::Password,
+        self: ::std::sync::Arc<Self>, password: ::domain::Password,
     ) -> ::aliases::result::Fallible<::domain::PasswordDigest>;
 
     async fn verify(
-        self: ::std::sync::Arc<Self>,
-        password: ::domain::Password,
-        digest: ::domain::PasswordDigest,
+        self: ::std::sync::Arc<Self>, password: ::domain::Password, digest: ::domain::PasswordDigest,
     ) -> ::aliases::result::Fallible<bool> {
         ::aliases::result::Fallible::Ok(self.hash(password).await? == digest)
     }
@@ -130,11 +95,7 @@ pub mod models {
     #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
     #[cfg_attr(
         feature = "serde",
-        serde(
-            from = "__AuthenticationTokenPayload",
-            into = "__AuthenticationTokenPayload",
-            rename_all = "camelCase"
-        )
+        serde(from = "__AuthenticationTokenPayload", into = "__AuthenticationTokenPayload", rename_all = "camelCase")
     )]
     #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
     #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]

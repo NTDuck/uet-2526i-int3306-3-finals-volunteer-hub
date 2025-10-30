@@ -8,12 +8,10 @@ use ::wasm_bindgen::prelude::*;
 #[derive(::bon::Builder)]
 pub struct Application {
     #[wasm_bindgen(skip)]
-    sign_in_boundary:
-        ::std::sync::Arc<dyn SignInBoundary + ::core::marker::Send + ::core::marker::Sync>,
+    sign_in_boundary: ::std::sync::Arc<dyn SignInBoundary + ::core::marker::Send + ::core::marker::Sync>,
 
     #[wasm_bindgen(skip)]
-    sign_up_boundary:
-        ::std::sync::Arc<dyn SignUpBoundary + ::core::marker::Send + ::core::marker::Sync>,
+    sign_up_boundary: ::std::sync::Arc<dyn SignUpBoundary + ::core::marker::Send + ::core::marker::Sync>,
 }
 
 #[wasm_bindgen]
@@ -67,29 +65,26 @@ impl ::core::convert::From<Gateways> for Application {
 
 #[derive(::bon::Builder)]
 struct Gateways {
-    user_repository:
-        ::std::sync::Arc<dyn UserRepository + ::core::marker::Send + ::core::marker::Sync>,
+    user_repository: ::std::sync::Arc<dyn UserRepository + ::core::marker::Send + ::core::marker::Sync>,
 
-    uuid_generator:
-        ::std::sync::Arc<dyn UuidGenerator + ::core::marker::Send + ::core::marker::Sync>,
-    auth_token_generator: ::std::sync::Arc<
-        dyn AuthenticationTokenGenerator + ::core::marker::Send + ::core::marker::Sync,
-    >,
-    password_hasher:
-        ::std::sync::Arc<dyn PasswordHasher + ::core::marker::Send + ::core::marker::Sync>,
+    uuid_generator: ::std::sync::Arc<dyn UuidGenerator + ::core::marker::Send + ::core::marker::Sync>,
+    auth_token_generator:
+        ::std::sync::Arc<dyn AuthenticationTokenGenerator + ::core::marker::Send + ::core::marker::Sync>,
+    password_hasher: ::std::sync::Arc<dyn PasswordHasher + ::core::marker::Send + ::core::marker::Sync>,
 }
 
 impl Gateways {
     async fn new() -> ::aliases::result::Fallible<Self> {
         use ::hmac::Mac as _;
 
-        // let logger = ::tracing_appender::rolling::never("/logs/wasm-bindings/", ".log");
-        // let (logger, _logger_guard) = ::tracing_appender::non_blocking(logger);
+        // let logger = ::tracing_appender::rolling::never("/logs/wasm-bindings/",
+        // ".log"); let (logger, _logger_guard) =
+        // ::tracing_appender::non_blocking(logger);
 
         // ::tracing_subscriber::fmt()
         //     .with_writer(logger)
-        //     .with_env_filter(::tracing_subscriber::EnvFilter::try_from_default_env()?)
-        //     .with_ansi(false)
+        //     .with_env_filter(::tracing_subscriber::EnvFilter::try_from_default_env()?
+        // )     .with_ansi(false)
         //     .init();
 
         ::tracing_wasm::try_set_as_global_default()?;
@@ -99,15 +94,11 @@ impl Gateways {
 
         ::aliases::result::Fallible::Ok(
             Self::builder()
-                .user_repository(::std::sync::Arc::new(
-                    InMemoryUserRepository::builder().build(),
-                ))
+                .user_repository(::std::sync::Arc::new(InMemoryUserRepository::builder().build()))
                 .uuid_generator(::std::sync::Arc::new(UuidV7Generator::builder().build()))
                 .auth_token_generator(::std::sync::Arc::new(
                     JsonWebTokenGenerator::builder()
-                        .key(::hmac::Hmac::<::sha2::Sha256>::new_from_slice(
-                            ::core::env!("JWT_SECRET_KEY").as_bytes(),
-                        )?)
+                        .key(::hmac::Hmac::<::sha2::Sha256>::new_from_slice(::core::env!("JWT_SECRET_KEY").as_bytes())?)
                         .build(),
                 ))
                 .password_hasher(::std::sync::Arc::new(
@@ -137,8 +128,7 @@ impl<T> FallibleExt<T> for ::aliases::result::Fallible<T> {
     }
 }
 
-impl<T, E> FallibleExt<T>
-    for ::aliases::result::Fallible<::core::result::Result<T, ::std::vec::Vec<E>>>
+impl<T, E> FallibleExt<T> for ::aliases::result::Fallible<::core::result::Result<T, ::std::vec::Vec<E>>>
 where
     E: ::core::error::Error,
 {
