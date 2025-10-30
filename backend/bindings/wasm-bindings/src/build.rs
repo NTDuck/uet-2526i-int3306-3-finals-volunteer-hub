@@ -12,7 +12,8 @@ pub mod env {
 
         match ::std::fs::read_to_string(path) {
             ::core::result::Result::Ok(content) => {
-                content.lines()
+                content
+                    .lines()
                     .map(|line| line.trim())
                     .filter(|line| !line.is_empty() && !line.starts_with('#'))
                     .filter_map(|line| line.split_once('='))
