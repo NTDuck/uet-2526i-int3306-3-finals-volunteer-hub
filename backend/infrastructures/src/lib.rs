@@ -136,7 +136,7 @@ enum UuidIntoTimestampError {
 
 #[derive(::bon::Builder)]
 pub struct JsonWebTokenGenerator<Key> {
-    key: Key,  // expects something like `::hmac::Hmac<::sha2::Sha256>`
+    key: Key, // expects something like `::hmac::Hmac<::sha2::Sha256>`
 }
 
 #[async_trait]
