@@ -2,7 +2,6 @@ import { sveltekit } from "@sveltejs/kit/vite";
 import { defineConfig, normalizePath } from "vite";
 import { viteStaticCopy } from "vite-plugin-static-copy";
 import path from "node:path";
-import fs from "node:fs/promises";
 
 export default defineConfig({
   // Order matters!

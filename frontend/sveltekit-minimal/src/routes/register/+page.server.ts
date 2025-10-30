@@ -2,7 +2,7 @@ import { fail, redirect } from "@sveltejs/kit";
 import type { RequestEvent } from "@sveltejs/kit";
 import type { Actions } from "$types";
 
-import { getApp } from "$lib/server";
+import { getApp } from "$lib/server/index.ts";
 
 export const actions = {
   default: async ({ request }: RequestEvent) => {
