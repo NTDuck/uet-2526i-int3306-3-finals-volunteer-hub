@@ -10,12 +10,18 @@ pub mod env {
     pub fn load<Path: ::core::convert::AsRef<::std::path::Path>>(path: Path) -> ::aliases::result::Fallible {
         ::std::println!("cargo:rerun-if-changed={}", path.as_ref().display());
 
-        ::std::fs::read_to_string(path)?
-            .lines()
-            .map(|line| line.trim())
-            .filter(|line| !line.is_empty() && !line.starts_with('#'))
-            .filter_map(|line| line.split_once('='))
-            .for_each(|(key, value)| ::std::println!("cargo:rustc-env={}={}", key.trim(), value.trim()));
+        match ::std::fs::read_to_string(path) {
+            ::core::result::Result::Ok(content) => {
+                content.lines()
+                    .map(|line| line.trim())
+                    .filter(|line| !line.is_empty() && !line.starts_with('#'))
+                    .filter_map(|line| line.split_once('='))
+                    .for_each(|(key, value)| ::std::println!("cargo:rustc-env={}={}", key.trim(), value.trim()));
+            },
+            ::core::result::Result::Err(error) => {
+                ::std::println!("cargo:error={}", error);
+            },
+        }
 
         ::aliases::result::Fallible::Ok(())
     }
