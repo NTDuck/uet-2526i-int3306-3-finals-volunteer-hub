@@ -8,6 +8,9 @@ on:
 env:
   CARGO_TERM_COLOR: always
 
+  JWT_SECRET_KEY: "foo"
+  ARGON2_SECRET_KEY: "bar"
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
