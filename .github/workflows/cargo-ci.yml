@@ -18,16 +18,19 @@ concurrency:
 jobs:
   format-and-lint:
     uses: ./.github/workflows/cargo-format-and-lint.yml
+    secrets: inherit
 
   build:
     needs:
       - format-and-lint
     uses: ./.github/workflows/cargo-build.yml
+    secrets: inherit
 
   test:
     needs:
       - format-and-lint
     uses: ./.github/workflows/cargo-test.yml
+    secrets: inherit
 
   dependencies-check:
     needs:
@@ -35,3 +38,4 @@ jobs:
       - build
       - test
     uses: ./.github/workflows/cargo-dependencies-check.yml
+    secrets: inherit
