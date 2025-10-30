@@ -1,150 +1,215 @@
-use ::async_trait::async_trait;
-use crate::gateways::*;
 use crate::boundaries::*;
+use crate::gateways::*;
+use ::async_trait::async_trait;
 
 #[derive(::bon::Builder)]
 pub struct SignInInteractor {
-	user_repository: ::std::sync::Arc<dyn UserRepository + ::core::marker::Send + ::core::marker::Sync>,
+    user_repository:
+        ::std::sync::Arc<dyn UserRepository + ::core::marker::Send + ::core::marker::Sync>,
 
-	auth_token_generator: ::std::sync::Arc<dyn AuthenticationTokenGenerator + ::core::marker::Send + ::core::marker::Sync>,
-	password_hasher: ::std::sync::Arc<dyn PasswordHasher + ::core::marker::Send + ::core::marker::Sync>,
+    auth_token_generator: ::std::sync::Arc<
+        dyn AuthenticationTokenGenerator + ::core::marker::Send + ::core::marker::Sync,
+    >,
+    password_hasher:
+        ::std::sync::Arc<dyn PasswordHasher + ::core::marker::Send + ::core::marker::Sync>,
 }
 
 #[async_trait]
 impl SignInBoundary for SignInInteractor {
-    async fn apply(self: ::std::sync::Arc<Self>, request: SignInRequest) -> ::aliases::result::Fallible<SignInResponse> {
-		use ::aliases::time::TimestampExt as _;
+    async fn apply(
+        self: ::std::sync::Arc<Self>,
+        request: SignInRequest,
+    ) -> ::aliases::result::Fallible<SignInResponse> {
+        use ::aliases::time::TimestampExt as _;
 
-		let mut errors = ::std::vec::Vec::new();
-		
-    	let user = if let ::core::result::Result::Ok(username) = ::domain::Username::builder().value(request.username_or_email.clone()).build() {
-			if let ::core::option::Option::Some(user) = ::std::sync::Arc::clone(&self.user_repository).get_by_username(username).await? {
-				::core::option::Option::Some(user)
-			} else {
-				errors.push(SignInErrResponse::UsernameNotFound);
-				::core::option::Option::None
-			}
-		} else if let ::core::result::Result::Ok(email) = ::domain::Email::builder().value(request.username_or_email.clone()).build() {
-			if let ::core::option::Option::Some(user) = ::std::sync::Arc::clone(&self.user_repository).get_by_email(email).await? {
-				::core::option::Option::Some(user)
-			} else {
-				errors.push(SignInErrResponse::EmailNotFound);
-				::core::option::Option::None
-			}
-		} else {
-			errors.push(SignInErrResponse::UsernameOrEmailInvalid);
-			::core::option::Option::None
-		};
+        let mut errors = ::std::vec::Vec::new();
 
-		let password = if let ::core::result::Result::Ok(password) = ::domain::Password::builder().value(request.password).build() {
-			::core::option::Option::Some(password)
-		} else {
-			errors.push(SignInErrResponse::PasswordInvalid);
-			::core::option::Option::None
-		};
+        let user = if let ::core::result::Result::Ok(username) = ::domain::Username::builder()
+            .value(request.username_or_email.clone())
+            .build()
+        {
+            if let ::core::option::Option::Some(user) =
+                ::std::sync::Arc::clone(&self.user_repository)
+                    .get_by_username(username)
+                    .await?
+            {
+                ::core::option::Option::Some(user)
+            } else {
+                errors.push(SignInErrResponse::UsernameNotFound);
+                ::core::option::Option::None
+            }
+        } else if let ::core::result::Result::Ok(email) = ::domain::Email::builder()
+            .value(request.username_or_email.clone())
+            .build()
+        {
+            if let ::core::option::Option::Some(user) =
+                ::std::sync::Arc::clone(&self.user_repository)
+                    .get_by_email(email)
+                    .await?
+            {
+                ::core::option::Option::Some(user)
+            } else {
+                errors.push(SignInErrResponse::EmailNotFound);
+                ::core::option::Option::None
+            }
+        } else {
+            errors.push(SignInErrResponse::UsernameOrEmailInvalid);
+            ::core::option::Option::None
+        };
 
-		let (::core::option::Option::Some(user), ::core::option::Option::Some(password)) = (user, password) else {
-			return ::aliases::result::Fallible::Ok(SignInResponse::Err(errors));
-		};
+        let password = if let ::core::result::Result::Ok(password) = ::domain::Password::builder()
+            .value(request.password)
+            .build()
+        {
+            ::core::option::Option::Some(password)
+        } else {
+            errors.push(SignInErrResponse::PasswordInvalid);
+            ::core::option::Option::None
+        };
 
-		if !::std::sync::Arc::clone(&self.password_hasher).verify(password, user.password).await? {
-			errors.push(SignInErrResponse::PasswordMismatch);
-			return ::aliases::result::Fallible::Ok(SignInResponse::Err(errors));
-		}
+        let (::core::option::Option::Some(user), ::core::option::Option::Some(password)) =
+            (user, password)
+        else {
+            return ::aliases::result::Fallible::Ok(SignInResponse::Err(errors));
+        };
 
-		let auth_token_payload = crate::gateways::models::AuthenticationTokenPayload::builder()
-			.user_id(user.id)
-			.user_role(user.role)
-			.expiry_timestamp(::aliases::time::Timestamp::now() + Self::AUTH_TOKEN_LIFETIME)
-			.build();
+        if !::std::sync::Arc::clone(&self.password_hasher)
+            .verify(password, user.password)
+            .await?
+        {
+            errors.push(SignInErrResponse::PasswordMismatch);
+            return ::aliases::result::Fallible::Ok(SignInResponse::Err(errors));
+        }
 
-		let auth_token = ::std::sync::Arc::clone(&self.auth_token_generator).generate(auth_token_payload).await?;
+        let auth_token_payload = crate::gateways::models::AuthenticationTokenPayload::builder()
+            .user_id(user.id)
+            .user_role(user.role)
+            .expiry_timestamp(::aliases::time::Timestamp::now() + Self::AUTH_TOKEN_LIFETIME)
+            .build();
 
-		let response = SignInOkResponse::builder()
-			.token(auth_token)
-			.user_role(user.role)
-			.build();
+        let auth_token = ::std::sync::Arc::clone(&self.auth_token_generator)
+            .generate(auth_token_payload)
+            .await?;
 
-		::aliases::result::Fallible::Ok(SignInResponse::Ok(response))
+        let response = SignInOkResponse::builder()
+            .token(auth_token)
+            .user_role(user.role)
+            .build();
+
+        ::aliases::result::Fallible::Ok(SignInResponse::Ok(response))
     }
 }
 
 impl SignInInteractor {
-	const AUTH_TOKEN_LIFETIME: ::aliases::time::Interval = ::aliases::time::Interval::hours(1);
+    const AUTH_TOKEN_LIFETIME: ::aliases::time::Interval = ::aliases::time::Interval::hours(1);
 }
 
 #[derive(::bon::Builder)]
 pub struct SignUpInteractor {
-	user_repository: ::std::sync::Arc<dyn UserRepository + ::core::marker::Send + ::core::marker::Sync>,
+    user_repository:
+        ::std::sync::Arc<dyn UserRepository + ::core::marker::Send + ::core::marker::Sync>,
 
-	uuid_generator: ::std::sync::Arc<dyn UuidGenerator + ::core::marker::Send + ::core::marker::Sync>,
-	password_hasher: ::std::sync::Arc<dyn PasswordHasher + ::core::marker::Send + ::core::marker::Sync>,
+    uuid_generator:
+        ::std::sync::Arc<dyn UuidGenerator + ::core::marker::Send + ::core::marker::Sync>,
+    password_hasher:
+        ::std::sync::Arc<dyn PasswordHasher + ::core::marker::Send + ::core::marker::Sync>,
 }
 
 #[async_trait]
 impl SignUpBoundary for SignUpInteractor {
-    async fn apply(self: ::std::sync::Arc<Self>, request: SignUpRequest) -> ::aliases::result::Fallible<SignUpResponse> {
-		let mut errors = ::std::vec::Vec::new();
+    async fn apply(
+        self: ::std::sync::Arc<Self>,
+        request: SignUpRequest,
+    ) -> ::aliases::result::Fallible<SignUpResponse> {
+        let mut errors = ::std::vec::Vec::new();
 
-		let username = if let ::core::result::Result::Ok(username) = ::domain::Username::builder().value(request.username).build() {
-			::core::option::Option::Some(username)
-		} else {
-			errors.push(SignUpErrResponse::UsernameInvalid);
-			::core::option::Option::None
-		};
+        let username = if let ::core::result::Result::Ok(username) = ::domain::Username::builder()
+            .value(request.username)
+            .build()
+        {
+            ::core::option::Option::Some(username)
+        } else {
+            errors.push(SignUpErrResponse::UsernameInvalid);
+            ::core::option::Option::None
+        };
 
-		let email = if let ::core::result::Result::Ok(email) = ::domain::Email::builder().value(request.email).build() {
-			::core::option::Option::Some(email)
-		} else {
-			errors.push(SignUpErrResponse::EmailInvalid);
-			::core::option::Option::None
-		};
+        let email = if let ::core::result::Result::Ok(email) =
+            ::domain::Email::builder().value(request.email).build()
+        {
+            ::core::option::Option::Some(email)
+        } else {
+            errors.push(SignUpErrResponse::EmailInvalid);
+            ::core::option::Option::None
+        };
 
-		let password = if let ::core::result::Result::Ok(password) = ::domain::Password::builder().value(request.password).build() {
-			::core::option::Option::Some(password)
-		} else {
-			errors.push(SignUpErrResponse::PasswordInvalid);
-			::core::option::Option::None
-		};
+        let password = if let ::core::result::Result::Ok(password) = ::domain::Password::builder()
+            .value(request.password)
+            .build()
+        {
+            ::core::option::Option::Some(password)
+        } else {
+            errors.push(SignUpErrResponse::PasswordInvalid);
+            ::core::option::Option::None
+        };
 
-		let (::core::option::Option::Some(username), ::core::option::Option::Some(email), ::core::option::Option::Some(password)) = (username, email, password) else {
-			return ::aliases::result::Fallible::Ok(SignUpResponse::Err(errors));
-		};
+        let (
+            ::core::option::Option::Some(username),
+            ::core::option::Option::Some(email),
+            ::core::option::Option::Some(password),
+        ) = (username, email, password)
+        else {
+            return ::aliases::result::Fallible::Ok(SignUpResponse::Err(errors));
+        };
 
-		if ::std::sync::Arc::clone(&self.user_repository).contains_username(username.clone()).await? {
-			errors.push(SignUpErrResponse::UsernameAlreadyExists);
-		}
+        if ::std::sync::Arc::clone(&self.user_repository)
+            .contains_username(username.clone())
+            .await?
+        {
+            errors.push(SignUpErrResponse::UsernameAlreadyExists);
+        }
 
-		if ::std::sync::Arc::clone(&self.user_repository).contains_email(email.clone()).await? {
-			errors.push(SignUpErrResponse::EmailAlreadyExists);
-		}
+        if ::std::sync::Arc::clone(&self.user_repository)
+            .contains_email(email.clone())
+            .await?
+        {
+            errors.push(SignUpErrResponse::EmailAlreadyExists);
+        }
 
-		if !errors.is_empty() {
-			return ::aliases::result::Fallible::Ok(SignUpResponse::Err(errors));
-		}
+        if !errors.is_empty() {
+            return ::aliases::result::Fallible::Ok(SignUpResponse::Err(errors));
+        }
 
-		let user_id = loop {
-            let uuid = ::std::sync::Arc::clone(&self.uuid_generator).generate().await?;
+        let user_id = loop {
+            let uuid = ::std::sync::Arc::clone(&self.uuid_generator)
+                .generate()
+                .await?;
 
-            if !::std::sync::Arc::clone(&self.user_repository).contains_id(uuid).await? {
+            if !::std::sync::Arc::clone(&self.user_repository)
+                .contains_id(uuid)
+                .await?
+            {
                 break uuid;
             }
         };
 
-		let password = ::std::sync::Arc::clone(&self.password_hasher).hash(password).await?;
+        let password = ::std::sync::Arc::clone(&self.password_hasher)
+            .hash(password)
+            .await?;
 
-		let user = ::domain::User::builder()
-			.id(user_id)
-			.role(request.user_role)
-			.username(username)
-			.email(email)
-			.password(password)
-			.first_name(request.first_name)
-			.last_name(request.last_name)
-			.build();
+        let user = ::domain::User::builder()
+            .id(user_id)
+            .role(request.user_role)
+            .username(username)
+            .email(email)
+            .password(password)
+            .first_name(request.first_name)
+            .last_name(request.last_name)
+            .build();
 
-		::std::sync::Arc::clone(&self.user_repository).save(user).await?;
+        ::std::sync::Arc::clone(&self.user_repository)
+            .save(user)
+            .await?;
 
-		::aliases::result::Fallible::Ok(SignUpResponse::Ok(()))
-	}
+        ::aliases::result::Fallible::Ok(SignUpResponse::Ok(()))
+    }
 }

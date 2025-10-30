@@ -1,25 +1,28 @@
-use ::wasm_bindgen::prelude::*;
-use ::use_cases::gateways::*;
-use ::use_cases::boundaries::*;
-use ::use_cases::interactors::*;
 use ::infrastructures::*;
+use ::use_cases::boundaries::*;
+use ::use_cases::gateways::*;
+use ::use_cases::interactors::*;
+use ::wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
 #[derive(::bon::Builder)]
 pub struct Application {
     #[wasm_bindgen(skip)]
-    sign_in_boundary: ::std::sync::Arc<dyn SignInBoundary + ::core::marker::Send + ::core::marker::Sync>,
+    sign_in_boundary:
+        ::std::sync::Arc<dyn SignInBoundary + ::core::marker::Send + ::core::marker::Sync>,
 
     #[wasm_bindgen(skip)]
-    sign_up_boundary: ::std::sync::Arc<dyn SignUpBoundary + ::core::marker::Send + ::core::marker::Sync>,
+    sign_up_boundary:
+        ::std::sync::Arc<dyn SignUpBoundary + ::core::marker::Send + ::core::marker::Sync>,
 }
 
 #[wasm_bindgen]
 impl Application {
     #[wasm_bindgen]
     pub async fn create() -> Promise<Self> {
-        Self::new().await
-            .inspect_err(|error| ::tracing::error!("{}", error))  // Saves hours of debugging
+        Self::new()
+            .await
+            .inspect_err(|error| ::tracing::error!("{}", error)) // Saves hours of debugging
             .into_promise()
     }
 
@@ -29,12 +32,18 @@ impl Application {
 
     #[wasm_bindgen(js_name = signIn)]
     pub async fn sign_in(&self, request: SignInRequest) -> Promise<SignInOkResponse> {
-        ::std::sync::Arc::clone(&self.sign_in_boundary).apply(request).await.into_promise()
+        ::std::sync::Arc::clone(&self.sign_in_boundary)
+            .apply(request)
+            .await
+            .into_promise()
     }
 
     #[wasm_bindgen(js_name = signUp)]
     pub async fn sign_up(&self, request: SignUpRequest) -> Promise<SignUpOkResponse> {
-        ::std::sync::Arc::clone(&self.sign_up_boundary).apply(request).await.into_promise()
+        ::std::sync::Arc::clone(&self.sign_up_boundary)
+            .apply(request)
+            .await
+            .into_promise()
     }
 }
 
@@ -58,11 +67,16 @@ impl ::core::convert::From<Gateways> for Application {
 
 #[derive(::bon::Builder)]
 struct Gateways {
-    user_repository: ::std::sync::Arc<dyn UserRepository + ::core::marker::Send + ::core::marker::Sync>,
+    user_repository:
+        ::std::sync::Arc<dyn UserRepository + ::core::marker::Send + ::core::marker::Sync>,
 
-    uuid_generator: ::std::sync::Arc<dyn UuidGenerator + ::core::marker::Send + ::core::marker::Sync>,
-    auth_token_generator: ::std::sync::Arc<dyn AuthenticationTokenGenerator + ::core::marker::Send + ::core::marker::Sync>,
-    password_hasher: ::std::sync::Arc<dyn PasswordHasher + ::core::marker::Send + ::core::marker::Sync>,
+    uuid_generator:
+        ::std::sync::Arc<dyn UuidGenerator + ::core::marker::Send + ::core::marker::Sync>,
+    auth_token_generator: ::std::sync::Arc<
+        dyn AuthenticationTokenGenerator + ::core::marker::Send + ::core::marker::Sync,
+    >,
+    password_hasher:
+        ::std::sync::Arc<dyn PasswordHasher + ::core::marker::Send + ::core::marker::Sync>,
 }
 
 impl Gateways {
@@ -83,19 +97,31 @@ impl Gateways {
         ::tracing::debug!("JWT_SECRET_KEY: {}", ::core::env!("JWT_SECRET_KEY"));
         ::tracing::debug!("ARGON2_SECRET_KEY: {}", ::core::env!("ARGON2_SECRET_KEY"));
 
-        ::aliases::result::Fallible::Ok(Self::builder()
-            .user_repository(::std::sync::Arc::new(InMemoryUserRepository::builder().build()))
-            .uuid_generator(::std::sync::Arc::new(UuidV7Generator::builder().build()))
-            .auth_token_generator(::std::sync::Arc::new(JsonWebTokenGenerator::builder()
-                .key(::hmac::Hmac::<::sha2::Sha256>::new_from_slice(::core::env!("JWT_SECRET_KEY").as_bytes())?)
-                .build()))
-            .password_hasher(::std::sync::Arc::new(Argon2PasswordHasher::builder()
-                .context(::argon2::Argon2::new_with_secret(
-                    ::core::env!("ARGON2_SECRET_KEY").as_bytes(),
-                    ::argon2::Algorithm::Argon2id, ::argon2::Version::V0x13,
-                    ::argon2::Params::default())?)
-                .build()))
-            .build())
+        ::aliases::result::Fallible::Ok(
+            Self::builder()
+                .user_repository(::std::sync::Arc::new(
+                    InMemoryUserRepository::builder().build(),
+                ))
+                .uuid_generator(::std::sync::Arc::new(UuidV7Generator::builder().build()))
+                .auth_token_generator(::std::sync::Arc::new(
+                    JsonWebTokenGenerator::builder()
+                        .key(::hmac::Hmac::<::sha2::Sha256>::new_from_slice(
+                            ::core::env!("JWT_SECRET_KEY").as_bytes(),
+                        )?)
+                        .build(),
+                ))
+                .password_hasher(::std::sync::Arc::new(
+                    Argon2PasswordHasher::builder()
+                        .context(::argon2::Argon2::new_with_secret(
+                            ::core::env!("ARGON2_SECRET_KEY").as_bytes(),
+                            ::argon2::Algorithm::Argon2id,
+                            ::argon2::Version::V0x13,
+                            ::argon2::Params::default(),
+                        )?)
+                        .build(),
+                ))
+                .build(),
+        )
     }
 }
 
@@ -111,16 +137,22 @@ impl<T> FallibleExt<T> for ::aliases::result::Fallible<T> {
     }
 }
 
-impl<T, E> FallibleExt<T> for ::aliases::result::Fallible<::core::result::Result<T, ::std::vec::Vec<E>>>
+impl<T, E> FallibleExt<T>
+    for ::aliases::result::Fallible<::core::result::Result<T, ::std::vec::Vec<E>>>
 where
     E: ::core::error::Error,
 {
     fn into_promise(self) -> Promise<T> {
         self.map_err(|error| ::wasm_bindgen::JsValue::from_str(&error.to_string()))
-            .and_then(|inner| inner
-                .map_err(|errors| errors.into_iter()
-                    .map(|error| ::wasm_bindgen::JsValue::from_str(&error.to_string()))
-                    .collect::<::std::vec::Vec<_>>())
-                .map_err(::core::convert::Into::into))
+            .and_then(|inner| {
+                inner
+                    .map_err(|errors| {
+                        errors
+                            .into_iter()
+                            .map(|error| ::wasm_bindgen::JsValue::from_str(&error.to_string()))
+                            .collect::<::std::vec::Vec<_>>()
+                    })
+                    .map_err(::core::convert::Into::into)
+            })
     }
 }

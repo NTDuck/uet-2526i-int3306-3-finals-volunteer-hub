@@ -26,7 +26,8 @@ pub mod string {
 #[macro_export]
 macro_rules! regex {
     ($regex:literal $(,)?) => {{
-        static REGEX: ::once_cell::sync::OnceCell<::regex::Regex> = ::once_cell::sync::OnceCell::new();
+        static REGEX: ::once_cell::sync::OnceCell<::regex::Regex> =
+            ::once_cell::sync::OnceCell::new();
         REGEX.get_or_init(|| ::regex::Regex::new($regex).unwrap())
     }};
 }

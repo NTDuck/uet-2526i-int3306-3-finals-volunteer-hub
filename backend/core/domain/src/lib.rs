@@ -1,5 +1,4 @@
-#[derive(::core::fmt::Debug, ::core::clone::Clone)]
-#[derive(::bon::Builder)]
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
 #[builder(on(_, into))]
 pub struct Event {
     pub id: Uuid,
@@ -24,20 +23,17 @@ pub enum EventStatus {
     },
 }
 
-#[derive(::core::fmt::Debug, ::core::clone::Clone)]
-#[derive(::bon::Builder)]
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
 pub struct Channel {
     pub id: Uuid,
 }
 
-#[derive(::core::fmt::Debug, ::core::clone::Clone)]
-#[derive(::bon::Builder)]
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
 pub struct Post {
     pub id: Uuid,
 }
 
-#[derive(::core::fmt::Debug, ::core::clone::Clone)]
-#[derive(::bon::Builder)]
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
 #[builder(on(_, into))]
 pub struct User {
     pub id: Uuid,
@@ -58,7 +54,16 @@ pub enum UserRole {
     Administrator,
 }
 
-#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::core::cmp::Eq, ::core::cmp::PartialEq, ::core::cmp::Ord, ::core::cmp::PartialOrd, ::core::hash::Hash)]
+#[derive(
+    ::core::fmt::Debug,
+    ::core::clone::Clone,
+    ::core::marker::Copy,
+    ::core::cmp::Eq,
+    ::core::cmp::PartialEq,
+    ::core::cmp::Ord,
+    ::core::cmp::PartialOrd,
+    ::core::hash::Hash,
+)]
 pub struct Uuid([u8; 16]);
 
 #[::bon::bon]
@@ -71,19 +76,29 @@ impl Uuid {
 
 impl ::core::ops::Deref for Uuid {
     type Target = [u8; 16];
-    
+
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
-#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::cmp::Eq, ::core::cmp::PartialEq, ::core::cmp::Ord, ::core::cmp::PartialOrd, ::core::hash::Hash)]
+#[derive(
+    ::core::fmt::Debug,
+    ::core::clone::Clone,
+    ::core::cmp::Eq,
+    ::core::cmp::PartialEq,
+    ::core::cmp::Ord,
+    ::core::cmp::PartialOrd,
+    ::core::hash::Hash,
+)]
 pub struct Username(::aliases::string::String);
 
 #[::bon::bon]
 impl Username {
     #[builder(on(_, into))]
-    pub fn new(value: ::aliases::string::String) -> ::core::result::Result<Self, UsernameBuilderError> {
+    pub fn new(
+        value: ::aliases::string::String,
+    ) -> ::core::result::Result<Self, UsernameBuilderError> {
         let value = Self::normalize(value);
         Self::validate(value).map(Self)
     }
@@ -98,7 +113,9 @@ impl Username {
         }
     }
 
-    fn validate(value: ::aliases::string::String) -> ::core::result::Result<::aliases::string::String, UsernameBuilderError> {
+    fn validate(
+        value: ::aliases::string::String,
+    ) -> ::core::result::Result<::aliases::string::String, UsernameBuilderError> {
         let regex = ::aliases::regex!("^[a-z0-9_-]{4,16}$");
 
         if !regex.is_match(&value) {
@@ -111,26 +128,35 @@ impl Username {
 
 impl ::core::ops::Deref for Username {
     type Target = ::aliases::string::String;
-    
+
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
-#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
-#[derive(::thiserror::Error)]
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::thiserror::Error)]
 pub enum UsernameBuilderError {
     #[error("Invalid username format: must be between 4 and 16 characters; lowercase letters, digits, underscores, or hyphens only")]
     InvalidFormat,
 }
 
-#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::cmp::Eq, ::core::cmp::PartialEq, ::core::cmp::Ord, ::core::cmp::PartialOrd, ::core::hash::Hash)]
+#[derive(
+    ::core::fmt::Debug,
+    ::core::clone::Clone,
+    ::core::cmp::Eq,
+    ::core::cmp::PartialEq,
+    ::core::cmp::Ord,
+    ::core::cmp::PartialOrd,
+    ::core::hash::Hash,
+)]
 pub struct Email(::aliases::string::String);
 
 #[::bon::bon]
 impl Email {
     #[builder(on(_, into))]
-    pub fn new(value: ::aliases::string::String) -> ::core::result::Result<Self, EmailBuilderError> {
+    pub fn new(
+        value: ::aliases::string::String,
+    ) -> ::core::result::Result<Self, EmailBuilderError> {
         let value = Self::normalize(value);
         Self::validate(value).map(Self)
     }
@@ -138,20 +164,28 @@ impl Email {
     fn normalize(value: ::aliases::string::String) -> ::aliases::string::String {
         let trimmed = value.trim();
 
-        if value.len() == trimmed.len() && !trimmed.chars().any(|char| char.is_control()) && !trimmed.chars().any(|char| char.is_uppercase()) {
+        if value.len() == trimmed.len()
+            && !trimmed.chars().any(|char| char.is_control())
+            && !trimmed.chars().any(|char| char.is_uppercase())
+        {
             value
         } else {
-            trimmed.chars()
+            trimmed
+                .chars()
                 .filter(|char| !char.is_control())
                 .flat_map(|char| char.to_lowercase())
                 .collect()
         }
     }
 
-    fn validate(value: ::aliases::string::String) -> ::core::result::Result<::aliases::string::String, EmailBuilderError> {
+    fn validate(
+        value: ::aliases::string::String,
+    ) -> ::core::result::Result<::aliases::string::String, EmailBuilderError> {
         // RFC 5322 Official Standard
         // https://emailregex.com/
-        let regex = ::aliases::regex!(r#"(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])"#);
+        let regex = ::aliases::regex!(
+            r#"(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])"#
+        );
 
         if !regex.is_match(&value) {
             ::core::result::Result::Err(EmailBuilderError::InvalidFormat)
@@ -163,14 +197,13 @@ impl Email {
 
 impl ::core::ops::Deref for Email {
     type Target = ::aliases::string::String;
-    
+
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
-#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
-#[derive(::thiserror::Error)]
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::thiserror::Error)]
 pub enum EmailBuilderError {
     #[error("Invalid email format: does not comply with RFC 5322")]
     InvalidFormat,
@@ -182,7 +215,9 @@ pub struct Password(::aliases::string::String);
 #[::bon::bon]
 impl Password {
     #[builder(on(_, into))]
-    pub fn new(value: ::aliases::string::String) -> ::core::result::Result<Self, PasswordBuilderError> {
+    pub fn new(
+        value: ::aliases::string::String,
+    ) -> ::core::result::Result<Self, PasswordBuilderError> {
         let value = Self::normalize(value);
         Self::validate(value).map(Self)
     }
@@ -197,7 +232,9 @@ impl Password {
         }
     }
 
-    fn validate(value: ::aliases::string::String) -> ::core::result::Result<::aliases::string::String, PasswordBuilderError> {
+    fn validate(
+        value: ::aliases::string::String,
+    ) -> ::core::result::Result<::aliases::string::String, PasswordBuilderError> {
         let regex = ::aliases::regex!("^\\w{8,32}$");
 
         if !regex.is_match(&value) {
@@ -210,14 +247,13 @@ impl Password {
 
 impl ::core::ops::Deref for Password {
     type Target = ::aliases::string::String;
-    
+
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
-#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
-#[derive(::thiserror::Error)]
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::thiserror::Error)]
 pub enum PasswordBuilderError {
     #[error("Invalid password format: must be between 8 and 32 characters")]
     InvalidFormat,
