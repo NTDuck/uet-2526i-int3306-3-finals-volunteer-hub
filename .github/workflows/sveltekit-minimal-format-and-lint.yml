@@ -1,0 +1,49 @@
+name: \[sveltekit-minimal\] Format & Lint
+
+on:
+  workflow_call:
+
+jobs:
+  deno-fmt:
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: ./frontend/sveltekit-minimal
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: denoland/setup-deno@v2
+        with:
+          cache: true
+          deno-version: v2.x
+
+      - run: deno fmt --check
+  
+  deno-lint:
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: ./frontend/sveltekit-minimal
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: denoland/setup-deno@v2
+        with:
+          cache: true
+          deno-version: v2.x
+
+      - run: deno lint

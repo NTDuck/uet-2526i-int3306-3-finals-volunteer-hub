@@ -1,0 +1,14 @@
+name: \[sveltekit-minimal\] CI
+
+on:
+  push:
+    branches:
+      - "*"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  format-and-lint:
+    uses: ./.github/workflows/sveltekit-minimal-format-and-lint.yml
