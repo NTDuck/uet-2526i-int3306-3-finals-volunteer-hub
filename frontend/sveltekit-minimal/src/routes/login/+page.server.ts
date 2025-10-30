@@ -10,6 +10,9 @@ export const actions = {
 		const formData = await request.formData();
 
 		try {
+			// NOTE that the `cookies.set(...)` should reside outside
+			// the `try` block. That would however require some cache
+			// or intermediate state. Consider IIFE?
 			const { token } = await app.signIn({
 				usernameOrEmail: formData.get("username-or-email"),
 				password: formData.get("password"),
