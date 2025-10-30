@@ -4,7 +4,7 @@ import type { Actions } from "$types";
 
 import { getApp } from "$lib/server";
 
-export const actions: Actions = {
+export const actions = {
   default: async ({ request, cookies, url }: RequestEvent) => {
   	console.log("Dog");
   	

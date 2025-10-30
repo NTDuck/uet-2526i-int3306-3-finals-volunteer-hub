@@ -4,6 +4,7 @@
 
 <nav>
   <a href="/login">log-in</a>
+  <a href="/register">register</a>
   <a href="/dashboard">dashboard</a>
 </nav>
 
