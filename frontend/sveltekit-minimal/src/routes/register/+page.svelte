@@ -4,11 +4,15 @@
   let { data, form } = $props() satisfies {
     data: PageData,
     form: {
-      error: string,
+      errors: string[],
       data: {
-        usernameOrEmail: string,
+        userRole: string,
+        username: string,
+        email: string,
         password: string,
-      }
+        firstName: string,
+        lastName: string,
+      },
     },
   };
 </script>
@@ -16,6 +20,13 @@
 <h1>register!</h1>
 
 <form method="POST">
+  <label for="user-role">user-role</label>
+  <select name="user-role" required>
+    <option value="volunteer">volunteer</option>
+    <option value="event-manager">event-manager</option>
+    <option value="administrator">administrator</option>
+  </select>
+
   <label for="username">username</label>
   <input type="text" name="username" value={form?.data.username ?? ""} required>
 
@@ -31,7 +42,7 @@
   <label for="last-name">last-name</label>
   <input type="text" name="last-name" value={form?.data.lastName ?? ""} required>
 
-  <button type="submit">log-in</button>
+  <button type="submit">register</button>
 </form>
 
 {#each form?.errors as error}

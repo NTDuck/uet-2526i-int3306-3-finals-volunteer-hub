@@ -4,11 +4,11 @@
   let { data, form } = $props() satisfies {
     data: PageData,
     form: {
-      error: string,
+      errors: string[],
       data: {
         usernameOrEmail: string,
         password: string,
-      }
+      },
     },
   };
 </script>
@@ -25,6 +25,6 @@
   <button type="submit">log-in</button>
 </form>
 
-{#if form?.error}
-  <p style="color: red;">{form.error}</p>
-{/if}
+{#each form?.errors as error}
+  <p style="color: red;">{error}</p>
+{/each}

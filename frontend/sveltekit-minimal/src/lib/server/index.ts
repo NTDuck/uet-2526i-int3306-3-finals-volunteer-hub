@@ -7,7 +7,7 @@ export async function getApp(): Promise<Application> {
 		try {
 			app = await Application.create();
 		} catch (error) {
-			console.error(error);
+			throw new Error(`\`Application.create()\` failed: ${error}`);
 		}
 	}
 

@@ -1,4 +1,4 @@
-// An alternative approach
+// An alternative approach where a `.rs` file is generated from a `.env` file
 // https://dev.to/javiasilis/how-to-pass-environment-variables-to-a-rust-wasm-application-like-yew-dioxus-and-leptos-as-a-typescript-developer-ond	
 pub fn main() -> ::aliases::result::Fallible {
 	self::env::load(::core::concat!(::core::env!("CARGO_WORKSPACE_DIR"), ".env"))?;

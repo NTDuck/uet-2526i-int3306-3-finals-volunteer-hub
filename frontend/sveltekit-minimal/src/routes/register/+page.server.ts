@@ -1,38 +1,42 @@
-import { redirect, fail } from "@sveltejs/kit";
+import { redirect, fail, error } from "@sveltejs/kit";
 import type { RequestEvent } from "@sveltejs/kit";
 import type { Actions } from "$types";
 
 import { getApp } from "$lib/server";
 
 export const actions = {
-  default: async ({ request, cookies, url }: RequestEvent) => {
+  default: async ({ request }: RequestEvent) => {
 		const app = await getApp();
 		const formData = await request.formData();
 
 		try {
-			const { token } = await app.signIn({
-				usernameOrEmail: formData.get("username-or-email"),
+			await app.signUp({
+				userRole: {
+					"volunteer": "volunteer",
+					"event-manager": "eventManager",
+					"administrator": "administrator",
+				}[formData.get("user-role") as string],
+				username: formData.get("username"),
+				email: formData.get("email"),
 				password: formData.get("password"),
+				firstName: formData.get("first-name"),
+				lastName: formData.get("last-name"),
 			});
 
-			console.log("Token is: ");
-			console.log(token);
-
-			cookies.set("auth-token", token, { path: "/" });
-
-			throw redirect(303, url.searchParams.get("redirect") ?? "/");
-		
-		} catch (error) {
-			console.log("Something is wrong!!!!");
-			console.log(error);
-
+		} catch (errors) {
 			return fail(400, {
-				error: error,  // TODO: Beautify
+				errors: errors,  // TODO: Beautify
 				data: {
-					usernameOrEmail: formData.get("username-or-email") ?? "",
+					userRole: formData.get("user-role") ?? "",
+					username: formData.get("username") ?? "",
+					email: formData.get("email") ?? "",
 					password: formData.get("password") ?? "",
+					firstName: formData.get("first-name") ?? "",
+					lastName: formData.get("last-name") ?? "",
 				},
 			});
 		}
+
+		throw redirect(303, "/login");
   },
 } satisfies Actions;

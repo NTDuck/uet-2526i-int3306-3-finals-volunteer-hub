@@ -6,37 +6,27 @@ import { getApp } from "$lib/server";
 
 export const actions = {
   default: async ({ request, cookies, url }: RequestEvent) => {
-  	console.log("Dog");
-  	
 		const app = await getApp();
 		const formData = await request.formData();
 
-		console.log("I'm here!");
-		
 		try {
 			const { token } = await app.signIn({
 				usernameOrEmail: formData.get("username-or-email"),
 				password: formData.get("password"),
 			});
 
-			console.log("Token is: ");
-			console.log(token);
-
 			cookies.set("auth-token", token, { path: "/" });
-
-			throw redirect(303, url.searchParams.get("redirect") ?? "/");
 		
-		} catch (error) {
-			console.log("Something is wrong!!!!");
-			console.log(error);
-
+		} catch (errors) {
 			return fail(400, {
-				error: error,  // TODO: Beautify
+				errors: errors,  // TODO: Beautify
 				data: {
 					usernameOrEmail: formData.get("username-or-email") ?? "",
 					password: formData.get("password") ?? "",
 				},
 			});
 		}
+
+		throw redirect(303, url.searchParams.get("redirect") ?? "/");
   },
 } satisfies Actions;

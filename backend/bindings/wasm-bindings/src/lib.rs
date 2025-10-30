@@ -80,6 +80,9 @@ impl Gateways {
 
         ::tracing_wasm::try_set_as_global_default()?;
 
+        ::tracing::debug!("JWT_SECRET_KEY: {}", ::core::env!("JWT_SECRET_KEY"));
+        ::tracing::debug!("ARGON2_SECRET_KEY: {}", ::core::env!("ARGON2_SECRET_KEY"));
+
         ::aliases::result::Fallible::Ok(Self::builder()
             .user_repository(::std::sync::Arc::new(InMemoryUserRepository::builder().build()))
             .uuid_generator(::std::sync::Arc::new(UuidV7Generator::builder().build()))
