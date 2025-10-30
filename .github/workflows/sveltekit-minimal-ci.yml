@@ -1,4 +1,4 @@
-name: \[sveltekit-minimal\] CI
+name: "[sveltekit-minimal] CI"
 
 on:
   push:

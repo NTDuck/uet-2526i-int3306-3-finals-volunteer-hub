@@ -1,4 +1,4 @@
-name: \[cargo\] CI
+name: "[cargo] CI"
 
 on:
   push:

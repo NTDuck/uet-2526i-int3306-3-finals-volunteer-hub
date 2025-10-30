@@ -1,4 +1,4 @@
-name: \[cargo\] Security & Vulnerability scanning
+name: "[cargo] Security & Vulnerability scanning"
 
 on:
   workflow_call:

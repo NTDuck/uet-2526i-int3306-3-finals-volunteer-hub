@@ -1,4 +1,4 @@
-name: \[sveltekit-minimal\] Format & Lint
+name: "[sveltekit-minimal] Format & Lint"
 
 on:
   workflow_call:
