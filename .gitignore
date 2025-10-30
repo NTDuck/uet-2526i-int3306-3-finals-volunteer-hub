@@ -162,5 +162,8 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
 
-# wasm-pack output
+# wasm-pack build output
 ./backend/bindings/output/
+
+# Deno build output
+.deno-deploy/
