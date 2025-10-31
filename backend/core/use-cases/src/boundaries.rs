@@ -81,26 +81,30 @@ pub type SignUpResponse = ::core::result::Result<SignUpOkResponse, ::std::vec::V
 
 pub type SignUpOkResponse = ();
 
-#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::thiserror::Error)]
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::thiserror::Error)]
 #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase", rename_all_fields = "kebab-case"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
 pub enum SignUpErrResponse {
-    #[error("Invalid username format")]
-    UsernameInvalid,
+    #[error(transparent)]
+    UsernameInvalid(#[from] #[cfg_attr(feature = "serde", serde(skip))] ::domain::UsernameBuilderError),
 
-    #[error("Invalid email format")]
-    EmailInvalid,
+    #[error(transparent)]
+    EmailInvalid(#[from] #[cfg_attr(feature = "serde", serde(skip))] ::domain::EmailBuilderError),
 
-    #[error("Invalid password format")]
-    PasswordInvalid,
+    #[error(transparent)]
+    PasswordInvalid(#[from] #[cfg_attr(feature = "serde", serde(skip))] ::domain::PasswordBuilderError),
 
-    #[error("User with username already exists")]
-    UsernameAlreadyExists,
+    #[error("User with username `{username}` already exists")]
+    UsernameAlreadyExists {
+        username: ::aliases::string::String,
+    },
 
-    #[error("User with email already exists")]
-    EmailAlreadyExists,
+    #[error("User with email `{email}` already exists")]
+    EmailAlreadyExists {
+        email: ::aliases::string::String,
+    },
 }
 
 pub mod models {

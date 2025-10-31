@@ -132,8 +132,9 @@ impl ::core::ops::Deref for Username {
     }
 }
 
-#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::thiserror::Error)]
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::core::default::Default, ::thiserror::Error)]
 pub enum UsernameBuilderError {
+    #[default]
     #[error(
         "Invalid username format: must be between 4 and 16 characters; lowercase letters, digits, underscores, or \
          hyphens only"
@@ -202,8 +203,9 @@ impl ::core::ops::Deref for Email {
     }
 }
 
-#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::thiserror::Error)]
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::core::default::Default, ::thiserror::Error)]
 pub enum EmailBuilderError {
+    #[default]
     #[error("Invalid email format: does not comply with RFC 5322")]
     InvalidFormat,
 }
@@ -250,8 +252,9 @@ impl ::core::ops::Deref for Password {
     }
 }
 
-#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::thiserror::Error)]
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::core::default::Default, ::thiserror::Error)]
 pub enum PasswordBuilderError {
+    #[default]
     #[error("Invalid password format: must be between 8 and 32 characters")]
     InvalidFormat,
 }

@@ -109,14 +109,14 @@ impl SignUpBoundary for SignUpInteractor {
         {
             ::core::option::Option::Some(username)
         } else {
-            errors.push(SignUpErrResponse::UsernameInvalid);
+            errors.push(SignUpErrResponse::UsernameInvalid(::core::default::Default::default()));
             ::core::option::Option::None
         };
 
         let email = if let ::core::result::Result::Ok(email) = ::domain::Email::builder().value(request.email).build() {
             ::core::option::Option::Some(email)
         } else {
-            errors.push(SignUpErrResponse::EmailInvalid);
+            errors.push(SignUpErrResponse::EmailInvalid(::core::default::Default::default()));
             ::core::option::Option::None
         };
 
@@ -125,7 +125,7 @@ impl SignUpBoundary for SignUpInteractor {
         {
             ::core::option::Option::Some(password)
         } else {
-            errors.push(SignUpErrResponse::PasswordInvalid);
+            errors.push(SignUpErrResponse::PasswordInvalid(::core::default::Default::default()));
             ::core::option::Option::None
         };
 
@@ -142,14 +142,14 @@ impl SignUpBoundary for SignUpInteractor {
             .contains_username(username.clone())
             .await?
         {
-            errors.push(SignUpErrResponse::UsernameAlreadyExists);
+            errors.push(SignUpErrResponse::UsernameAlreadyExists { username: username.to_string().into() });
         }
 
         if ::std::sync::Arc::clone(&self.user_repository)
             .contains_email(email.clone())
             .await?
         {
-            errors.push(SignUpErrResponse::EmailAlreadyExists);
+            errors.push(SignUpErrResponse::EmailAlreadyExists { email: email.to_string().into() });
         }
 
         if !errors.is_empty() {
