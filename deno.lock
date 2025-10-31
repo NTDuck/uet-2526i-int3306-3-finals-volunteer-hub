@@ -1,0 +1,17 @@
+{
+  "version": "5",
+  "specifiers": {
+    "npm:sv@*": "0.9.6"
+  },
+  "npm": {
+    "sv@0.9.6": {
+      "integrity": "sha512-PlulS/0MKK68MXk9fBhIDHDKCI2wFgz7QyaHo9mmNjVOLA7JvTS1KTy9hpxpLj7/EYKeh6tSBFrSnJ/g8tsD+A==",
+      "bin": true
+    }
+  },
+  "workspace": {
+    "dependencies": [
+      "jsr:@std/assert@1"
+    ]
+  }
+}

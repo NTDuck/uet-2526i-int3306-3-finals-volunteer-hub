@@ -1,0 +1,28 @@
+{
+  "name": "sveltekit-minimal",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "dev": "deno run -A npm:vite dev",
+    "build": "deno run -A npm:vite build",
+    "preview": "deno run -A npm:vite preview",
+    "prepare": "deno run -A npm:svelte-kit sync || echo ''",
+    "check": "deno run -A npm:svelte-kit sync && deno run -A npm:svelte-check --tsconfig ./tsconfig.json",
+    "check:watch": "deno run -A npm:svelte-kit sync && deno run -A npm:svelte-check --tsconfig ./tsconfig.json --watch",
+    "format": "deno fmt",
+    "lint": "deno lint"
+  },
+  "devDependencies": {
+    "@deno/svelte-adapter": "^0.1.0",
+    "@sveltejs/adapter-auto": "^6.1.0",
+    "@sveltejs/kit": "^2.43.2",
+    "@sveltejs/vite-plugin-svelte": "^6.2.0",
+    "@types/node": "^24",
+    "svelte": "^5.39.5",
+    "svelte-check": "^4.3.2",
+    "typescript": "^5.9.2",
+    "vite": "^7.1.7",
+    "vite-plugin-static-copy": "^3.1.4"
+  }
+}
