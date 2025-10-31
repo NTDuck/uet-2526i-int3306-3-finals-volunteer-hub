@@ -89,6 +89,7 @@ pub trait PasswordHasher {
     }
 }
 
+// Not to be exposed to `tsify`/`wasm-bindgen`
 pub mod models {
     #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::bon::Builder)]
     #[builder(on(_, into))]
@@ -97,8 +98,6 @@ pub mod models {
         feature = "serde",
         serde(from = "__AuthenticationTokenPayload", into = "__AuthenticationTokenPayload", rename_all = "camelCase")
     )]
-    #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
-    #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
     pub struct AuthenticationTokenPayload {
         pub user_id: ::domain::Uuid,
         pub user_role: ::domain::UserRole,
