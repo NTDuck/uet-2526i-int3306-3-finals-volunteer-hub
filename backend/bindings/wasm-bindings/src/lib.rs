@@ -89,9 +89,6 @@ impl Gateways {
 
         ::tracing_wasm::try_set_as_global_default()?;
 
-        ::tracing::debug!("JWT_SECRET_KEY: {}", ::core::env!("JWT_SECRET_KEY"));
-        ::tracing::debug!("ARGON2_SECRET_KEY: {}", ::core::env!("ARGON2_SECRET_KEY"));
-
         ::aliases::result::Fallible::Ok(
             Self::builder()
                 .user_repository(::std::sync::Arc::new(InMemoryUserRepository::builder().build()))
@@ -118,17 +115,17 @@ impl Gateways {
 
 pub type Promise<T = ()> = ::core::result::Result<T, ::wasm_bindgen::JsValue>;
 
-trait FallibleExt<T = ()> {
+trait IntoPromise<T = ()> {
     fn into_promise(self) -> Promise<T>;
 }
 
-impl<T> FallibleExt<T> for ::aliases::result::Fallible<T> {
+impl<T> IntoPromise<T> for ::aliases::result::Fallible<T> {
     fn into_promise(self) -> Promise<T> {
         self.map_err(|error| ::wasm_bindgen::JsValue::from_str(&error.to_string()))
     }
 }
 
-impl<T, E> FallibleExt<T> for ::aliases::result::Fallible<::core::result::Result<T, ::std::vec::Vec<E>>>
+impl<T, E> IntoPromise<T> for ::aliases::result::Fallible<::core::result::Result<T, ::std::vec::Vec<E>>>
 where
     E: ::core::error::Error,
 {
