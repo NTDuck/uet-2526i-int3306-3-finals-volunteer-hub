@@ -36,11 +36,9 @@ jobs:
       - uses: EmbarkStudios/cargo-deny-action@v2
         with:
           command: check ${{ matrix.check }}
+          manifest-path: ./backend/Cargo.toml
 
   cargo-audit:
-    needs:
-      - cargo-deny
-
     strategy:
       fail-fast: false
       matrix:
