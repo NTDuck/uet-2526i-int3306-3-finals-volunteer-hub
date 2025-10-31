@@ -44,7 +44,7 @@ impl SignInBoundary for SignInInteractor {
                 ::core::option::Option::None
             }
         } else {
-            errors.push(SignInErrResponse::UsernameOrEmailInvalid(::core::default::Default::default(), ::core::default::Default::default()));
+            errors.push(SignInErrResponse::UsernameOrEmailInvalid(::core::default::Default::default()));
             ::core::option::Option::None
         };
 

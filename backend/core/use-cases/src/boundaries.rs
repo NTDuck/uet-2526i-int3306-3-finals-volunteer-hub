@@ -48,10 +48,10 @@ pub enum SignInErrResponse {
         email: ::aliases::string::String,
     },
 
-    #[error("{0} or {1}")]
+    #[error("{} or {}", 0.0, 0.1)]
     UsernameOrEmailInvalid(
-        #[cfg_attr(feature = "serde", serde(skip))] ::domain::UsernameBuilderError,
-        #[cfg_attr(feature = "serde", serde(skip))] ::domain::EmailBuilderError,
+        #[cfg_attr(feature = "serde", serde(skip))]
+        (::domain::UsernameBuilderError, ::domain::EmailBuilderError),
     ),
 
     #[error(transparent)]
