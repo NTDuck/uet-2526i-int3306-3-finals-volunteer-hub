@@ -3,6 +3,10 @@ name: "[cargo] Build"
 on:
   workflow_call:
 
+env:
+  JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+  ARGON2_SECRET_KEY: ${{ secrets.ARGON2_SECRET_KEY }}
+
 jobs:
   cargo-build:
     strategy:
@@ -24,8 +28,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-
-      - uses: ./.github/actions/cargo-load-env
 
       - uses: dtolnay/rust-toolchain@master
         with:

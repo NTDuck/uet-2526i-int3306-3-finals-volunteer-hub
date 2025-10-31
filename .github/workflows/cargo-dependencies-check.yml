@@ -39,6 +39,9 @@ jobs:
           manifest-path: ./backend/Cargo.toml
 
   cargo-audit:
+    needs:
+      - cargo-deny
+
     strategy:
       fail-fast: false
       matrix:
