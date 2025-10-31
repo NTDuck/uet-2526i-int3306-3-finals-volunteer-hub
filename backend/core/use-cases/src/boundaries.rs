@@ -32,25 +32,32 @@ pub struct SignInOkResponse {
     pub token: ::aliases::string::String,
 }
 
-#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::thiserror::Error)]
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::thiserror::Error)]
 #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase", rename_all_fields = "kebab-case"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
 pub enum SignInErrResponse {
-    #[error("User with username not found")]
-    UsernameNotFound,
+    #[error("User with username `{username}` not found")]
+    UsernameNotFound {
+        username: ::aliases::string::String,
+    },
 
-    #[error("User with email not found")]
-    EmailNotFound,
+    #[error("User with email `{email}` not found")]
+    EmailNotFound {
+        email: ::aliases::string::String,
+    },
 
-    #[error("Invalid username or email format")]
-    UsernameOrEmailInvalid,
+    #[error("{0} or {1}")]
+    UsernameOrEmailInvalid(
+        #[cfg_attr(feature = "serde", serde(skip))] ::domain::UsernameBuilderError,
+        #[cfg_attr(feature = "serde", serde(skip))] ::domain::EmailBuilderError,
+    ),
 
-    #[error("Invalid password")]
-    PasswordInvalid,
+    #[error(transparent)]
+    PasswordInvalid(#[from] #[cfg_attr(feature = "serde", serde(skip))] ::domain::PasswordBuilderError),
 
-    #[error("Password does not match")]
+    #[error("Passwords do not match")]
     PasswordMismatch,
 }
 

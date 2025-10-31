@@ -29,7 +29,7 @@ impl SignInBoundary for SignInInteractor {
             {
                 ::core::option::Option::Some(user)
             } else {
-                errors.push(SignInErrResponse::UsernameNotFound);
+                errors.push(SignInErrResponse::UsernameNotFound { username: request.username_or_email.clone() });
                 ::core::option::Option::None
             }
         } else if let ::core::result::Result::Ok(email) =
@@ -40,11 +40,11 @@ impl SignInBoundary for SignInInteractor {
             {
                 ::core::option::Option::Some(user)
             } else {
-                errors.push(SignInErrResponse::EmailNotFound);
+                errors.push(SignInErrResponse::EmailNotFound { email: request.username_or_email.clone() });
                 ::core::option::Option::None
             }
         } else {
-            errors.push(SignInErrResponse::UsernameOrEmailInvalid);
+            errors.push(SignInErrResponse::UsernameOrEmailInvalid(::core::default::Default::default(), ::core::default::Default::default()));
             ::core::option::Option::None
         };
 
@@ -53,7 +53,7 @@ impl SignInBoundary for SignInInteractor {
         {
             ::core::option::Option::Some(password)
         } else {
-            errors.push(SignInErrResponse::PasswordInvalid);
+            errors.push(SignInErrResponse::PasswordInvalid(::core::default::Default::default()));
             ::core::option::Option::None
         };
 
