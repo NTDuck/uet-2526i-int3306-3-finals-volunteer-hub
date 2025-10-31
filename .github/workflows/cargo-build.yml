@@ -3,12 +3,8 @@ name: "[cargo] Build"
 on:
   workflow_call:
 
-env:
-  JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
-  ARGON2_SECRET_KEY: ${{ secrets.ARGON2_SECRET_KEY }}
-
 jobs:
-  cargo-check:
+  cargo-build:
     strategy:
       fail-fast: false
       matrix:
@@ -29,11 +25,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: ./.github/actions/cargo-load-env
+
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ matrix.channel }}
 
       - uses: Swatinem/rust-cache@v2
 
-      - name: Build
-        run: cargo check --workspace --all-targets
+      - run: cargo check --workspace --all-targets

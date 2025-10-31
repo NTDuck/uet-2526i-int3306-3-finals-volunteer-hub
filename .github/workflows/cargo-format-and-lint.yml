@@ -3,12 +3,8 @@ name: "[cargo] Format & Lint"
 on:
   workflow_call:
 
-env:
-  JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
-  ARGON2_SECRET_KEY: ${{ secrets.ARGON2_SECRET_KEY }}
-
 jobs:
-  cargo-fmt:
+  cargo-format:
     strategy:
       fail-fast: false
       matrix:
@@ -32,9 +28,9 @@ jobs:
 
       - run: cargo fmt --all -- --check
 
-  cargo-clippy:
+  cargo-lint:
     needs:
-      - cargo-fmt
+      - cargo-format
 
     strategy:
       fail-fast: false
@@ -51,6 +47,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/cargo-load-env
 
       - uses: dtolnay/rust-toolchain@master
         with:
