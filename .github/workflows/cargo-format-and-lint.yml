@@ -27,7 +27,7 @@ jobs:
           components: rustfmt
 
       - run: cargo fmt --all -- --check
-  
+
   cargo-clippy:
     needs:
       - cargo-fmt

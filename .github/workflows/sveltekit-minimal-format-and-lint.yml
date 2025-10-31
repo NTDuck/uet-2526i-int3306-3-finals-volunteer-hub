@@ -25,7 +25,7 @@ jobs:
           deno-version: v2.x
 
       - run: deno fmt --check
-  
+
   deno-lint:
     strategy:
       fail-fast: false

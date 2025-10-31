@@ -16,8 +16,20 @@ cd ./frontend/sveltekit-minimal && deno install
 ## How to run
 
 ```cmd
-deno task bind-wasm
+deno task build-wasm
+```
+
+Development
+
+```cmd
 deno task dev-sveltekit-minimal
+```
+
+Production
+
+```cmd
+deno task build-sveltekit-minimal
+deno task preview-sveltekit-minimal
 ```
 
 # Notes
