@@ -108,9 +108,9 @@ pub mod models {
     #[derive(::serde::Serialize, ::serde::Deserialize, ::bon::Builder)]
     #[builder(on(_, into))]
     struct __AuthenticationTokenPayload {
-        pub user_id: crate::boundaries::models::Uuid,
-        pub user_role: crate::boundaries::models::UserRole,
-        pub expiry_timestamp: ::aliases::time::Timestamp,
+        user_id: __Uuid,
+        user_role: crate::boundaries::models::UserRole,
+        expiry_timestamp: ::aliases::time::Timestamp,
     }
 
     #[cfg(feature = "serde")]
@@ -132,6 +132,39 @@ pub mod models {
                 .user_role(value.user_role)
                 .expiry_timestamp(value.expiry_timestamp)
                 .build()
+        }
+    }
+
+    #[cfg(feature = "serde")]
+    #[derive(::serde::Serialize, ::serde::Deserialize)]
+    #[serde(transparent)]
+    struct __Uuid([u8; 16]);
+
+    #[::bon::bon]
+    impl __Uuid {
+        #[builder]
+        pub fn new(value: [u8; 16]) -> Self {
+            Self(value)
+        }
+    }
+
+    impl ::core::ops::Deref for __Uuid {
+        type Target = [u8; 16];
+
+        fn deref(&self) -> &Self::Target {
+            &self.0
+        }
+    }
+
+    impl ::core::convert::From<::domain::Uuid> for __Uuid {
+        fn from(value: ::domain::Uuid) -> Self {
+            Self::builder().value(*value).build()
+        }
+    }
+
+    impl ::core::convert::From<__Uuid> for ::domain::Uuid {
+        fn from(value: __Uuid) -> Self {
+            Self::builder().value(*value).build()
         }
     }
 }
