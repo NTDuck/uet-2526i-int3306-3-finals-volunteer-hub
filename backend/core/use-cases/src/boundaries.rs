@@ -34,7 +34,6 @@ pub struct SignInOkResponse {
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::thiserror::Error)]
 #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-#[cfg_attr(feature = "serde", serde(rename_all = "camelCase", rename_all_fields = "kebab-case"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
 pub enum SignInErrResponse {
@@ -90,7 +89,6 @@ pub type SignUpOkResponse = ();
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::thiserror::Error)]
 #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-#[cfg_attr(feature = "serde", serde(rename_all = "camelCase", rename_all_fields = "kebab-case"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
 pub enum SignUpErrResponse {
@@ -114,10 +112,49 @@ pub enum SignUpErrResponse {
     },
 }
 
+// To be exposed to `tsify`/`wasm-bindgen`
 pub mod models {
+    #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
+    #[builder(on(_, into))]
+    pub struct Event {
+        pub id: ::aliases::string::String,
+
+        pub status: EventStatus,
+
+        pub name: ::aliases::string::String,
+        pub description: ::aliases::string::String,
+        pub category: ::aliases::string::String,
+        pub location: ::aliases::string::String,
+    }
+
+    #[derive(::core::fmt::Debug, ::core::clone::Clone)]
+    #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+    #[cfg_attr(feature = "serde", serde(rename_all = "kebab-case", rename_all_fields = "kebab-case"))]
+    #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
+    #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
+    pub enum EventStatus {
+        Created {
+            created_by_manager_id: ::aliases::string::String,
+        },
+        Published {
+            created_by_manager_id: ::aliases::string::String,
+            published_by_administrator_id: ::aliases::string::String,
+            published_at: ::aliases::time::Timestamp,
+            channel_id: ::aliases::string::String,
+        },
+        Completed {
+            created_by_manager_id: ::aliases::string::String,
+            published_by_administrator_id: ::aliases::string::String,
+            published_at: ::aliases::time::Timestamp,
+            completed_at: ::aliases::time::Timestamp,
+            channel_id: ::aliases::string::String,
+        },
+    }
+
+
     #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
     #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-    #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+    #[cfg_attr(feature = "serde", serde(rename_all = "kebab-case"))]
     #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
     #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
     pub enum UserRole {

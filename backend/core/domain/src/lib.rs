@@ -2,34 +2,53 @@
 #[builder(on(_, into))]
 pub struct Event {
     pub id: Uuid,
-    pub name: ::aliases::string::String,
-    pub description: ::aliases::string::String,
-    pub location: ::aliases::string::String,
-    pub timestamp: ::aliases::time::Timestamp,
 
     pub status: EventStatus,
+
+    pub name: ::aliases::string::String,
+    pub description: ::aliases::string::String,
+    pub category: ::aliases::string::String,
+    pub location: ::aliases::string::String,
 }
 
-#[derive(::core::fmt::Debug, ::core::clone::Clone)]
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
 pub enum EventStatus {
     Created {
-        manager_id: Uuid,
+        created_by_manager_id: Uuid,
     },
-    Approved {
-        administrator_id: Uuid,
+    Published {
+        created_by_manager_id: Uuid,
+        published_by_administrator_id: Uuid,
+        published_at: ::aliases::time::Timestamp,
+        channel_id: Uuid,
     },
     Completed {
-        timestamp: ::aliases::time::Timestamp,
+        created_by_manager_id: Uuid,
+        published_by_administrator_id: Uuid,
+        published_at: ::aliases::time::Timestamp,
+        completed_at: ::aliases::time::Timestamp,
+        channel_id: Uuid,
     },
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
-pub struct Channel {
+pub struct EventChannel {
+    pub id: Uuid,
+    pub event_id: Uuid,
+}
+
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
+pub struct EventChannelPost {
     pub id: Uuid,
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
-pub struct Post {
+pub struct EventChannelPostReaction {
+    pub id: Uuid,
+}
+
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
+pub struct EventChannelPostComment {
     pub id: Uuid,
 }
 
@@ -52,6 +71,14 @@ pub enum UserRole {
     Volunteer,
     EventManager,
     Administrator,
+}
+
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::bon::Builder)]
+pub struct EventCompletion {
+    pub event_id: Uuid,
+    pub volunteer_id: Uuid,
+
+    pub timestamp: ::aliases::time::Timestamp,
 }
 
 #[derive(

@@ -134,6 +134,37 @@ enum UuidIntoTimestampError {
     OutOfRange,
 }
 
+pub struct LowerUrnUuidCodec;
+
+#[::bon::bon]
+impl LowerUrnUuidCodec {
+    #[builder(builder_type(vis = "pub"))]
+    fn new() -> Self {
+        Self
+    }
+}
+
+#[async_trait]
+impl UuidCodec for LowerUrnUuidCodec {
+    async fn format(self: ::std::sync::Arc<Self>, uuid: ::domain::Uuid) -> ::aliases::result::Fallible<::aliases::string::String> {
+        let uuid = ::uuid::Uuid::from_bytes(*uuid);
+
+        let mut buffer = [0u8; 45];
+        let urn = uuid.as_urn().encode_lower(&mut buffer).to_string().into();
+
+        ::aliases::result::Fallible::Ok(urn)
+    }
+
+    async fn parse(self: ::std::sync::Arc<Self>, urn: ::aliases::string::String) -> ::aliases::result::Fallible<::domain::Uuid> {
+        let uuid = ::uuid::Uuid::parse_str(&urn)?;
+        let uuid = ::domain::Uuid::builder()
+            .value(uuid.into_bytes())
+            .build();
+
+        ::aliases::result::Fallible::Ok(uuid)
+    }
+}
+
 #[derive(::bon::Builder)]
 pub struct JsonWebTokenGenerator<Key> {
     key: Key, // expects something like `::hmac::Hmac<::sha2::Sha256>`

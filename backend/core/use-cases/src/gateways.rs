@@ -42,6 +42,12 @@ pub trait UuidGenerator {
 }
 
 #[async_trait]
+pub trait UuidCodec {
+    async fn format(self: ::std::sync::Arc<Self>, uuid: ::domain::Uuid) -> ::aliases::result::Fallible<::aliases::string::String>;
+    async fn parse(self: ::std::sync::Arc<Self>, uuid: ::aliases::string::String) -> ::aliases::result::Fallible<::domain::Uuid>;
+}
+
+#[async_trait]
 pub trait AuthenticationTokenGenerator {
     async fn generate(
         self: ::std::sync::Arc<Self>, payload: self::models::AuthenticationTokenPayload,
