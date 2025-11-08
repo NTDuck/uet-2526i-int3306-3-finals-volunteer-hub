@@ -2,8 +2,9 @@
 #[builder(on(_, into))]
 pub struct Event {
     pub id: Uuid,
+    pub channel_id: ::core::option::Option<Uuid>,
 
-    pub status: EventStatus,
+    pub statuses: ::std::vec::Vec<EventStatus>,
 
     pub name: ::aliases::string::String,
     pub description: ::aliases::string::String,
@@ -16,18 +17,17 @@ pub enum EventStatus {
     Created {
         created_by_manager_id: Uuid,
     },
-    Published {
-        created_by_manager_id: Uuid,
-        published_by_administrator_id: Uuid,
-        published_at: ::aliases::time::Timestamp,
-        channel_id: Uuid,
+    Approved {
+        approved_by_administrator_id: Uuid,
+        approved_at: ::aliases::time::Timestamp,
+    },
+    Rejected {
+        rejected_by_administrator_id: Uuid,
+        rejected_at: ::aliases::time::Timestamp,
     },
     Completed {
-        created_by_manager_id: Uuid,
-        published_by_administrator_id: Uuid,
-        published_at: ::aliases::time::Timestamp,
+        completed_by_manager_id: Uuid,
         completed_at: ::aliases::time::Timestamp,
-        channel_id: Uuid,
     },
 }
 
@@ -73,12 +73,38 @@ pub enum UserRole {
     Administrator,
 }
 
-#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::bon::Builder)]
-pub struct EventCompletion {
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
+pub struct EventRegistration {
     pub event_id: Uuid,
     pub volunteer_id: Uuid,
 
-    pub timestamp: ::aliases::time::Timestamp,
+    pub statuses: ::std::vec::Vec<EventRegistrationStatus>,
+}
+
+/// Possible lifecycles
+/// 1. `Pending` (volunteer subscribes to event) -> `Accepted` (event manager accepts registration) -> `Completed` (event manager updates registration status after event completion)
+/// 2. `Pending` (volunteer subscribes to event) -> `Declined` (event manager declines registration)
+/// 3. `Pending` (volunteer subscribes to event) -> `Withdrawn` (volunteer unsubscribes from event)
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
+pub enum EventRegistrationStatus {
+    Pending {
+        pending_at: ::aliases::time::Timestamp,
+    },
+    Withdrawn {
+        withdrawn_at: ::aliases::time::Timestamp,
+    },
+    Accepted {
+        accepted_by_manager_id: Uuid,
+        accepted_at: ::aliases::time::Timestamp,
+    },
+    Declined {
+        declined_by_manager_id: Uuid,
+        declined_at: ::aliases::time::Timestamp,
+    },
+    Completed {
+        completed_by_manager_id: Uuid,
+        completed_at: ::aliases::time::Timestamp,
+    },
 }
 
 #[derive(

@@ -171,17 +171,17 @@ pub trait RemoveEventBoundary {
 }
 
 #[async_trait]
-pub trait ApproveVolunteerEventSubscriptionBoundary {
+pub trait AcceptVolunteerEventRegistrationBoundary {
     
 }
 
 #[async_trait]
-pub trait DenyVolunteerEventSubscriptionBoundary {
+pub trait DeclineVolunteerEventRegistrationBoundary {
     
 }
 
 #[async_trait]
-pub trait UpdateVolunteerEventCompletionStatusBoundary {
+pub trait CompleteVolunteerEventRegistrationBoundary {
 
 }
 
@@ -197,7 +197,7 @@ pub trait ApproveEventBoundary {
 }
 
 #[async_trait]
-pub trait DenyEventBoundary {
+pub trait RejectEventBoundary {
 
 }
 
