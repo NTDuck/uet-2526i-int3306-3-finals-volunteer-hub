@@ -112,14 +112,168 @@ pub enum SignUpErrResponse {
     },
 }
 
+#[async_trait]
+pub trait ViewRecentlyPublishedEventsBoundary {
+
+}
+
+#[async_trait]
+pub trait ViewRecentlyPostedEventsBoundary {
+
+}
+
+#[async_trait]
+pub trait ViewTrendingEventsBoundary {
+
+}
+
+// Volunteer's
+
+#[async_trait]
+pub trait ViewEventsByTimestampBoundary {
+
+}
+
+#[async_trait]
+pub trait ViewEventsByCategoryBoundary {
+    
+}
+
+#[async_trait]
+pub trait SubscribeToEventBoundary {
+    
+}
+
+#[async_trait]
+pub trait UnsubscribeFromEventBoundary {
+    
+}
+
+#[async_trait]
+pub trait ViewEventHistoryBoundary {
+
+}
+
+// Event manager's
+#[async_trait]
+pub trait CreateEventBoundary {
+
+}
+
+#[async_trait]
+pub trait UpdateEventBoundary {
+
+}
+
+#[async_trait]
+pub trait RemoveEventBoundary {
+
+}
+
+#[async_trait]
+pub trait ApproveVolunteerEventSubscriptionBoundary {
+    
+}
+
+#[async_trait]
+pub trait DenyVolunteerEventSubscriptionBoundary {
+    
+}
+
+#[async_trait]
+pub trait UpdateVolunteerEventCompletionStatusBoundary {
+
+}
+
+#[async_trait]
+pub trait ViewEventVolunteersBoundary {
+
+}
+
+// Administrator's
+#[async_trait]
+pub trait ApproveEventBoundary {
+    
+}
+
+#[async_trait]
+pub trait DenyEventBoundary {
+
+}
+
+#[async_trait]
+pub trait ViewNonAdministratorUsersBoundary {
+    
+}
+
+#[async_trait]
+pub trait ViewNonAdministratorUserBoundary {
+
+}
+
+#[async_trait]
+pub trait SuspendNonAdministratorUserBoundary {
+
+}
+
+#[async_trait]
+pub trait ReinstateNonAdministratorUserBoundary {
+    
+}
+
+#[async_trait]
+pub trait ExportEventsBoundary {
+
+}
+
+#[async_trait]
+pub trait ExportVolunteersBoundary {
+
+}
+
+// Common
+#[async_trait]
+pub trait ViewEventChannelBoundary {
+
+}
+
+#[async_trait]
+pub trait CreateEventChannelPostBoundary {
+
+}
+
+#[async_trait]
+pub trait CreateEventChannelPostReactionBoundary {
+
+}
+
+#[async_trait]
+pub trait CreateEventChannelPostCommentBoundary {
+
+}
+
 // To be exposed to `tsify`/`wasm-bindgen`
 pub mod models {
+    #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
+    #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+    #[cfg_attr(feature = "serde", serde(rename_all = "kebab-case"))]
+    #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
+    #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
+    pub enum ExportFormat {
+        CSV,
+        JSON,
+    }
+
     #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
     #[builder(on(_, into))]
+    #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+    #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+    #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
+    #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
     pub struct Event {
         pub id: ::aliases::string::String,
 
-        pub status: EventStatus,
+        pub status: self::EventStatus,
 
         pub name: ::aliases::string::String,
         pub description: ::aliases::string::String,
@@ -150,7 +304,6 @@ pub mod models {
             channel_id: ::aliases::string::String,
         },
     }
-
 
     #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
     #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
