@@ -40,16 +40,21 @@ pub struct EventChannel {
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
 pub struct EventChannelPost {
     pub id: Uuid,
+    pub volunteer_id: Uuid,
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
 pub struct EventChannelPostReaction {
     pub id: Uuid,
+    pub volunteer_id: Uuid,
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
 pub struct EventChannelPostComment {
     pub id: Uuid,
+    pub volunteer_id: Uuid,
+
+    pub content: ::aliases::string::String,
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]

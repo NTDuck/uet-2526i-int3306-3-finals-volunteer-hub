@@ -128,7 +128,6 @@ pub trait ViewTrendingEventsBoundary {
 }
 
 // Volunteer's
-
 #[async_trait]
 pub trait ViewEventsByTimestampBoundary {
 

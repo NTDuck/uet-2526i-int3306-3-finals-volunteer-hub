@@ -1,7 +1,9 @@
 use ::async_trait::async_trait;
 
 #[async_trait]
-pub trait EventRepository {}
+pub trait EventRepository {
+    
+}
 
 #[async_trait]
 pub trait UserRepository {
