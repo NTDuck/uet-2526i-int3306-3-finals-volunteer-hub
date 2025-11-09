@@ -129,8 +129,19 @@ pub trait ViewEventRecommendationBoundary {
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
 pub struct ViewEventRecommendationRequest {
     pub token: ::aliases::string::String,
-    pub r#type: self::models::EventRecommendationType,
+    pub r#type: EventRecommendationType,
     pub limit: usize,
+}
+
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
+#[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "kebab-case"))]
+#[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
+#[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
+pub enum EventRecommendationType {
+    RecentlyPublished,
+    RecentlyPosted,
+    Trending,
 }
 
 #[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
@@ -157,19 +168,58 @@ pub enum ViewEventRecommendationErrResponse {
 
 // Volunteer's
 #[async_trait]
-pub trait ViewEventsByTimestampBoundary {
-
+pub trait ViewPublishedEventsBoundary {
 }
 
-#[async_trait]
-pub trait ViewEventsByCategoryBoundary {
-    
+pub struct ViewPublishedEventsRequest {
+    pub token: ::aliases::string::String,
+    pub filters: ::std::vec::Vec<ViewEventsFilter>,
+}
+
+#[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
+pub type ViewPublishedEventsResponse = ::core::result::Result<ViewPublishedEventsOkResponse, ::std::vec::Vec<ViewPublishedEventsErrResponse>>;
+
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
+#[builder(on(_, into))]
+#[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
+#[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
+pub struct ViewPublishedEventsOkResponse {
+    pub events: ::std::vec::Vec<self::models::EventPreview>,
+}
+
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::thiserror::Error)]
+#[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
+#[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
+pub enum ViewPublishedEventsErrResponse {
+    #[error("Invalid or expired authentication token")]
+    AuthenticationTokenInvalid,
+}
+
+#[derive(::core::fmt::Debug, ::core::clone::Clone)]
+#[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "kebab-case"))]
+#[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
+#[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
+pub enum ViewEventsFilter {
+    ByCategory(::aliases::string::String),
+    BeforeTimestamp(::aliases::time::Timestamp),
+    AfterTimestamp(::aliases::time::Timestamp),
 }
 
 #[async_trait]
 pub trait SubscribeToEventBoundary {
     
 }
+
+pub struct SubscribeToEventRequest {
+    token: ::aliases::string::String,
+    event_id: ::aliases::string::String,
+}
+
+pub type SubscribeToEventResponse = ::core::result::Result<SubscribeToEventOkResponse, ::std::vec::Vec<SubscribeToEventErrResponse>>;
 
 #[async_trait]
 pub trait UnsubscribeFromEventBoundary {
@@ -258,6 +308,17 @@ pub trait ExportVolunteersBoundary {
 
 }
 
+
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
+#[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "kebab-case"))]
+#[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
+#[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
+pub enum ExportFormat {
+    CSV,
+    JSON,
+}
+
 // Common
 #[async_trait]
 pub trait ViewEventChannelBoundary {
@@ -281,27 +342,6 @@ pub trait CreateEventChannelPostCommentBoundary {
 
 // To be exposed to `tsify`/`wasm-bindgen`
 pub mod models {
-    #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
-    #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-    #[cfg_attr(feature = "serde", serde(rename_all = "kebab-case"))]
-    #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
-    #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
-    pub enum EventRecommendationType {
-        RecentlyPublished,
-        RecentlyPosted,
-        Trending,
-    }
-
-    #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
-    #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-    #[cfg_attr(feature = "serde", serde(rename_all = "kebab-case"))]
-    #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
-    #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
-    pub enum ExportFormat {
-        CSV,
-        JSON,
-    }
-
     #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
     #[builder(on(_, into))]
     #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]

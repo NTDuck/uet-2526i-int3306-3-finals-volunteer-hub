@@ -202,11 +202,11 @@ impl ViewEventRecommendationBoundary for ViewEventRecommendationInteractor {
 
         // Rust's type inference fails here
         let events: ::std::vec::Vec<::domain::Event> = match request.r#type {
-            crate::boundaries::models::EventRecommendationType::RecentlyPublished =>
+            crate::boundaries::EventRecommendationType::RecentlyPublished =>
                 ::std::sync::Arc::clone(&self.event_repository).view_recently_approved(request.limit).await?,
-            crate::boundaries::models::EventRecommendationType::RecentlyPosted =>
+            crate::boundaries::EventRecommendationType::RecentlyPosted =>
                 ::std::sync::Arc::clone(&self.event_repository).view_recently_posted(request.limit).await?,
-            crate::boundaries::models::EventRecommendationType::Trending =>
+            crate::boundaries::EventRecommendationType::Trending =>
                 ::std::sync::Arc::clone(&self.event_repository).view_trending(request.limit).await?,
         };
 

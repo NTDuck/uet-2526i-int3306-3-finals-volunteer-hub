@@ -5,6 +5,8 @@ pub trait EventRepository {
     async fn view_recently_approved(self: ::std::sync::Arc<Self>, limit: usize) -> ::aliases::result::Fallible<::std::vec::Vec<::domain::Event>>;
     async fn view_recently_posted(self: ::std::sync::Arc<Self>, limit: usize) -> ::aliases::result::Fallible<::std::vec::Vec<::domain::Event>>;
     async fn view_trending(self: ::std::sync::Arc<Self>, limit: usize) -> ::aliases::result::Fallible<::std::vec::Vec<::domain::Event>>;
+
+    async fn view(self: ::std::sync::Arc<Self>, filters: ::std::vec::Vec<crate::boundaries::models::ViewEventsFilter>) -> ::aliases::result::Fallible<::std::vec::Vec<::domain::Event>>;
 }
 
 #[async_trait]
