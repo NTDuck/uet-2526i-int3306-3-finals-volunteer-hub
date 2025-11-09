@@ -3,6 +3,8 @@ use ::async_trait::async_trait;
 #[async_trait]
 pub trait EventRepository {
     async fn view_recently_approved(self: ::std::sync::Arc<Self>, limit: usize) -> ::aliases::result::Fallible<::std::vec::Vec<::domain::Event>>;
+    async fn view_recently_posted(self: ::std::sync::Arc<Self>, limit: usize) -> ::aliases::result::Fallible<::std::vec::Vec<::domain::Event>>;
+    async fn view_trending(self: ::std::sync::Arc<Self>, limit: usize) -> ::aliases::result::Fallible<::std::vec::Vec<::domain::Event>>;
 }
 
 #[async_trait]

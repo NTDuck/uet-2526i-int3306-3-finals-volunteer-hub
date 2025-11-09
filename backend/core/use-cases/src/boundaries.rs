@@ -116,9 +116,9 @@ pub enum SignUpErrResponse {
 }
 
 #[async_trait]
-pub trait ViewRecentlyPublishedEventsBoundary {
-    async fn apply(self: ::std::sync::Arc<Self>, request: ViewRecentlyPublishedEventsRequest)
-        -> ::aliases::result::Fallible<ViewRecentlyPublishedEventsResponse>;
+pub trait ViewEventRecommendationBoundary {
+    async fn apply(self: ::std::sync::Arc<Self>, request: ViewEventRecommendationRequest)
+        -> ::aliases::result::Fallible<ViewEventRecommendationResponse>;
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
@@ -127,13 +127,14 @@ pub trait ViewRecentlyPublishedEventsBoundary {
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
-pub struct ViewRecentlyPublishedEventsRequest {
+pub struct ViewEventRecommendationRequest {
     pub token: ::aliases::string::String,
+    pub r#type: self::models::EventRecommendationType,
     pub limit: usize,
 }
 
 #[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
-pub type ViewRecentlyPublishedEventsResponse = ::core::result::Result<ViewRecentlyPublishedEventsOkResponse, ::std::vec::Vec<ViewRecentlyPublishedEventsErrResponse>>;
+pub type ViewEventRecommendationResponse = ::core::result::Result<ViewEventRecommendationOkResponse, ::std::vec::Vec<ViewEventRecommendationErrResponse>>;
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
 #[builder(on(_, into))]
@@ -141,7 +142,7 @@ pub type ViewRecentlyPublishedEventsResponse = ::core::result::Result<ViewRecent
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
-pub struct ViewRecentlyPublishedEventsOkResponse {
+pub struct ViewEventRecommendationOkResponse {
     pub events: ::std::vec::Vec<self::models::EventPreview>,
 }
 
@@ -149,19 +150,9 @@ pub struct ViewRecentlyPublishedEventsOkResponse {
 #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
-pub enum ViewRecentlyPublishedEventsErrResponse {
+pub enum ViewEventRecommendationErrResponse {
     #[error("Invalid or expired authentication token")]
     AuthenticationTokenInvalid,
-}
-
-#[async_trait]
-pub trait ViewRecentlyPostedEventsBoundary {
-    
-}
-
-#[async_trait]
-pub trait ViewTrendingEventsBoundary {
-
 }
 
 // Volunteer's
@@ -290,6 +281,17 @@ pub trait CreateEventChannelPostCommentBoundary {
 
 // To be exposed to `tsify`/`wasm-bindgen`
 pub mod models {
+    #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
+    #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+    #[cfg_attr(feature = "serde", serde(rename_all = "kebab-case"))]
+    #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
+    #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
+    pub enum EventRecommendationType {
+        RecentlyPublished,
+        RecentlyPosted,
+        Trending,
+    }
+
     #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
     #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "kebab-case"))]

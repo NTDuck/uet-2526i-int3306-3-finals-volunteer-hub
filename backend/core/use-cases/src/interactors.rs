@@ -183,7 +183,7 @@ impl SignUpBoundary for SignUpInteractor {
 }
 
 #[derive(::bon::Builder)]
-pub struct ViewRecentlyPublishedEventsInteractor {
+pub struct ViewEventRecommendationInteractor {
     event_repository: ::std::sync::Arc<dyn EventRepository + ::core::marker::Send + ::core::marker::Sync>,
 
     uuid_codec: ::std::sync::Arc<dyn UuidCodec + ::core::marker::Send + ::core::marker::Sync>,
@@ -191,17 +191,25 @@ pub struct ViewRecentlyPublishedEventsInteractor {
 }
 
 #[async_trait]
-impl ViewRecentlyPublishedEventsBoundary for ViewRecentlyPublishedEventsInteractor {
-    async fn apply(self: ::std::sync::Arc<Self>, request: ViewRecentlyPublishedEventsRequest)
-    -> ::aliases::result::Fallible<ViewRecentlyPublishedEventsResponse> {
+impl ViewEventRecommendationBoundary for ViewEventRecommendationInteractor {
+    async fn apply(self: ::std::sync::Arc<Self>, request: ViewEventRecommendationRequest)
+    -> ::aliases::result::Fallible<ViewEventRecommendationResponse> {
         if !::std::sync::Arc::clone(&self.auth_token_generator).verify(request.token).await? {
-            return ::aliases::result::Fallible::Ok(ViewRecentlyPublishedEventsResponse::Err(::std::vec![
-                ViewRecentlyPublishedEventsErrResponse::AuthenticationTokenInvalid,
+            return ::aliases::result::Fallible::Ok(ViewEventRecommendationResponse::Err(::std::vec![
+                ViewEventRecommendationErrResponse::AuthenticationTokenInvalid,
             ]));
         }
 
         // Rust's type inference fails here
-        let events: ::std::vec::Vec<::domain::Event> = ::std::sync::Arc::clone(&self.event_repository).view_recently_approved(request.limit).await?;
+        let events: ::std::vec::Vec<::domain::Event> = match request.r#type {
+            crate::boundaries::models::EventRecommendationType::RecentlyPublished =>
+                ::std::sync::Arc::clone(&self.event_repository).view_recently_approved(request.limit).await?,
+            crate::boundaries::models::EventRecommendationType::RecentlyPosted =>
+                ::std::sync::Arc::clone(&self.event_repository).view_recently_posted(request.limit).await?,
+            crate::boundaries::models::EventRecommendationType::Trending =>
+                ::std::sync::Arc::clone(&self.event_repository).view_trending(request.limit).await?,
+        };
+
         let events = ::futures::future::try_join_all(events.into_iter().map(|event| {
             let uuid_codec = ::std::sync::Arc::clone(&self.uuid_codec);
             async move {
@@ -216,8 +224,8 @@ impl ViewRecentlyPublishedEventsBoundary for ViewRecentlyPublishedEventsInteract
         }))
             .await?;
 
-        let response = ViewRecentlyPublishedEventsOkResponse::builder().events(events).build();
+        let response = ViewEventRecommendationOkResponse::builder().events(events).build();
 
-        ::aliases::result::Fallible::Ok(ViewRecentlyPublishedEventsResponse::Ok(response))
+        ::aliases::result::Fallible::Ok(ViewEventRecommendationResponse::Ok(response))
     }
 }
