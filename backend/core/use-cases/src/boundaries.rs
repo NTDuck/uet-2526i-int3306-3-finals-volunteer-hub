@@ -19,6 +19,7 @@ pub struct SignInRequest {
     pub password: ::aliases::string::String,
 }
 
+#[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
 pub type SignInResponse = ::core::result::Result<SignInOkResponse, ::std::vec::Vec<SignInErrResponse>>;
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
@@ -83,8 +84,10 @@ pub struct SignUpRequest {
     pub last_name: ::aliases::string::String,
 }
 
+#[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
 pub type SignUpResponse = ::core::result::Result<SignUpOkResponse, ::std::vec::Vec<SignUpErrResponse>>;
 
+#[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
 pub type SignUpOkResponse = ();
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::thiserror::Error)]
@@ -114,12 +117,46 @@ pub enum SignUpErrResponse {
 
 #[async_trait]
 pub trait ViewRecentlyPublishedEventsBoundary {
+    async fn apply(self: ::std::sync::Arc<Self>, request: ViewRecentlyPublishedEventsRequest)
+        -> ::aliases::result::Fallible<ViewRecentlyPublishedEventsResponse>;
+}
 
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
+#[builder(on(_, into))]
+#[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
+#[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
+pub struct ViewRecentlyPublishedEventsRequest {
+    pub token: ::aliases::string::String,
+    pub limit: usize,
+}
+
+#[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
+pub type ViewRecentlyPublishedEventsResponse = ::core::result::Result<ViewRecentlyPublishedEventsOkResponse, ::std::vec::Vec<ViewRecentlyPublishedEventsErrResponse>>;
+
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
+#[builder(on(_, into))]
+#[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
+#[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
+pub struct ViewRecentlyPublishedEventsOkResponse {
+    pub events: ::std::vec::Vec<self::models::EventPreview>,
+}
+
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::thiserror::Error)]
+#[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
+#[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
+pub enum ViewRecentlyPublishedEventsErrResponse {
+    #[error("Invalid or expired authentication token")]
+    AuthenticationTokenInvalid,
 }
 
 #[async_trait]
 pub trait ViewRecentlyPostedEventsBoundary {
-
+    
 }
 
 #[async_trait]
@@ -271,12 +308,13 @@ pub mod models {
     #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
     pub struct Event {
         pub id: ::aliases::string::String,
+        pub channel_id: ::core::option::Option<::aliases::string::String>,
 
-        pub status: self::EventStatus,
+        pub statuses: ::std::vec::Vec<self::EventStatus>,
 
         pub name: ::aliases::string::String,
         pub description: ::aliases::string::String,
-        pub category: ::aliases::string::String,
+        pub categories: ::std::vec::Vec<::aliases::string::String>,
         pub location: ::aliases::string::String,
     }
 
@@ -289,19 +327,57 @@ pub mod models {
         Created {
             created_by_manager_id: ::aliases::string::String,
         },
-        Published {
-            created_by_manager_id: ::aliases::string::String,
-            published_by_administrator_id: ::aliases::string::String,
-            published_at: ::aliases::time::Timestamp,
-            channel_id: ::aliases::string::String,
+        Approved {
+            approved_by_administrator_id: ::aliases::string::String,
+            approved_at: ::aliases::time::Timestamp,
+        },
+        Rejected {
+            rejected_by_administrator_id: ::aliases::string::String,
+            rejected_at: ::aliases::time::Timestamp,
         },
         Completed {
-            created_by_manager_id: ::aliases::string::String,
-            published_by_administrator_id: ::aliases::string::String,
-            published_at: ::aliases::time::Timestamp,
+            completed_by_manager_id: ::aliases::string::String,
             completed_at: ::aliases::time::Timestamp,
-            channel_id: ::aliases::string::String,
         },
+    }
+
+    #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
+    #[builder(on(_, into))]
+    #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+    #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+    #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
+    #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
+    pub struct EventPreview {
+        pub id: ::aliases::string::String,
+
+        #[builder(with = |value: ::std::vec::Vec<impl ::core::convert::Into<self::EventStatusPreview>>| value.into_iter().map(::core::convert::Into::into).collect())]
+        pub statuses: ::std::vec::Vec<self::EventStatusPreview>,
+
+        pub name: ::aliases::string::String,
+        pub categories: ::std::vec::Vec<::aliases::string::String>,
+    }
+
+    #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
+    #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+    #[cfg_attr(feature = "serde", serde(rename_all = "kebab-case", rename_all_fields = "kebab-case"))]
+    #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
+    #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
+    pub enum EventStatusPreview {
+        Created,
+        Approved,
+        Rejected,
+        Completed,
+    }
+
+    impl ::core::convert::From<::domain::EventStatus> for EventStatusPreview {
+        fn from(value: ::domain::EventStatus) -> Self {
+            match value {
+                ::domain::EventStatus::Created { .. } => Self::Created,
+                ::domain::EventStatus::Approved { .. } => Self::Approved,
+                ::domain::EventStatus::Rejected { .. } => Self::Rejected,
+                ::domain::EventStatus::Completed { .. } => Self::Completed,
+            }
+        }
     }
 
     #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]

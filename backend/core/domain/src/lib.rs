@@ -8,7 +8,7 @@ pub struct Event {
 
     pub name: ::aliases::string::String,
     pub description: ::aliases::string::String,
-    pub category: ::aliases::string::String,
+    pub categories: ::std::vec::Vec<::aliases::string::String>,
     pub location: ::aliases::string::String,
 }
 

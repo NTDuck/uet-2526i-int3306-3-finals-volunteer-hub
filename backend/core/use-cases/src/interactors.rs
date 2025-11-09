@@ -181,3 +181,43 @@ impl SignUpBoundary for SignUpInteractor {
         ::aliases::result::Fallible::Ok(SignUpResponse::Ok(()))
     }
 }
+
+#[derive(::bon::Builder)]
+pub struct ViewRecentlyPublishedEventsInteractor {
+    event_repository: ::std::sync::Arc<dyn EventRepository + ::core::marker::Send + ::core::marker::Sync>,
+
+    uuid_codec: ::std::sync::Arc<dyn UuidCodec + ::core::marker::Send + ::core::marker::Sync>,
+    auth_token_generator: ::std::sync::Arc<dyn AuthenticationTokenGenerator + ::core::marker::Send + ::core::marker::Sync>,
+}
+
+#[async_trait]
+impl ViewRecentlyPublishedEventsBoundary for ViewRecentlyPublishedEventsInteractor {
+    async fn apply(self: ::std::sync::Arc<Self>, request: ViewRecentlyPublishedEventsRequest)
+    -> ::aliases::result::Fallible<ViewRecentlyPublishedEventsResponse> {
+        if !::std::sync::Arc::clone(&self.auth_token_generator).verify(request.token).await? {
+            return ::aliases::result::Fallible::Ok(ViewRecentlyPublishedEventsResponse::Err(::std::vec![
+                ViewRecentlyPublishedEventsErrResponse::AuthenticationTokenInvalid,
+            ]));
+        }
+
+        // Rust's type inference fails here
+        let events: ::std::vec::Vec<::domain::Event> = ::std::sync::Arc::clone(&self.event_repository).view_recently_approved(request.limit).await?;
+        let events = ::futures::future::try_join_all(events.into_iter().map(|event| {
+            let uuid_codec = ::std::sync::Arc::clone(&self.uuid_codec);
+            async move {
+                ::futures::future::ok::<_, ::aliases::result::Error>(crate::boundaries::models::EventPreview::builder()
+                    .id(uuid_codec.format(event.id).await?)
+                    .statuses(event.statuses)
+                    .name(event.name)
+                    .categories(event.categories)
+                    .build())
+                .await
+            }
+        }))
+            .await?;
+
+        let response = ViewRecentlyPublishedEventsOkResponse::builder().events(events).build();
+
+        ::aliases::result::Fallible::Ok(ViewRecentlyPublishedEventsResponse::Ok(response))
+    }
+}
