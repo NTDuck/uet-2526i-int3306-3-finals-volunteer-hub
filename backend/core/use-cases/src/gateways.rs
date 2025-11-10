@@ -6,7 +6,7 @@ pub trait EventRepository {
     async fn view_recently_posted(self: ::std::sync::Arc<Self>, limit: usize) -> ::aliases::result::Fallible<::std::vec::Vec<::domain::Event>>;
     async fn view_trending(self: ::std::sync::Arc<Self>, limit: usize) -> ::aliases::result::Fallible<::std::vec::Vec<::domain::Event>>;
 
-    async fn view(self: ::std::sync::Arc<Self>, filters: ::std::vec::Vec<crate::boundaries::models::ViewEventsFilter>) -> ::aliases::result::Fallible<::std::vec::Vec<::domain::Event>>;
+    async fn view(self: ::std::sync::Arc<Self>, filter: self::models::ViewEventsFilter) -> ::aliases::result::Fallible<::std::vec::Vec<::domain::Event>>;
 }
 
 #[async_trait]
@@ -103,6 +103,39 @@ pub trait PasswordHasher {
 
 // Not to be exposed to `tsify`/`wasm-bindgen`
 pub mod models {
+    #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
+    #[builder(on(_, into))]
+    pub struct ViewEventsFilter {
+        #[builder(with = |value: ::std::vec::Vec<impl ::core::convert::Into<self::EventStatusPreview>>| value.into_iter().map(::core::convert::Into::into).collect())]
+        pub statuses: ::std::vec::Vec<self::EventStatusPreview>,
+
+        pub name: ::core::option::Option<::aliases::string::String>,
+        pub description: ::core::option::Option<::aliases::string::String>,
+        pub category: ::core::option::Option<::aliases::string::String>,
+        pub location: ::core::option::Option<::aliases::string::String>,
+
+        pub timestamps: ::core::ops::Range<::core::option::Option<::aliases::time::Timestamp>>,
+    }
+
+    #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
+    pub enum EventStatusPreview {
+        Created,
+        Approved,
+        Rejected,
+        Completed,
+    }
+
+    impl ::core::convert::From<::domain::EventStatus> for EventStatusPreview {
+        fn from(value: ::domain::EventStatus) -> Self {
+            match value {
+                ::domain::EventStatus::Created { .. } => Self::Created,
+                ::domain::EventStatus::Approved { .. } => Self::Approved,
+                ::domain::EventStatus::Rejected { .. } => Self::Rejected,
+                ::domain::EventStatus::Completed { .. } => Self::Completed,
+            }
+        }
+    }
+
     #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::bon::Builder)]
     #[builder(on(_, into))]
     #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]

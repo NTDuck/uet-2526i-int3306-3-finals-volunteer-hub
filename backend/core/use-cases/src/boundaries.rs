@@ -169,11 +169,21 @@ pub enum ViewEventRecommendationErrResponse {
 // Volunteer's
 #[async_trait]
 pub trait ViewPublishedEventsBoundary {
+    async fn apply(self: ::std::sync::Arc<Self>, request: ViewPublishedEventsRequest)
+        -> ::aliases::result::Fallible<ViewPublishedEventsResponse>;
 }
 
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
+#[builder(on(_, into))]
+#[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
+#[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
 pub struct ViewPublishedEventsRequest {
     pub token: ::aliases::string::String,
-    pub filters: ::std::vec::Vec<ViewEventsFilter>,
+
+    #[cfg_attr(feature = "serde", serde(flatten))]
+    pub filter: ViewPublishedEventsFilter,
 }
 
 #[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
@@ -198,22 +208,48 @@ pub enum ViewPublishedEventsErrResponse {
     AuthenticationTokenInvalid,
 }
 
-#[derive(::core::fmt::Debug, ::core::clone::Clone)]
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
+#[builder(on(_, into))]
 #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-#[cfg_attr(feature = "serde", serde(rename_all = "kebab-case"))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
-pub enum ViewEventsFilter {
-    ByCategory(::aliases::string::String),
-    BeforeTimestamp(::aliases::time::Timestamp),
-    AfterTimestamp(::aliases::time::Timestamp),
+pub struct ViewPublishedEventsFilter {
+    pub name: ::core::option::Option<::aliases::string::String>,
+    pub description: ::core::option::Option<::aliases::string::String>,
+    pub category: ::core::option::Option<::aliases::string::String>,
+    pub location: ::core::option::Option<::aliases::string::String>,
+
+    #[builder(default)]
+    pub timestamps: ::core::ops::Range<::core::option::Option<::aliases::time::Timestamp>>,
+}
+
+impl ::core::convert::From<ViewPublishedEventsFilter> for crate::gateways::models::ViewEventsFilter {
+    fn from(value: ViewPublishedEventsFilter) -> Self {
+        Self::builder()
+            .statuses(::std::vec![
+                crate::gateways::models::EventStatusPreview::Approved,
+            ])
+            .maybe_name(value.name)
+            .maybe_description(value.description)
+            .maybe_category(value.category)
+            .maybe_location(value.location)
+            .timestamps(value.timestamps)
+            .build()
+    }
 }
 
 #[async_trait]
 pub trait SubscribeToEventBoundary {
-    
+    async fn apply(self: ::std::sync::Arc<Self>, request: SubscribeToEventRequest) -> ::aliases::result::Fallible<SubscribeToEventResponse>;
 }
 
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
+#[builder(on(_, into))]
+#[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
+#[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
 pub struct SubscribeToEventRequest {
     token: ::aliases::string::String,
     event_id: ::aliases::string::String,
@@ -221,14 +257,86 @@ pub struct SubscribeToEventRequest {
 
 pub type SubscribeToEventResponse = ::core::result::Result<SubscribeToEventOkResponse, ::std::vec::Vec<SubscribeToEventErrResponse>>;
 
+#[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
+pub type SubscribeToEventOkResponse = ();
+
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::thiserror::Error)]
+#[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
+#[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
+pub enum SubscribeToEventErrResponse {
+    #[error("Invalid or expired authentication token")]
+    AuthenticationTokenInvalid,
+
+    #[error("User not authorized: expecting role `{expected_user_role}`, found `{user_role}`", expected_user_role = self::models::UserRole::Volunteer)]
+    UserUnauthorized { user_role: self::models::UserRole },
+    
+    #[error("Event not found")]  // or not published yet
+    EventNotFound,
+
+    #[error("User already subscribed")]
+    UserAlreadySubscribed,
+}
+
 #[async_trait]
 pub trait UnsubscribeFromEventBoundary {
+    async fn apply(self: ::std::sync::Arc<Self>, request: UnsubscribeFromEventRequest) -> ::aliases::result::Fallible<UnsubscribeFromEventResponse>;
+}
+
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
+#[builder(on(_, into))]
+#[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
+#[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
+pub struct UnsubscribeFromEventRequest {
+    token: ::aliases::string::String,
+    event_id: ::aliases::string::String,
+}
+
+pub type UnsubscribeFromEventResponse = ::core::result::Result<UnsubscribeFromEventOkResponse, ::std::vec::Vec<UnsubscribeFromEventErrResponse>>;
+
+#[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
+pub type UnsubscribeFromEventOkResponse = ();
+
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::thiserror::Error)]
+#[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
+#[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
+pub enum UnsubscribeFromEventErrResponse {
+    #[error("Invalid or expired authentication token")]
+    AuthenticationTokenInvalid,
+
+    #[error("User not authorized: expecting role `{expected_user_role}`, found `{user_role}`", expected_user_role = self::models::UserRole::Volunteer)]
+    UserUnauthorized { user_role: self::models::UserRole },
     
+    #[error("Event not found")]  // or not published yet
+    EventNotFound,
+
+    #[error("User not subscribed")]
+    UserNotSubscribed,
 }
 
 #[async_trait]
 pub trait ViewEventHistoryBoundary {
 
+}
+
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
+#[builder(on(_, into))]
+#[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
+#[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
+pub struct ViewEventHistoryRequest {
+    token: ::aliases::string::String,
+}
+
+#[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
+pub type ViewEventHistoryResponse = ::core::result::Result<ViewEventHistoryOkResponse, ::std::vec::Vec<ViewEventHistoryErrResponse>>;
+
+pub struct ViewEventHistoryOkResponse {
+    events: ::std::vec::Vec<self::models::Event>,
 }
 
 // Event manager's
@@ -307,7 +415,6 @@ pub trait ExportEventsBoundary {
 pub trait ExportVolunteersBoundary {
 
 }
-
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
 #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
@@ -422,7 +529,43 @@ pub mod models {
         }
     }
 
-    #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
+    #[derive(::core::fmt::Debug, ::core::clone::Clone)]
+    #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+    #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+    #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
+    #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
+    pub struct EventAndRegistrationPreview {
+        pub event: self::EventPreview,
+        pub registration: self::EventRegistrationPreview,
+    }
+
+    #[derive(::core::fmt::Debug, ::core::clone::Clone)]
+    #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+    #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+    #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
+    #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
+    pub struct EventRegistrationPreview {
+        pub event_id: ::aliases::string::String,
+        pub volunteer_id: ::aliases::string::String,
+
+        #[builder(with = |value: ::std::vec::Vec<impl ::core::convert::Into<self::EventRegistrationStatusPreview>>| value.into_iter().map(::core::convert::Into::into).collect())]
+        pub statuses: ::std::vec::Vec<self::EventRegistrationStatusPreview>,
+    }
+
+    #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::strum::Display)]
+    #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+    #[cfg_attr(feature = "serde", serde(rename_all = "kebab-case"))]
+    #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
+    #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
+    pub enum EventRegistrationStatusPreview {
+        Pending,
+        Withdrawn,
+        Accepted,
+        Declined,
+        Completed,
+    }
+
+    #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::strum::Display)]
     #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
     #[cfg_attr(feature = "serde", serde(rename_all = "kebab-case"))]
     #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
