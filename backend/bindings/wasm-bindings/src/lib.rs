@@ -1,7 +1,7 @@
 use ::infrastructures::*;
-use ::use_cases::boundaries::*;
+use ::use_cases::_boundaries::*;
 use ::use_cases::gateways::*;
-use ::use_cases::interactors::*;
+use ::use_cases::_interactors::*;
 use ::wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]

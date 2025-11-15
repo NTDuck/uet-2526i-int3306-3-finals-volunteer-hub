@@ -1,6 +1,6 @@
 use ::async_trait::async_trait;
 
-use crate::boundaries::*;
+use crate::_boundaries::*;
 use crate::gateways::*;
 
 #[derive(::bon::Builder)]
@@ -202,18 +202,18 @@ impl ViewEventRecommendationBoundary for ViewEventRecommendationInteractor {
 
         // Rust's type inference fails here
         let events: ::std::vec::Vec<::domain::Event> = match request.r#type {
-            crate::boundaries::EventRecommendationType::RecentlyPublished =>
+            crate::_boundaries::EventRecommendationType::RecentlyPublished =>
                 ::std::sync::Arc::clone(&self.event_repository).view_recently_approved(request.limit).await?,
-            crate::boundaries::EventRecommendationType::RecentlyPosted =>
+            crate::_boundaries::EventRecommendationType::RecentlyPosted =>
                 ::std::sync::Arc::clone(&self.event_repository).view_recently_posted(request.limit).await?,
-            crate::boundaries::EventRecommendationType::Trending =>
+            crate::_boundaries::EventRecommendationType::Trending =>
                 ::std::sync::Arc::clone(&self.event_repository).view_trending(request.limit).await?,
         };
 
         let events = ::futures::future::try_join_all(events.into_iter().map(|event| {
             let uuid_codec = ::std::sync::Arc::clone(&self.uuid_codec);
             async move {
-                ::futures::future::ok::<_, ::aliases::result::Error>(crate::boundaries::models::EventPreview::builder()
+                ::futures::future::ok::<_, ::aliases::result::Error>(crate::_boundaries::models::EventPreview::builder()
                     .id(uuid_codec.format(event.id).await?)
                     .statuses(event.statuses)
                     .name(event.name)

@@ -154,7 +154,7 @@ pub mod models {
     #[builder(on(_, into))]
     struct __AuthenticationTokenPayload {
         user_id: __Uuid,
-        user_role: crate::boundaries::models::UserRole,
+        user_role: crate::_boundaries::models::UserRole,
         expiry_timestamp: ::aliases::time::Timestamp,
     }
 
