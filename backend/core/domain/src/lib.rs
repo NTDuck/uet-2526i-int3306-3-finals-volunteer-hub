@@ -31,6 +31,18 @@ pub enum EventStatus {
     },
 }
 
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::thiserror::Error)]
+pub enum EventBuilderError {
+    #[error("Invalid event name format `{value}`: must be between 4 and 16 characters; lowercase letters, digits, underscores, or hyphens only")]
+    InvalidNameFormat { name: ::aliases::string::String },
+
+    InvalidDescriptionFormat { description: ::aliases::string::String },
+
+    InvalidCategoriesFormat { categories: ::std::vec::Vec<::aliases::string::String> },
+
+    InvalidLocationFormat { location: ::aliases::string::String },
+}
+
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
 pub struct EventChannel {
     pub id: Uuid,
@@ -175,7 +187,7 @@ impl Username {
         let regex = ::aliases::regex!("^[a-z0-9_-]{4,16}$");
 
         if !regex.is_match(&value) {
-            ::core::result::Result::Err(UsernameBuilderError::InvalidFormat)
+            ::core::result::Result::Err(UsernameBuilderError::InvalidFormat { value })
         } else {
             ::core::result::Result::Ok(value)
         }
@@ -190,14 +202,13 @@ impl ::core::ops::Deref for Username {
     }
 }
 
-#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::core::default::Default, ::thiserror::Error)]
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::thiserror::Error)]
 pub enum UsernameBuilderError {
-    #[default]
     #[error(
-        "Invalid username format: must be between 4 and 16 characters; lowercase letters, digits, underscores, or \
+        "Invalid username format `{value}`: must be between 4 and 16 characters; lowercase letters, digits, underscores, or \
          hyphens only"
     )]
-    InvalidFormat,
+    InvalidFormat { value: ::aliases::string::String },
 }
 
 #[derive(
@@ -246,7 +257,7 @@ impl Email {
         );
 
         if !regex.is_match(&value) {
-            ::core::result::Result::Err(EmailBuilderError::InvalidFormat)
+            ::core::result::Result::Err(EmailBuilderError::InvalidFormat { value })
         } else {
             ::core::result::Result::Ok(value)
         }
@@ -261,11 +272,10 @@ impl ::core::ops::Deref for Email {
     }
 }
 
-#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::core::default::Default, ::thiserror::Error)]
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::thiserror::Error)]
 pub enum EmailBuilderError {
-    #[default]
-    #[error("Invalid email format: does not comply with RFC 5322")]
-    InvalidFormat,
+    #[error("Invalid email format `{value}`: does not comply with RFC 5322")]
+    InvalidFormat { value: ::aliases::string::String },
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone)]

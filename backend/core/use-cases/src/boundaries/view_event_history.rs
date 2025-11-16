@@ -18,6 +18,12 @@ pub struct ViewEventHistoryRequest {
 #[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
 pub type ViewEventHistoryResponse = ::core::result::Result<ViewEventHistoryOkResponse, ::std::vec::Vec<ViewEventHistoryErrResponse>>;
 
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
+#[builder(on(_, into))]
+#[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
+#[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
 pub struct ViewEventHistoryOkResponse {
     pub events: ::std::vec::Vec<ViewEventHistoryEvent>,
 }
