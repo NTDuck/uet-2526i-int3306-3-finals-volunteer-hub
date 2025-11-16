@@ -11,7 +11,7 @@ default = ["serde", "wasm-bindings"]
 wasm-bindings = ["dep:tsify", "dep:wasm-bindgen"]
 
 [dependencies]
-aliases = { path = "../../aliases" }
+axiom = { path = "../../axiom" }
 domain = { path = "../domain" }
 
 async-trait = { workspace = true }

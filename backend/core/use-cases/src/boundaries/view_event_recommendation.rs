@@ -3,7 +3,7 @@ use ::async_trait::async_trait;
 #[async_trait]
 pub trait ViewEventRecommendationBoundary {
     async fn apply(self: ::std::sync::Arc<Self>, request: ViewEventRecommendationRequest)
-        -> ::aliases::result::Fallible<ViewEventRecommendationResponse>;
+        -> ::axiom::result::Fallible<ViewEventRecommendationResponse>;
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
@@ -13,7 +13,7 @@ pub trait ViewEventRecommendationBoundary {
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
 pub struct ViewEventRecommendationRequest {
-    pub token: ::aliases::string::String,
+    pub token: ::axiom::string::String,
     pub r#type: ViewEventRecommendationRecommendationType,
     pub limit: usize,
 }
@@ -49,12 +49,12 @@ pub struct ViewEventRecommendationOkResponse {
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
 pub struct ViewEventRecommendationEvent {
-    pub id: ::aliases::string::String,
+    pub id: ::axiom::string::String,
 
     pub status: ViewEventRecommendationEventStatus,
 
-    pub name: ::aliases::string::String,
-    pub categories: ::std::vec::Vec<::aliases::string::String>,
+    pub name: ::axiom::string::String,
+    pub categories: ::std::vec::Vec<::axiom::string::String>,
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::strum::Display)]

@@ -16,8 +16,8 @@ pub struct SignInInteractor {
 impl SignInBoundary for SignInInteractor {
     async fn apply(
         self: ::std::sync::Arc<Self>, request: SignInRequest,
-    ) -> ::aliases::result::Fallible<SignInResponse> {
-        use ::aliases::time::TimestampExt as _;
+    ) -> ::axiom::result::Fallible<SignInResponse> {
+        use ::axiom::time::TimestampExt as _;
 
         let mut errors = ::std::vec::Vec::new();
 
@@ -59,7 +59,7 @@ impl SignInBoundary for SignInInteractor {
         };
 
         let (::core::option::Option::Some(user), ::core::option::Option::Some(password)) = (user, password) else {
-            return ::aliases::result::Fallible::Ok(SignInResponse::Err(errors));
+            return ::axiom::result::Fallible::Ok(SignInResponse::Err(errors));
         };
 
         if !::std::sync::Arc::clone(&self.password_hasher)
@@ -67,26 +67,26 @@ impl SignInBoundary for SignInInteractor {
             .await?
         {
             errors.push(SignInErrResponse::PasswordMismatch);
-            return ::aliases::result::Fallible::Ok(SignInResponse::Err(errors));
+            return ::axiom::result::Fallible::Ok(SignInResponse::Err(errors));
         }
 
         let auth_token_payload = crate::gateways::AuthenticationTokenPayload::builder()
             .user_id(user.id)
             .user_role(user.role)
-            .expiry_timestamp(::aliases::time::Timestamp::now() + Self::AUTH_TOKEN_LIFETIME)
+            .expiry_timestamp(::axiom::time::Timestamp::now() + Self::AUTH_TOKEN_LIFETIME)
             .build();
 
         // Rust's type inference fails here
-        let auth_token: ::aliases::string::String = ::std::sync::Arc::clone(&self.auth_token_generator)
+        let auth_token: ::axiom::string::String = ::std::sync::Arc::clone(&self.auth_token_generator)
             .generate(auth_token_payload)
             .await?;
 
         let response = SignInOkResponse::builder().token(auth_token).user_role(user.role).build();
 
-        ::aliases::result::Fallible::Ok(SignInResponse::Ok(response))
+        ::axiom::result::Fallible::Ok(SignInResponse::Ok(response))
     }
 }
 
 impl SignInInteractor {
-    const AUTH_TOKEN_LIFETIME: ::aliases::time::Interval = ::aliases::time::Interval::hours(1);
+    const AUTH_TOKEN_LIFETIME: ::axiom::time::Interval = ::axiom::time::Interval::hours(1);
 }

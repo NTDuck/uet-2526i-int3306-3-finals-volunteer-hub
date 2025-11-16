@@ -2,7 +2,7 @@ use ::async_trait::async_trait;
 
 #[async_trait]
 pub trait CreateEventBoundary {
-	async fn apply(self: ::std::sync::Arc<Self>, request: CreateEventRequest) -> ::aliases::result::Fallible<CreateEventResponse>;
+	async fn apply(self: ::std::sync::Arc<Self>, request: CreateEventRequest) -> ::axiom::result::Fallible<CreateEventResponse>;
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
@@ -12,10 +12,10 @@ pub trait CreateEventBoundary {
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
 pub struct CreateEventRequest {
-    pub name: ::aliases::string::String,
-    pub description: ::aliases::string::String,
-    pub categories: ::std::vec::Vec<::aliases::string::String>,
-    pub location: ::aliases::string::String,
+    pub name: ::axiom::string::String,
+    pub description: ::axiom::string::String,
+    pub categories: ::std::vec::Vec<::axiom::string::String>,
+    pub location: ::axiom::string::String,
 }
 
 #[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
@@ -35,25 +35,25 @@ pub enum CreateEventErrResponse {
     #[error("User not authorized: expecting role `{expected_user_role}`, found `{user_role}`", expected_user_role = CreateEventUserRole::EventManager)]
     UserUnauthorized { user_role: CreateEventUserRole },
 
-    EventNameInvalid {
-        name: ::aliases::string::String,
-    },
+    // EventNameInvalid {
+    //     name: ::axiom::string::String,
+    // },
 
-    EventDescriptionInvalid {
-        description: ::aliases::string::String,
-    },
+    // EventDescriptionInvalid {
+    //     description: ::axiom::string::String,
+    // },
 
-    EventCategoriesInvalid {
-        categories: ::std::vec::Vec<::aliases::string::String>,
-    },
+    // EventCategoriesInvalid {
+    //     categories: ::std::vec::Vec<::axiom::string::String>,
+    // },
 
-    EventLocationInvalid {
-        location: ::aliases::string::String,
-    },
+    // EventLocationInvalid {
+    //     location: ::axiom::string::String,
+    // },
 
     #[error("Event with name `{name}` already exists")]
     EventAlreadyExists {
-        name: ::aliases::string::String,
+        name: ::axiom::string::String,
     },
 }
 

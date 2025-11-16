@@ -6,7 +6,7 @@ use ::wasm_bindgen::prelude::*;
 #[async_trait]
 pub trait SignInBoundary {
     async fn apply(self: ::std::sync::Arc<Self>, request: SignInRequest)
-        -> ::aliases::result::Fallible<SignInResponse>;
+        -> ::axiom::result::Fallible<SignInResponse>;
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
@@ -16,8 +16,8 @@ pub trait SignInBoundary {
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
 pub struct SignInRequest {
-    pub username_or_email: ::aliases::string::String,
-    pub password: ::aliases::string::String,
+    pub username_or_email: ::axiom::string::String,
+    pub password: ::axiom::string::String,
 }
 
 #[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
@@ -31,7 +31,7 @@ pub type SignInResponse = ::core::result::Result<SignInOkResponse, ::std::vec::V
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
 pub struct SignInOkResponse {
     pub user_role: SignInUserRole,
-    pub token: ::aliases::string::String,
+    pub token: ::axiom::string::String,
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::strum::Display)]
@@ -72,12 +72,12 @@ impl ::core::convert::From<SignInUserRole> for ::domain::UserRole {
 pub enum SignInErrResponse {
     #[error("User with username `{username}` not found")]
     UsernameNotFound {
-        username: ::aliases::string::String,
+        username: ::axiom::string::String,
     },
 
     #[error("User with email `{email}` not found")]
     EmailNotFound {
-        email: ::aliases::string::String,
+        email: ::axiom::string::String,
     },
 
     #[error("{} or {}", 0.0, 0.1)]

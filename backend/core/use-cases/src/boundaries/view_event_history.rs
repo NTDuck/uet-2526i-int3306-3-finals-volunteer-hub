@@ -2,7 +2,7 @@ use ::async_trait::async_trait;
 
 #[async_trait]
 pub trait ViewEventHistoryBoundary {
-    async fn apply(self: ::std::sync::Arc<Self>, request: ViewEventHistoryRequest) -> ::aliases::result::Fallible<ViewEventHistoryResponse>;
+    async fn apply(self: ::std::sync::Arc<Self>, request: ViewEventHistoryRequest) -> ::axiom::result::Fallible<ViewEventHistoryResponse>;
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
@@ -12,7 +12,7 @@ pub trait ViewEventHistoryBoundary {
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
 pub struct ViewEventHistoryRequest {
-    token: ::aliases::string::String,
+    token: ::axiom::string::String,
 }
 
 #[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
@@ -35,13 +35,13 @@ pub struct ViewEventHistoryOkResponse {
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
 pub struct ViewEventHistoryEvent {
-    pub id: ::aliases::string::String,
+    pub id: ::axiom::string::String,
 
     pub status: ViewEventHistoryEventStatus,
     pub registration_status: ViewEventHistoryEventRegistrationStatus,
 
-    pub name: ::aliases::string::String,
-    pub categories: ::std::vec::Vec<::aliases::string::String>,
+    pub name: ::axiom::string::String,
+    pub categories: ::std::vec::Vec<::axiom::string::String>,
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::strum::Display)]

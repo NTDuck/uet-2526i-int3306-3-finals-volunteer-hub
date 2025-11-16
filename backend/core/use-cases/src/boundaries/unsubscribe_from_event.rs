@@ -2,7 +2,7 @@ use ::async_trait::async_trait;
 
 #[async_trait]
 pub trait UnsubscribeFromEventBoundary {
-    async fn apply(self: ::std::sync::Arc<Self>, request: UnsubscribeFromEventRequest) -> ::aliases::result::Fallible<UnsubscribeFromEventResponse>;
+    async fn apply(self: ::std::sync::Arc<Self>, request: UnsubscribeFromEventRequest) -> ::axiom::result::Fallible<UnsubscribeFromEventResponse>;
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
@@ -12,8 +12,8 @@ pub trait UnsubscribeFromEventBoundary {
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
 pub struct UnsubscribeFromEventRequest {
-    token: ::aliases::string::String,
-    event_id: ::aliases::string::String,
+    token: ::axiom::string::String,
+    event_id: ::axiom::string::String,
 }
 
 pub type UnsubscribeFromEventResponse = ::core::result::Result<UnsubscribeFromEventOkResponse, ::std::vec::Vec<UnsubscribeFromEventErrResponse>>;

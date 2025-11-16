@@ -1,10 +1,11 @@
 [workspace]
 members = [
-    "./aliases",
+    "./axiom",
+    "./axiom-derive",
     "./core/domain",
     "./core/use-cases",
     "./infrastructures",
-    "./bindings/*",
+    "./bindings/*", "axiom-derive",
 ]
 exclude = [
     "./bindings/output",

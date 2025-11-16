@@ -15,7 +15,7 @@ pub struct SignUpInteractor {
 impl SignUpBoundary for SignUpInteractor {
     async fn apply(
         self: ::std::sync::Arc<Self>, request: SignUpRequest,
-    ) -> ::aliases::result::Fallible<SignUpResponse> {
+    ) -> ::axiom::result::Fallible<SignUpResponse> {
         let mut errors = ::std::vec::Vec::new();
 
         let username = if let ::core::result::Result::Ok(username) =
@@ -49,7 +49,7 @@ impl SignUpBoundary for SignUpInteractor {
             ::core::option::Option::Some(password),
         ) = (username, email, password)
         else {
-            return ::aliases::result::Fallible::Ok(SignUpResponse::Err(errors));
+            return ::axiom::result::Fallible::Ok(SignUpResponse::Err(errors));
         };
 
         if ::std::sync::Arc::clone(&self.user_repository)
@@ -67,7 +67,7 @@ impl SignUpBoundary for SignUpInteractor {
         }
 
         if !errors.is_empty() {
-            return ::aliases::result::Fallible::Ok(SignUpResponse::Err(errors));
+            return ::axiom::result::Fallible::Ok(SignUpResponse::Err(errors));
         }
 
         let user_id = loop {
@@ -93,6 +93,6 @@ impl SignUpBoundary for SignUpInteractor {
 
         ::std::sync::Arc::clone(&self.user_repository).save(user).await?;
 
-        ::aliases::result::Fallible::Ok(SignUpResponse::Ok(()))
+        ::axiom::result::Fallible::Ok(SignUpResponse::Ok(()))
     }
 }

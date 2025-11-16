@@ -3,7 +3,7 @@ use ::async_trait::async_trait;
 #[async_trait]
 pub trait SignUpBoundary {
     async fn apply(self: ::std::sync::Arc<Self>, request: SignUpRequest)
-        -> ::aliases::result::Fallible<SignUpResponse>;
+        -> ::axiom::result::Fallible<SignUpResponse>;
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
@@ -15,12 +15,12 @@ pub trait SignUpBoundary {
 pub struct SignUpRequest {
     pub user_role: SignUpUserRole,
 
-    pub username: ::aliases::string::String,
-    pub email: ::aliases::string::String,
-    pub password: ::aliases::string::String,
+    pub username: ::axiom::string::String,
+    pub email: ::axiom::string::String,
+    pub password: ::axiom::string::String,
 
-    pub first_name: ::aliases::string::String,
-    pub last_name: ::aliases::string::String,
+    pub first_name: ::axiom::string::String,
+    pub last_name: ::axiom::string::String,
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::strum::Display)]
@@ -76,11 +76,11 @@ pub enum SignUpErrResponse {
 
     #[error("User with username `{username}` already exists")]
     UsernameAlreadyExists {
-        username: ::aliases::string::String,
+        username: ::axiom::string::String,
     },
 
     #[error("User with email `{email}` already exists")]
     EmailAlreadyExists {
-        email: ::aliases::string::String,
+        email: ::axiom::string::String,
     },
 }

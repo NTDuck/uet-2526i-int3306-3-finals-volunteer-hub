@@ -2,11 +2,11 @@ use ::async_trait::async_trait;
 
 #[async_trait]
 pub trait EventRepository {
-    async fn view_recently_approved(self: ::std::sync::Arc<Self>, limit: usize) -> ::aliases::result::Fallible<::std::vec::Vec<::domain::Event>>;
-    async fn view_recently_posted(self: ::std::sync::Arc<Self>, limit: usize) -> ::aliases::result::Fallible<::std::vec::Vec<::domain::Event>>;
-    async fn view_trending(self: ::std::sync::Arc<Self>, limit: usize) -> ::aliases::result::Fallible<::std::vec::Vec<::domain::Event>>;
+    async fn view_recently_approved(self: ::std::sync::Arc<Self>, limit: usize) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::Event>>;
+    async fn view_recently_posted(self: ::std::sync::Arc<Self>, limit: usize) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::Event>>;
+    async fn view_trending(self: ::std::sync::Arc<Self>, limit: usize) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::Event>>;
 
-    async fn view(self: ::std::sync::Arc<Self>, filter: EventRepositoryViewFilter) -> ::aliases::result::Fallible<::std::vec::Vec<::domain::Event>>;
+    async fn view(self: ::std::sync::Arc<Self>, filter: EventRepositoryViewFilter) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::Event>>;
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
@@ -15,12 +15,12 @@ pub struct EventRepositoryViewFilter {
     #[builder(with = |value: ::std::vec::Vec<impl ::core::convert::Into<EventRepositoryViewFilterEventStatus>>| value.into_iter().map(::core::convert::Into::into).collect())]
     pub statuses: ::std::vec::Vec<EventRepositoryViewFilterEventStatus>,
 
-    pub name: ::core::option::Option<::aliases::string::String>,
-    pub description: ::core::option::Option<::aliases::string::String>,
-    pub category: ::core::option::Option<::aliases::string::String>,
-    pub location: ::core::option::Option<::aliases::string::String>,
+    pub name: ::core::option::Option<::axiom::string::String>,
+    pub description: ::core::option::Option<::axiom::string::String>,
+    pub category: ::core::option::Option<::axiom::string::String>,
+    pub location: ::core::option::Option<::axiom::string::String>,
 
-    pub timestamps: ::core::ops::Range<::core::option::Option<::aliases::time::Timestamp>>,
+    pub timestamps: ::core::ops::Range<::core::option::Option<::axiom::time::Timestamp>>,
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
@@ -44,80 +44,80 @@ impl ::core::convert::From<::domain::EventStatus> for EventRepositoryViewFilterE
 
 #[async_trait]
 pub trait UserRepository {
-    async fn save(self: ::std::sync::Arc<Self>, user: ::domain::User) -> ::aliases::result::Fallible;
+    async fn save(self: ::std::sync::Arc<Self>, user: ::domain::User) -> ::axiom::result::Fallible;
 
     async fn get_by_id(
         self: ::std::sync::Arc<Self>, id: ::domain::Uuid,
-    ) -> ::aliases::result::Fallible<::core::option::Option<::domain::User>>;
+    ) -> ::axiom::result::Fallible<::core::option::Option<::domain::User>>;
     async fn get_by_username(
         self: ::std::sync::Arc<Self>, username: ::domain::Username,
-    ) -> ::aliases::result::Fallible<::core::option::Option<::domain::User>>;
+    ) -> ::axiom::result::Fallible<::core::option::Option<::domain::User>>;
     async fn get_by_email(
         self: ::std::sync::Arc<Self>, email: ::domain::Email,
-    ) -> ::aliases::result::Fallible<::core::option::Option<::domain::User>>;
+    ) -> ::axiom::result::Fallible<::core::option::Option<::domain::User>>;
 
-    async fn contains_id(self: ::std::sync::Arc<Self>, id: ::domain::Uuid) -> ::aliases::result::Fallible<bool> {
-        ::aliases::result::Fallible::Ok(self.get_by_id(id).await?.is_some())
+    async fn contains_id(self: ::std::sync::Arc<Self>, id: ::domain::Uuid) -> ::axiom::result::Fallible<bool> {
+        ::axiom::result::Fallible::Ok(self.get_by_id(id).await?.is_some())
     }
 
     async fn contains_username(
         self: ::std::sync::Arc<Self>, username: ::domain::Username,
-    ) -> ::aliases::result::Fallible<bool> {
-        ::aliases::result::Fallible::Ok(self.get_by_username(username).await?.is_some())
+    ) -> ::axiom::result::Fallible<bool> {
+        ::axiom::result::Fallible::Ok(self.get_by_username(username).await?.is_some())
     }
 
-    async fn contains_email(self: ::std::sync::Arc<Self>, email: ::domain::Email) -> ::aliases::result::Fallible<bool> {
-        ::aliases::result::Fallible::Ok(self.get_by_email(email).await?.is_some())
+    async fn contains_email(self: ::std::sync::Arc<Self>, email: ::domain::Email) -> ::axiom::result::Fallible<bool> {
+        ::axiom::result::Fallible::Ok(self.get_by_email(email).await?.is_some())
     }
 }
 
 #[async_trait]
 pub trait UuidGenerator {
-    async fn generate(self: ::std::sync::Arc<Self>) -> ::aliases::result::Fallible<::domain::Uuid>;
+    async fn generate(self: ::std::sync::Arc<Self>) -> ::axiom::result::Fallible<::domain::Uuid>;
 
     async fn get_timestamp(
         self: ::std::sync::Arc<Self>, uuid: &::domain::Uuid,
-    ) -> ::aliases::result::Fallible<::aliases::time::Timestamp>;
+    ) -> ::axiom::result::Fallible<::axiom::time::Timestamp>;
 }
 
 #[async_trait]
 pub trait UuidCodec {
-    async fn format(self: ::std::sync::Arc<Self>, uuid: ::domain::Uuid) -> ::aliases::result::Fallible<::aliases::string::String>;
-    async fn parse(self: ::std::sync::Arc<Self>, uuid: ::aliases::string::String) -> ::aliases::result::Fallible<::domain::Uuid>;
+    async fn format(self: ::std::sync::Arc<Self>, uuid: ::domain::Uuid) -> ::axiom::result::Fallible<::axiom::string::String>;
+    async fn parse(self: ::std::sync::Arc<Self>, uuid: ::axiom::string::String) -> ::axiom::result::Fallible<::domain::Uuid>;
 }
 
 #[async_trait]
 pub trait AuthenticationTokenGenerator {
     async fn generate(
         self: ::std::sync::Arc<Self>, payload: AuthenticationTokenPayload,
-    ) -> ::aliases::result::Fallible<::aliases::string::String>;
+    ) -> ::axiom::result::Fallible<::axiom::string::String>;
 
     async fn get_payload(
-        self: ::std::sync::Arc<Self>, token: ::aliases::string::String,
-    ) -> ::aliases::result::Fallible<::core::option::Option<AuthenticationTokenPayload>>;
+        self: ::std::sync::Arc<Self>, token: ::axiom::string::String,
+    ) -> ::axiom::result::Fallible<::core::option::Option<AuthenticationTokenPayload>>;
 
     async fn get_user_id(
-        self: ::std::sync::Arc<Self>, token: ::aliases::string::String,
-    ) -> ::aliases::result::Fallible<::core::option::Option<::domain::Uuid>> {
-        ::aliases::result::Fallible::Ok(self.get_payload(token).await?.map(|payload| payload.user_id))
+        self: ::std::sync::Arc<Self>, token: ::axiom::string::String,
+    ) -> ::axiom::result::Fallible<::core::option::Option<::domain::Uuid>> {
+        ::axiom::result::Fallible::Ok(self.get_payload(token).await?.map(|payload| payload.user_id))
     }
 
     async fn get_user_role(
-        self: ::std::sync::Arc<Self>, token: ::aliases::string::String,
-    ) -> ::aliases::result::Fallible<::core::option::Option<::domain::UserRole>> {
-        ::aliases::result::Fallible::Ok(self.get_payload(token).await?.map(|payload| payload.user_role))
+        self: ::std::sync::Arc<Self>, token: ::axiom::string::String,
+    ) -> ::axiom::result::Fallible<::core::option::Option<::domain::UserRole>> {
+        ::axiom::result::Fallible::Ok(self.get_payload(token).await?.map(|payload| payload.user_role))
     }
 
     async fn get_expiry_timestamp(
-        self: ::std::sync::Arc<Self>, token: ::aliases::string::String,
-    ) -> ::aliases::result::Fallible<::core::option::Option<::aliases::time::Timestamp>> {
-        ::aliases::result::Fallible::Ok(self.get_payload(token).await?.map(|payload| payload.expiry_timestamp))
+        self: ::std::sync::Arc<Self>, token: ::axiom::string::String,
+    ) -> ::axiom::result::Fallible<::core::option::Option<::axiom::time::Timestamp>> {
+        ::axiom::result::Fallible::Ok(self.get_payload(token).await?.map(|payload| payload.expiry_timestamp))
     }
 
     async fn verify(
-        self: ::std::sync::Arc<Self>, token: ::aliases::string::String,
-    ) -> ::aliases::result::Fallible<bool> {
-        ::aliases::result::Fallible::Ok(self.get_payload(token).await?.is_some())
+        self: ::std::sync::Arc<Self>, token: ::axiom::string::String,
+    ) -> ::axiom::result::Fallible<bool> {
+        ::axiom::result::Fallible::Ok(self.get_payload(token).await?.is_some())
     }
 }
 
@@ -131,7 +131,7 @@ pub trait AuthenticationTokenGenerator {
 pub struct AuthenticationTokenPayload {
     pub user_id: ::domain::Uuid,
     pub user_role: ::domain::UserRole,
-    pub expiry_timestamp: ::aliases::time::Timestamp,
+    pub expiry_timestamp: ::axiom::time::Timestamp,
 }
 
 #[cfg(feature = "serde")]
@@ -140,7 +140,7 @@ pub struct AuthenticationTokenPayload {
 struct AuthenticationTokenPayloadSerdeImpl {
     user_id: AuthenticationTokenPayloadSerdeImplUuid,
     user_role: AuthenticationTokenPayloadSerdeImplUntaggedUserRole,
-    expiry_timestamp: ::aliases::time::Timestamp,
+    expiry_timestamp: ::axiom::time::Timestamp,
 }
 
 #[cfg(feature = "serde")]
@@ -231,11 +231,11 @@ impl ::core::convert::From<AuthenticationTokenPayloadSerdeImplUntaggedUserRole> 
 pub trait PasswordHasher {
     async fn hash(
         self: ::std::sync::Arc<Self>, password: ::domain::Password,
-    ) -> ::aliases::result::Fallible<::domain::PasswordDigest>;
+    ) -> ::axiom::result::Fallible<::domain::PasswordDigest>;
 
     async fn verify(
         self: ::std::sync::Arc<Self>, password: ::domain::Password, digest: ::domain::PasswordDigest,
-    ) -> ::aliases::result::Fallible<bool> {
-        ::aliases::result::Fallible::Ok(self.hash(password).await? == digest)
+    ) -> ::axiom::result::Fallible<bool> {
+        ::axiom::result::Fallible::Ok(self.hash(password).await? == digest)
     }
 }

@@ -3,7 +3,7 @@ use ::async_trait::async_trait;
 #[async_trait]
 pub trait ViewPublishedEventsBoundary {
     async fn apply(self: ::std::sync::Arc<Self>, request: ViewPublishedEventsRequest)
-        -> ::aliases::result::Fallible<ViewPublishedEventsResponse>;
+        -> ::axiom::result::Fallible<ViewPublishedEventsResponse>;
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
@@ -13,7 +13,7 @@ pub trait ViewPublishedEventsBoundary {
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
 pub struct ViewPublishedEventsRequest {
-    pub token: ::aliases::string::String,
+    pub token: ::axiom::string::String,
 
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub filter: ViewPublishedEventsFilter,
@@ -39,12 +39,12 @@ pub struct ViewPublishedEventsOkResponse {
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
 pub struct ViewPublishedEventsEvent {
-    pub id: ::aliases::string::String,
+    pub id: ::axiom::string::String,
 
     pub status: ViewPublishedEventsEventStatus,
 
-    pub name: ::aliases::string::String,
-    pub categories: ::std::vec::Vec<::aliases::string::String>,
+    pub name: ::axiom::string::String,
+    pub categories: ::std::vec::Vec<::axiom::string::String>,
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::strum::Display)]
@@ -86,13 +86,13 @@ pub enum ViewPublishedEventsErrResponse {
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
 pub struct ViewPublishedEventsFilter {
-    pub name: ::core::option::Option<::aliases::string::String>,
-    pub description: ::core::option::Option<::aliases::string::String>,
-    pub category: ::core::option::Option<::aliases::string::String>,
-    pub location: ::core::option::Option<::aliases::string::String>,
+    pub name: ::core::option::Option<::axiom::string::String>,
+    pub description: ::core::option::Option<::axiom::string::String>,
+    pub category: ::core::option::Option<::axiom::string::String>,
+    pub location: ::core::option::Option<::axiom::string::String>,
 
     #[builder(default)]
-    pub timestamps: ::core::ops::Range<::core::option::Option<::aliases::time::Timestamp>>,
+    pub timestamps: ::core::ops::Range<::core::option::Option<::axiom::time::Timestamp>>,
 }
 
 impl ::core::convert::From<ViewPublishedEventsFilter> for crate::gateways::EventRepositoryViewFilter {

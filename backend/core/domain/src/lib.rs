@@ -6,10 +6,10 @@ pub struct Event {
 
     pub statuses: ::std::vec::Vec<EventStatus>,
 
-    pub name: ::aliases::string::String,
-    pub description: ::aliases::string::String,
-    pub categories: ::std::vec::Vec<::aliases::string::String>,
-    pub location: ::aliases::string::String,
+    pub name: ::axiom::string::String,
+    pub description: ::axiom::string::String,
+    pub categories: ::std::vec::Vec<::axiom::string::String>,
+    pub location: ::axiom::string::String,
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
@@ -19,15 +19,15 @@ pub enum EventStatus {
     },
     Approved {
         approved_by_administrator_id: Uuid,
-        approved_at: ::aliases::time::Timestamp,
+        approved_at: ::axiom::time::Timestamp,
     },
     Rejected {
         rejected_by_administrator_id: Uuid,
-        rejected_at: ::aliases::time::Timestamp,
+        rejected_at: ::axiom::time::Timestamp,
     },
     Completed {
         completed_by_manager_id: Uuid,
-        completed_at: ::aliases::time::Timestamp,
+        completed_at: ::axiom::time::Timestamp,
     },
 }
 
@@ -54,7 +54,7 @@ pub struct EventChannelPostComment {
     pub id: Uuid,
     pub volunteer_id: Uuid,
 
-    pub content: ::aliases::string::String,
+    pub content: ::axiom::string::String,
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
@@ -67,8 +67,8 @@ pub struct User {
     pub email: Email,
     pub password: PasswordDigest,
 
-    pub first_name: ::aliases::string::String,
-    pub last_name: ::aliases::string::String,
+    pub first_name: ::axiom::string::String,
+    pub last_name: ::axiom::string::String,
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
@@ -87,17 +87,17 @@ pub enum UserRole {
     ::core::cmp::PartialOrd,
     ::core::hash::Hash
 )]
-pub struct Username(::aliases::string::String);
+pub struct Username(::axiom::string::String);
 
 #[::bon::bon]
 impl Username {
     #[builder(on(_, into))]
-    pub fn new(value: ::aliases::string::String) -> ::core::result::Result<Self, UsernameBuilderError> {
+    pub fn new(value: ::axiom::string::String) -> ::core::result::Result<Self, UsernameBuilderError> {
         let value = Self::normalize(value);
         Self::validate(value).map(Self)
     }
 
-    fn normalize(value: ::aliases::string::String) -> ::aliases::string::String {
+    fn normalize(value: ::axiom::string::String) -> ::axiom::string::String {
         let trimmed = value.trim();
 
         if value.len() == trimmed.len() {
@@ -108,9 +108,9 @@ impl Username {
     }
 
     fn validate(
-        value: ::aliases::string::String,
-    ) -> ::core::result::Result<::aliases::string::String, UsernameBuilderError> {
-        let regex = ::aliases::regex!("^[a-z0-9_-]{4,16}$");
+        value: ::axiom::string::String,
+    ) -> ::core::result::Result<::axiom::string::String, UsernameBuilderError> {
+        let regex = ::axiom::regex!("^[a-z0-9_-]{4,16}$");
 
         if !regex.is_match(&value) {
             ::core::result::Result::Err(UsernameBuilderError::InvalidFormat { value })
@@ -121,7 +121,7 @@ impl Username {
 }
 
 impl ::core::ops::Deref for Username {
-    type Target = ::aliases::string::String;
+    type Target = ::axiom::string::String;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -134,7 +134,7 @@ pub enum UsernameBuilderError {
         "Invalid username format `{value}`: must be between 4 and 16 characters; lowercase letters, digits, underscores, or \
          hyphens (`-`) only"
     )]
-    InvalidFormat { value: ::aliases::string::String },
+    InvalidFormat { value: ::axiom::string::String },
 }
 
 #[derive(
@@ -146,17 +146,17 @@ pub enum UsernameBuilderError {
     ::core::cmp::PartialOrd,
     ::core::hash::Hash
 )]
-pub struct Email(::aliases::string::String);
+pub struct Email(::axiom::string::String);
 
 #[::bon::bon]
 impl Email {
     #[builder(on(_, into))]
-    pub fn new(value: ::aliases::string::String) -> ::core::result::Result<Self, EmailBuilderError> {
+    pub fn new(value: ::axiom::string::String) -> ::core::result::Result<Self, EmailBuilderError> {
         let value = Self::normalize(value);
         Self::validate(value).map(Self)
     }
 
-    fn normalize(value: ::aliases::string::String) -> ::aliases::string::String {
+    fn normalize(value: ::axiom::string::String) -> ::axiom::string::String {
         let trimmed = value.trim();
 
         if value.len() == trimmed.len()
@@ -174,11 +174,11 @@ impl Email {
     }
 
     fn validate(
-        value: ::aliases::string::String,
-    ) -> ::core::result::Result<::aliases::string::String, EmailBuilderError> {
+        value: ::axiom::string::String,
+    ) -> ::core::result::Result<::axiom::string::String, EmailBuilderError> {
         // RFC 5322 Official Standard
         // https://emailregex.com/
-        let regex = ::aliases::regex!(
+        let regex = ::axiom::regex!(
             r#"(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])"#
         );
 
@@ -191,7 +191,7 @@ impl Email {
 }
 
 impl ::core::ops::Deref for Email {
-    type Target = ::aliases::string::String;
+    type Target = ::axiom::string::String;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -201,21 +201,21 @@ impl ::core::ops::Deref for Email {
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::thiserror::Error)]
 pub enum EmailBuilderError {
     #[error("Invalid email format `{value}`: does not comply with RFC 5322")]
-    InvalidFormat { value: ::aliases::string::String },
+    InvalidFormat { value: ::axiom::string::String },
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone)]
-pub struct Password(::aliases::string::String);
+pub struct Password(::axiom::string::String);
 
 #[::bon::bon]
 impl Password {
     #[builder(on(_, into))]
-    pub fn new(value: ::aliases::string::String) -> ::core::result::Result<Self, PasswordBuilderError> {
+    pub fn new(value: ::axiom::string::String) -> ::core::result::Result<Self, PasswordBuilderError> {
         let value = Self::normalize(value);
         Self::validate(value).map(Self)
     }
 
-    fn normalize(value: ::aliases::string::String) -> ::aliases::string::String {
+    fn normalize(value: ::axiom::string::String) -> ::axiom::string::String {
         let trimmed = value.trim();
 
         if value.len() == trimmed.len() {
@@ -226,9 +226,9 @@ impl Password {
     }
 
     fn validate(
-        value: ::aliases::string::String,
-    ) -> ::core::result::Result<::aliases::string::String, PasswordBuilderError> {
-        let regex = ::aliases::regex!("^\\w{8,32}$");
+        value: ::axiom::string::String,
+    ) -> ::core::result::Result<::axiom::string::String, PasswordBuilderError> {
+        let regex = ::axiom::regex!("^\\w{8,32}$");
 
         if !regex.is_match(&value) {
             ::core::result::Result::Err(PasswordBuilderError::InvalidFormat)
@@ -239,7 +239,7 @@ impl Password {
 }
 
 impl ::core::ops::Deref for Password {
-    type Target = ::aliases::string::String;
+    type Target = ::axiom::string::String;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -253,7 +253,7 @@ pub enum PasswordBuilderError {
     InvalidFormat,
 }
 
-pub type PasswordDigest = ::aliases::string::String;
+pub type PasswordDigest = ::axiom::string::String;
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
 pub struct EventRegistration {
@@ -270,22 +270,22 @@ pub struct EventRegistration {
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
 pub enum EventRegistrationStatus {
     Pending {
-        pending_at: ::aliases::time::Timestamp,
+        pending_at: ::axiom::time::Timestamp,
     },
     Withdrawn {
-        withdrawn_at: ::aliases::time::Timestamp,
+        withdrawn_at: ::axiom::time::Timestamp,
     },
     Accepted {
         accepted_by_manager_id: Uuid,
-        accepted_at: ::aliases::time::Timestamp,
+        accepted_at: ::axiom::time::Timestamp,
     },
     Declined {
         declined_by_manager_id: Uuid,
-        declined_at: ::aliases::time::Timestamp,
+        declined_at: ::axiom::time::Timestamp,
     },
     Completed {
         completed_by_manager_id: Uuid,
-        completed_at: ::aliases::time::Timestamp,
+        completed_at: ::axiom::time::Timestamp,
     },
 }
 
