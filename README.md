@@ -68,6 +68,12 @@ $ deno task preview-sveltekit-minimal
 - **Nhận thông báo**: Nhận thông báo trạng thái đăng ký/hoàn thành (Web Push API).
 - **Truy cập kênh trao đổi**: Post bài, comment, like trên kênh sự kiện (tương tự
   wall Facebook), chỉ sau khi sự kiện được duyệt.
+  > [./backend/core/use-cases/src/boundaries/view_event_channel.rs](./backend/core/use-cases/src/boundaries/view_event_channel.rs)
+  > |
+  > [./backend/core/use-cases/src/interactors/view_event_channel.rs](./backend/core/use-cases/src/interactors/view_event_channel.rs)\
+  > [./backend/core/use-cases/src/boundaries/view_post.rs](./backend/core/use-cases/src/boundaries/view_post.rs)
+  > |
+  > [./backend/core/use-cases/src/interactors/view_post.rs](./backend/core/use-cases/src/interactors/view_post.rs)\
   > [./backend/core/use-cases/src/boundaries/create_post.rs](./backend/core/use-cases/src/boundaries/create_post.rs)
   > |
   > [./backend/core/use-cases/src/interactors/create_post.rs](./backend/core/use-cases/src/interactors/create_post.rs)\
@@ -123,6 +129,12 @@ $ deno task preview-sveltekit-minimal
   > [./backend/core/use-cases/src/interactors/view_event_volunteers.rs](./backend/core/use-cases/src/interactors/view_event_volunteers.rs)
 - **Truy cập kênh trao đổi**: Post bài, comment, like trên kênh sự kiện (tương tự
   wall Facebook), chỉ sau khi sự kiện được duyệt.
+  > [./backend/core/use-cases/src/boundaries/view_event_channel.rs](./backend/core/use-cases/src/boundaries/view_event_channel.rs)
+  > |
+  > [./backend/core/use-cases/src/interactors/view_event_channel.rs](./backend/core/use-cases/src/interactors/view_event_channel.rs)\
+  > [./backend/core/use-cases/src/boundaries/view_post.rs](./backend/core/use-cases/src/boundaries/view_post.rs)
+  > |
+  > [./backend/core/use-cases/src/interactors/view_post.rs](./backend/core/use-cases/src/interactors/view_post.rs)\
   > [./backend/core/use-cases/src/boundaries/create_post.rs](./backend/core/use-cases/src/boundaries/create_post.rs)
   > |
   > [./backend/core/use-cases/src/interactors/create_post.rs](./backend/core/use-cases/src/interactors/create_post.rs)\

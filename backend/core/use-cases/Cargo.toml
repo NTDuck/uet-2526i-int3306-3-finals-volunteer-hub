@@ -7,7 +7,6 @@ repository.workspace = true
 publish.workspace = true
 
 [features]
-default = ["serde", "wasm-bindings"]
 wasm-bindings = ["dep:tsify", "dep:wasm-bindgen"]
 
 [dependencies]

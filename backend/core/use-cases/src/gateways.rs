@@ -12,8 +12,8 @@ pub trait EventRepository {
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
 #[builder(on(_, into))]
 pub struct EventRepositoryViewFilter {
-    #[builder(with = |value: ::std::vec::Vec<impl ::core::convert::Into<EventRepositoryViewFilterUntaggedEventStatus>>| value.into_iter().map(::core::convert::Into::into).collect())]
-    pub statuses: ::std::vec::Vec<EventRepositoryViewFilterUntaggedEventStatus>,
+    #[builder(with = |value: ::std::vec::Vec<impl ::core::convert::Into<EventRepositoryViewFilterEventStatus>>| value.into_iter().map(::core::convert::Into::into).collect())]
+    pub statuses: ::std::vec::Vec<EventRepositoryViewFilterEventStatus>,
 
     pub name: ::core::option::Option<::aliases::string::String>,
     pub description: ::core::option::Option<::aliases::string::String>,
@@ -24,14 +24,14 @@ pub struct EventRepositoryViewFilter {
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
-pub enum EventRepositoryViewFilterUntaggedEventStatus {
+pub enum EventRepositoryViewFilterEventStatus {
     Created,
     Approved,
     Rejected,
     Completed,
 }
 
-impl ::core::convert::From<::domain::EventStatus> for EventRepositoryViewFilterUntaggedEventStatus {
+impl ::core::convert::From<::domain::EventStatus> for EventRepositoryViewFilterEventStatus {
     fn from(value: ::domain::EventStatus) -> Self {
         match value {
             ::domain::EventStatus::Created { .. } => Self::Created,

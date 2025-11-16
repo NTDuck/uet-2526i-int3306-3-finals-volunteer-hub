@@ -176,7 +176,7 @@ where
     Key: ::jwt::SigningAlgorithm + ::jwt::VerifyingAlgorithm + ::core::marker::Send + ::core::marker::Sync,
 {
     async fn generate(
-        self: ::std::sync::Arc<Self>, payload: ::use_cases::gateways::models::AuthenticationTokenPayload,
+        self: ::std::sync::Arc<Self>, payload: ::use_cases::gateways::AuthenticationTokenPayload,
     ) -> ::aliases::result::Fallible<::aliases::string::String> {
         use ::jwt::SignWithKey as _;
 
@@ -186,7 +186,7 @@ where
 
     async fn get_payload(
         self: ::std::sync::Arc<Self>, token: ::aliases::string::String,
-    ) -> ::aliases::result::Fallible<::core::option::Option<::use_cases::gateways::models::AuthenticationTokenPayload>>
+    ) -> ::aliases::result::Fallible<::core::option::Option<::use_cases::gateways::AuthenticationTokenPayload>>
     {
         use ::jwt::VerifyWithKey as _;
 

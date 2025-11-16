@@ -9,7 +9,7 @@ publish.workspace = true
 [dependencies]
 aliases = { path = "../aliases" }
 domain = { path = "../core/domain" }
-use-cases = { path = "../core/use-cases" }
+use-cases = { path = "../core/use-cases", features = ["serde"] }
 
 async-trait = { workspace = true }
 bon = { workspace = true }
