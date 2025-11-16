@@ -31,18 +31,6 @@ pub enum EventStatus {
     },
 }
 
-#[derive(::core::fmt::Debug, ::core::clone::Clone, ::thiserror::Error)]
-pub enum EventBuilderError {
-    #[error("Invalid event name format `{value}`: must be between 4 and 16 characters; lowercase letters, digits, underscores, or hyphens only")]
-    InvalidNameFormat { name: ::aliases::string::String },
-
-    InvalidDescriptionFormat { description: ::aliases::string::String },
-
-    InvalidCategoriesFormat { categories: ::std::vec::Vec<::aliases::string::String> },
-
-    InvalidLocationFormat { location: ::aliases::string::String },
-}
-
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
 pub struct EventChannel {
     pub id: Uuid,
@@ -88,68 +76,6 @@ pub enum UserRole {
     Volunteer,
     EventManager,
     Administrator,
-}
-
-#[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
-pub struct EventRegistration {
-    pub event_id: Uuid,
-    pub volunteer_id: Uuid,
-
-    pub statuses: ::std::vec::Vec<EventRegistrationStatus>,
-}
-
-/// Possible lifecycles
-/// 1. `Pending` (volunteer subscribes to event) -> `Accepted` (event manager accepts registration) -> `Completed` (event manager updates registration status after event completion)
-/// 2. `Pending` (volunteer subscribes to event) -> `Declined` (event manager declines registration)
-/// 3. `Pending` (volunteer subscribes to event) -> `Withdrawn` (volunteer unsubscribes from event)
-#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
-pub enum EventRegistrationStatus {
-    Pending {
-        pending_at: ::aliases::time::Timestamp,
-    },
-    Withdrawn {
-        withdrawn_at: ::aliases::time::Timestamp,
-    },
-    Accepted {
-        accepted_by_manager_id: Uuid,
-        accepted_at: ::aliases::time::Timestamp,
-    },
-    Declined {
-        declined_by_manager_id: Uuid,
-        declined_at: ::aliases::time::Timestamp,
-    },
-    Completed {
-        completed_by_manager_id: Uuid,
-        completed_at: ::aliases::time::Timestamp,
-    },
-}
-
-#[derive(
-    ::core::fmt::Debug,
-    ::core::clone::Clone,
-    ::core::marker::Copy,
-    ::core::cmp::Eq,
-    ::core::cmp::PartialEq,
-    ::core::cmp::Ord,
-    ::core::cmp::PartialOrd,
-    ::core::hash::Hash
-)]
-pub struct Uuid([u8; 16]);
-
-#[::bon::bon]
-impl Uuid {
-    #[builder]
-    pub fn new(value: [u8; 16]) -> Self {
-        Self(value)
-    }
-}
-
-impl ::core::ops::Deref for Uuid {
-    type Target = [u8; 16];
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
 }
 
 #[derive(
@@ -206,7 +132,7 @@ impl ::core::ops::Deref for Username {
 pub enum UsernameBuilderError {
     #[error(
         "Invalid username format `{value}`: must be between 4 and 16 characters; lowercase letters, digits, underscores, or \
-         hyphens only"
+         hyphens (`-`) only"
     )]
     InvalidFormat { value: ::aliases::string::String },
 }
@@ -328,3 +254,65 @@ pub enum PasswordBuilderError {
 }
 
 pub type PasswordDigest = ::aliases::string::String;
+
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
+pub struct EventRegistration {
+    pub event_id: Uuid,
+    pub volunteer_id: Uuid,
+
+    pub statuses: ::std::vec::Vec<EventRegistrationStatus>,
+}
+
+/// Possible lifecycles
+/// 1. `Pending` (volunteer subscribes to event) -> `Accepted` (event manager accepts registration) -> `Completed` (event manager updates registration status after event completion)
+/// 2. `Pending` (volunteer subscribes to event) -> `Declined` (event manager declines registration)
+/// 3. `Pending` (volunteer subscribes to event) -> `Withdrawn` (volunteer unsubscribes from event)
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
+pub enum EventRegistrationStatus {
+    Pending {
+        pending_at: ::aliases::time::Timestamp,
+    },
+    Withdrawn {
+        withdrawn_at: ::aliases::time::Timestamp,
+    },
+    Accepted {
+        accepted_by_manager_id: Uuid,
+        accepted_at: ::aliases::time::Timestamp,
+    },
+    Declined {
+        declined_by_manager_id: Uuid,
+        declined_at: ::aliases::time::Timestamp,
+    },
+    Completed {
+        completed_by_manager_id: Uuid,
+        completed_at: ::aliases::time::Timestamp,
+    },
+}
+
+#[derive(
+    ::core::fmt::Debug,
+    ::core::clone::Clone,
+    ::core::marker::Copy,
+    ::core::cmp::Eq,
+    ::core::cmp::PartialEq,
+    ::core::cmp::Ord,
+    ::core::cmp::PartialOrd,
+    ::core::hash::Hash
+)]
+pub struct Uuid([u8; 16]);
+
+#[::bon::bon]
+impl Uuid {
+    #[builder]
+    pub fn new(value: [u8; 16]) -> Self {
+        Self(value)
+    }
+}
+
+impl ::core::ops::Deref for Uuid {
+    type Target = [u8; 16];
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
