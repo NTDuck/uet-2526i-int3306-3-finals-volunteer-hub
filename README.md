@@ -65,9 +65,10 @@ $ deno task preview-sveltekit-minimal
   > [./backend/core/use-cases/src/boundaries/view_event_history.rs](./backend/core/use-cases/src/boundaries/view_event_history.rs)
   > |
   > [./backend/core/use-cases/src/interactors/view_event_history.rs](./backend/core/use-cases/src/interactors/view_event_history.rs)
-- **Nhận thông báo**: Nhận thông báo trạng thái đăng ký/hoàn thành (Web Push API).
-- **Truy cập kênh trao đổi**: Post bài, comment, like trên kênh sự kiện (tương tự
-  wall Facebook), chỉ sau khi sự kiện được duyệt.
+- **Nhận thông báo**: Nhận thông báo trạng thái đăng ký/hoàn thành (Web Push
+  API).
+- **Truy cập kênh trao đổi**: Post bài, comment, like trên kênh sự kiện (tương
+  tự wall Facebook), chỉ sau khi sự kiện được duyệt.
   > [./backend/core/use-cases/src/boundaries/view_event_channel.rs](./backend/core/use-cases/src/boundaries/view_event_channel.rs)
   > |
   > [./backend/core/use-cases/src/interactors/view_event_channel.rs](./backend/core/use-cases/src/interactors/view_event_channel.rs)\
@@ -83,8 +84,8 @@ $ deno task preview-sveltekit-minimal
   > [./backend/core/use-cases/src/boundaries/create_comment.rs](./backend/core/use-cases/src/boundaries/create_comment.rs)
   > |
   > [./backend/core/use-cases/src/interactors/create_comment.rs](./backend/core/use-cases/src/interactors/create_comment.rs)
-- **Xem Dashboard**: Xem tổng hợp sự kiện liên quan (mới công bố, có tin bài mới),
-  sự kiện thu hút (tăng thành viên/trao đổi/like nhanh).
+- **Xem Dashboard**: Xem tổng hợp sự kiện liên quan (mới công bố, có tin bài
+  mới), sự kiện thu hút (tăng thành viên/trao đổi/like nhanh).
   > [./backend/core/use-cases/src/boundaries/view_event_recommendation.rs](./backend/core/use-cases/src/boundaries/view_event_recommendation.rs)
   > |
   > [./backend/core/use-cases/src/interactors/view_event_recommendation.rs](./backend/core/use-cases/src/interactors/view_event_recommendation.rs)
@@ -100,8 +101,8 @@ $ deno task preview-sveltekit-minimal
   > [./backend/core/use-cases/src/boundaries/sign_up.rs](./backend/core/use-cases/src/boundaries/sign_up.rs)
   > |
   > [./backend/core/use-cases/src/interactors/sign_up.rs](./backend/core/use-cases/src/interactors/sign_up.rs)
-- **Quản lý sự kiện**: Tạo, sửa, xóa sự kiện (tên, ngày, địa điểm, mô tả). Validate
-  input (Joi/Yup).
+- **Quản lý sự kiện**: Tạo, sửa, xóa sự kiện (tên, ngày, địa điểm, mô tả).
+  Validate input (Joi/Yup).
   > [./backend/core/use-cases/src/boundaries/create_event.rs](./backend/core/use-cases/src/boundaries/create_event.rs)
   > |
   > [./backend/core/use-cases/src/interactors/create_event.rs](./backend/core/use-cases/src/interactors/create_event.rs)\
@@ -118,8 +119,8 @@ $ deno task preview-sveltekit-minimal
   > [./backend/core/use-cases/src/boundaries/decline_event_registration.rs](./backend/core/use-cases/src/boundaries/decline_event_registration.rs)
   > |
   > [./backend/core/use-cases/src/interactors/decline_event_registration.rs](./backend/core/use-cases/src/interactors/decline_event_registration.rs)
-- **Đánh dấu hoàn thành**: Cập nhật trạng thái hoàn thành cho tình nguyện viên sau
-  sự kiện.
+- **Đánh dấu hoàn thành**: Cập nhật trạng thái hoàn thành cho tình nguyện viên
+  sau sự kiện.
   > [./backend/core/use-cases/src/boundaries/complete_event_registration.rs](./backend/core/use-cases/src/boundaries/complete_event_registration.rs)
   > |
   > [./backend/core/use-cases/src/interactors/complete_event_registration.rs](./backend/core/use-cases/src/interactors/complete_event_registration.rs)
@@ -127,8 +128,8 @@ $ deno task preview-sveltekit-minimal
   > [./backend/core/use-cases/src/boundaries/view_event_volunteers.rs](./backend/core/use-cases/src/boundaries/view_event_volunteers.rs)
   > |
   > [./backend/core/use-cases/src/interactors/view_event_volunteers.rs](./backend/core/use-cases/src/interactors/view_event_volunteers.rs)
-- **Truy cập kênh trao đổi**: Post bài, comment, like trên kênh sự kiện (tương tự
-  wall Facebook), chỉ sau khi sự kiện được duyệt.
+- **Truy cập kênh trao đổi**: Post bài, comment, like trên kênh sự kiện (tương
+  tự wall Facebook), chỉ sau khi sự kiện được duyệt.
   > [./backend/core/use-cases/src/boundaries/view_event_channel.rs](./backend/core/use-cases/src/boundaries/view_event_channel.rs)
   > |
   > [./backend/core/use-cases/src/interactors/view_event_channel.rs](./backend/core/use-cases/src/interactors/view_event_channel.rs)\
@@ -144,8 +145,8 @@ $ deno task preview-sveltekit-minimal
   > [./backend/core/use-cases/src/boundaries/create_comment.rs](./backend/core/use-cases/src/boundaries/create_comment.rs)
   > |
   > [./backend/core/use-cases/src/interactors/create_comment.rs](./backend/core/use-cases/src/interactors/create_comment.rs)
-- **Xem Dashboard**: Xem tổng hợp sự kiện liên quan (mới công bố, có tin bài mới),
-  sự kiện thu hút (tăng thành viên/trao đổi/like nhanh).
+- **Xem Dashboard**: Xem tổng hợp sự kiện liên quan (mới công bố, có tin bài
+  mới), sự kiện thu hút (tăng thành viên/trao đổi/like nhanh).
   > [./backend/core/use-cases/src/boundaries/view_event_recommendation.rs](./backend/core/use-cases/src/boundaries/view_event_recommendation.rs)
   > |
   > [./backend/core/use-cases/src/interactors/view_event_recommendation.rs](./backend/core/use-cases/src/interactors/view_event_recommendation.rs)
@@ -168,7 +169,8 @@ $ deno task preview-sveltekit-minimal
   > [./backend/core/use-cases/src/boundaries/reject_event.rs](./backend/core/use-cases/src/boundaries/reject_event.rs)
   > |
   > [./backend/core/use-cases/src/interactors/reject_event.rs](./backend/core/use-cases/src/interactors/reject_event.rs)
-- **Quản lý người dùng**: Xem, khóa/mở tài khoản tình nguyện viên/quản lý sự kiện.
+- **Quản lý người dùng**: Xem, khóa/mở tài khoản tình nguyện viên/quản lý sự
+  kiện.
   > [./backend/core/use-cases/src/boundaries/view_non_admin_users.rs](./backend/core/use-cases/src/boundaries/view_non_admin_users.rs)
   > |
   > [./backend/core/use-cases/src/interactors/view_non_admin_users.rs](./backend/core/use-cases/src/interactors/view_non_admin_users.rs)\
@@ -188,8 +190,8 @@ $ deno task preview-sveltekit-minimal
   > [./backend/core/use-cases/src/boundaries/export_volunteers.rs](./backend/core/use-cases/src/boundaries/export_volunteers.rs)
   > |
   > [./backend/core/use-cases/src/interactors/export_volunteers.rs](./backend/core/use-cases/src/interactors/export_volunteers.rs)
-- **Xem Dashboard**: Xem tổng hợp sự kiện liên quan (mới công bố, có tin bài mới),
-  sự kiện thu hút (tăng thành viên/trao đổi/like nhanh).
+- **Xem Dashboard**: Xem tổng hợp sự kiện liên quan (mới công bố, có tin bài
+  mới), sự kiện thu hút (tăng thành viên/trao đổi/like nhanh).
   > [./backend/core/use-cases/src/boundaries/view_event_recommendation.rs](./backend/core/use-cases/src/boundaries/view_event_recommendation.rs)
   > |
   > [./backend/core/use-cases/src/interactors/view_event_recommendation.rs](./backend/core/use-cases/src/interactors/view_event_recommendation.rs)

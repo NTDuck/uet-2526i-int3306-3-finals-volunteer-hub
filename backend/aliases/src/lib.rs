@@ -1,3 +1,27 @@
+pub mod option {
+    pub trait OptionExt<T> {
+        fn ok(self) -> crate::result::Fallible<T>;
+    }
+
+    impl<T> OptionExt<T> for ::core::option::Option<T> {
+        #[track_caller]
+        fn ok(self) -> crate::result::Fallible<T> {
+            match self {
+                ::core::option::Option::Some(val) => crate::result::Fallible::Ok(val),
+                ::core::option::Option::None => {
+                    let location = ::std::panic::Location::caller();
+                    crate::result::Fallible::Err(::anyhow::anyhow!(
+                        "called `OptionExt::some()` on a `None` value at {}:{}:{}",
+                        location.file(),
+                        location.line(),
+                        location.column(),
+                    ))
+                },
+            }
+        }
+    }
+}
+
 pub mod result {
     pub type Error = ::anyhow::Error;
     pub type Fallible<T = ()> = ::core::result::Result<T, Error>;

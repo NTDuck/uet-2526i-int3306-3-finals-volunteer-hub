@@ -15,6 +15,8 @@ pub struct ViewEventRecommendationInteractor {
 impl ViewEventRecommendationBoundary for ViewEventRecommendationInteractor {
     async fn apply(self: ::std::sync::Arc<Self>, request: ViewEventRecommendationRequest)
     -> ::aliases::result::Fallible<ViewEventRecommendationResponse> {
+        use ::aliases::option::OptionExt as _;
+
         if !::std::sync::Arc::clone(&self.auth_token_generator).verify(request.token).await? {
             return ::aliases::result::Fallible::Ok(ViewEventRecommendationResponse::Err(::std::vec![
                 ViewEventRecommendationErrResponse::AuthenticationTokenInvalid,
@@ -33,11 +35,11 @@ impl ViewEventRecommendationBoundary for ViewEventRecommendationInteractor {
 
         let events = ::futures::future::try_join_all(events.into_iter().map(|event| {
             let uuid_codec = ::std::sync::Arc::clone(&self.uuid_codec);
-            let status = event.statuses.first();
+
             async move {
-                ::futures::future::ok::<_, ::aliases::result::Error>(crate::boundaries::ViewEventHistoryEvent::builder()
+                ::futures::future::ok::<_, ::aliases::result::Error>(crate::boundaries::ViewEventRecommendationEvent::builder()
                     .id(uuid_codec.format(event.id).await?)
-                    .statuses(event.statuses)
+                    .status(*event.statuses.first().ok()?)
                     .name(event.name)
                     .categories(event.categories)
                     .build())
