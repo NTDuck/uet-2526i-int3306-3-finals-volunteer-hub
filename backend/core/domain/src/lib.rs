@@ -212,7 +212,7 @@ impl Password {
     #[builder(on(_, into))]
     pub fn new(value: ::axiom::string::String) -> ::core::result::Result<Self, PasswordBuilderError> {
         let value = Self::normalize(value);
-        Self::validate(value).map(Self)
+        return Self::validate(value).map(Self);
     }
 
     fn normalize(value: ::axiom::string::String) -> ::axiom::string::String {
