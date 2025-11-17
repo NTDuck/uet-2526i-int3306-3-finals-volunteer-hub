@@ -11,11 +11,7 @@ export const actions = {
 
     try {
       await app.signUp({
-        userRole: {
-          "volunteer": "volunteer",
-          "event-manager": "eventManager",
-          "administrator": "administrator",
-        }[formData.get("user-role") as string],
+        userRole: formData.get("user-role"),
         username: formData.get("username"),
         email: formData.get("email"),
         password: formData.get("password"),
