@@ -42,15 +42,15 @@ impl SignUpBoundary for SignUpInteractor {
         let username_exists = ::std::sync::Arc::clone(&self.user_repository).contains_username(username.clone()).await?;
         let email_exists = ::std::sync::Arc::clone(&self.user_repository).contains_email(email.clone()).await?;
 
-        if !username_exists {
+        if username_exists {
             errors.push(SignUpErrResponse::UsernameAlreadyExists { username: username.to_string().into() });
         }
 
-        if !email_exists {
+        if email_exists {
             errors.push(SignUpErrResponse::EmailAlreadyExists { email: email.to_string().into() });
         }
 
-        if !username_exists || !email_exists {
+        if username_exists || email_exists {
             return ::axiom::result::Fallible::Ok(SignUpResponse::Err(errors));
         }
 
