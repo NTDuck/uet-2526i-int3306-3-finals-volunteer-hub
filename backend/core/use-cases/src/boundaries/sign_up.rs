@@ -8,10 +8,10 @@ pub trait SignUpBoundary {
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
 #[builder(on(_, into))]
-#[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(::serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
-#[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
+#[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi))]
 pub struct SignUpRequest {
     pub user_role: SignUpUserRole,
 
@@ -24,10 +24,10 @@ pub struct SignUpRequest {
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::strum::Display)]
-#[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(::serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(untagged, rename_all = "kebab-case"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
-#[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
+#[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi))]
 pub enum SignUpUserRole {
     Volunteer,
     EventManager,
@@ -61,9 +61,9 @@ pub type SignUpResponse = ::core::result::Result<SignUpOkResponse, ::std::vec::V
 pub type SignUpOkResponse = ();
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::thiserror::Error)]
-#[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(::serde::Serialize))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
-#[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
+#[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
 pub enum SignUpErrResponse {
     #[error(transparent)]
     UsernameInvalid(#[from] #[cfg_attr(feature = "serde", serde(skip))] ::domain::UsernameBuilderError),
@@ -76,11 +76,13 @@ pub enum SignUpErrResponse {
 
     #[error("User with username `{username}` already exists")]
     UsernameAlreadyExists {
+        #[cfg_attr(feature = "serde", serde(skip))]
         username: ::axiom::string::String,
     },
 
     #[error("User with email `{email}` already exists")]
     EmailAlreadyExists {
+        #[cfg_attr(feature = "serde", serde(skip))]
         email: ::axiom::string::String,
     },
 }

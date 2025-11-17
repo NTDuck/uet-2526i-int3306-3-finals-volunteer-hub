@@ -23,40 +23,32 @@ impl SignInBoundary for SignInInteractor {
 
         // Rust's type inference fails here
         let user: ::core::option::Option<::domain::User> = if let ::core::result::Result::Ok(username) =
-            ::domain::Username::builder().value(request.username_or_email.clone()).build()
+            ::domain::Username::try_from(request.username_or_email.clone())
         {
-            if let ::core::option::Option::Some(user) =
-                ::std::sync::Arc::clone(&self.user_repository).get_by_username(username).await?
-            {
-                ::core::option::Option::Some(user)
-            } else {
-                errors.push(SignInErrResponse::UsernameNotFound { username: request.username_or_email.clone() });
-                ::core::option::Option::None
-            }
+            ::std::sync::Arc::clone(&self.user_repository).get_by_username(username).await?
+                .or_else(|| {
+                    errors.push(SignInErrResponse::UsernameNotFound { username: request.username_or_email.clone() });
+                    ::core::option::Option::None
+                })
         } else if let ::core::result::Result::Ok(email) =
-            ::domain::Email::builder().value(request.username_or_email.clone()).build()
+            ::domain::Email::try_from(request.username_or_email.clone())
         {
-            if let ::core::option::Option::Some(user) =
-                ::std::sync::Arc::clone(&self.user_repository).get_by_email(email).await?
-            {
-                ::core::option::Option::Some(user)
-            } else {
-                errors.push(SignInErrResponse::EmailNotFound { email: request.username_or_email.clone() });
-                ::core::option::Option::None
-            }
+            ::std::sync::Arc::clone(&self.user_repository).get_by_email(email).await?
+                .or_else(|| {
+                    errors.push(SignInErrResponse::EmailNotFound { email: request.username_or_email.clone() });
+                    ::core::option::Option::None
+                })
         } else {
-            errors.push(SignInErrResponse::UsernameOrEmailInvalid(::core::default::Default::default()));
+            errors.push(SignInErrResponse::UsernameOrEmailInvalid(
+                ::domain::UsernameBuilderError::InvalidFormat { value: request.username_or_email.clone() },
+                ::domain::EmailBuilderError::InvalidFormat { value: request.username_or_email.clone() },
+            ));
             ::core::option::Option::None
         };
 
-        let password = if let ::core::result::Result::Ok(password) =
-            ::domain::Password::builder().value(request.password).build()
-        {
-            ::core::option::Option::Some(password)
-        } else {
-            errors.push(SignInErrResponse::PasswordInvalid(::core::default::Default::default()));
-            ::core::option::Option::None
-        };
+        let password = ::domain::Password::try_from(request.password.clone())
+            .map_err(|error| errors.push(SignInErrResponse::PasswordInvalid(error)))
+            .ok();
 
         let (::core::option::Option::Some(user), ::core::option::Option::Some(password)) = (user, password) else {
             return ::axiom::result::Fallible::Ok(SignInResponse::Err(errors));

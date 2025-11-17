@@ -18,30 +18,17 @@ impl SignUpBoundary for SignUpInteractor {
     ) -> ::axiom::result::Fallible<SignUpResponse> {
         let mut errors = ::std::vec::Vec::new();
 
-        let username = if let ::core::result::Result::Ok(username) =
-            ::domain::Username::builder().value(request.username).build()
-        {
-            ::core::option::Option::Some(username)
-        } else {
-            errors.push(SignUpErrResponse::UsernameInvalid(::core::default::Default::default()));
-            ::core::option::Option::None
-        };
+        let username = ::domain::Username::try_from(request.username)
+            .map_err(|error| errors.push(SignUpErrResponse::UsernameInvalid(error)))
+            .ok();
 
-        let email = if let ::core::result::Result::Ok(email) = ::domain::Email::builder().value(request.email).build() {
-            ::core::option::Option::Some(email)
-        } else {
-            errors.push(SignUpErrResponse::EmailInvalid(::core::default::Default::default()));
-            ::core::option::Option::None
-        };
+        let email = ::domain::Email::try_from(request.email)
+            .map_err(|error| errors.push(SignUpErrResponse::EmailInvalid(error)))
+            .ok();
 
-        let password = if let ::core::result::Result::Ok(password) =
-            ::domain::Password::builder().value(request.password).build()
-        {
-            ::core::option::Option::Some(password)
-        } else {
-            errors.push(SignUpErrResponse::PasswordInvalid(::core::default::Default::default()));
-            ::core::option::Option::None
-        };
+        let password = ::domain::Password::try_from(request.password)
+            .map_err(|error| errors.push(SignUpErrResponse::PasswordInvalid(error)))
+            .ok();
 
         let (
             ::core::option::Option::Some(username),
@@ -52,21 +39,18 @@ impl SignUpBoundary for SignUpInteractor {
             return ::axiom::result::Fallible::Ok(SignUpResponse::Err(errors));
         };
 
-        if ::std::sync::Arc::clone(&self.user_repository)
-            .contains_username(username.clone())
-            .await?
-        {
+        let username_exists = ::std::sync::Arc::clone(&self.user_repository).contains_username(username.clone()).await?;
+        let email_exists = ::std::sync::Arc::clone(&self.user_repository).contains_email(email.clone()).await?;
+
+        if !username_exists {
             errors.push(SignUpErrResponse::UsernameAlreadyExists { username: username.to_string().into() });
         }
 
-        if ::std::sync::Arc::clone(&self.user_repository)
-            .contains_email(email.clone())
-            .await?
-        {
+        if !email_exists {
             errors.push(SignUpErrResponse::EmailAlreadyExists { email: email.to_string().into() });
         }
 
-        if !errors.is_empty() {
+        if !username_exists || !email_exists {
             return ::axiom::result::Fallible::Ok(SignUpResponse::Err(errors));
         }
 

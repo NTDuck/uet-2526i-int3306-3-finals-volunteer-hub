@@ -16,7 +16,7 @@ pub struct InMemoryUserRepository {
 
 #[async_trait]
 impl UserRepository for InMemoryUserRepository {
-    async fn save(self: ::std::sync::Arc<Self>, user: ::domain::User) -> ::aliases::result::Fallible {
+    async fn save(self: ::std::sync::Arc<Self>, user: ::domain::User) -> ::axiom::result::Fallible {
         self.users_by_ids
             .lock()
             .await
@@ -24,51 +24,51 @@ impl UserRepository for InMemoryUserRepository {
         self.users_by_usernames.lock().await.insert(user.username.clone(), user.clone());
         self.users_by_emails.lock().await.insert(user.email.clone(), user.clone());
 
-        ::aliases::result::Fallible::Ok(())
+        ::axiom::result::Fallible::Ok(())
     }
 
     async fn get_by_id(
         self: ::std::sync::Arc<Self>, id: ::domain::Uuid,
-    ) -> ::aliases::result::Fallible<::core::option::Option<::domain::User>> {
+    ) -> ::axiom::result::Fallible<::core::option::Option<::domain::User>> {
         let user = self.users_by_ids.lock().await.get(&::core::cmp::Reverse(id)).cloned();
 
-        ::aliases::result::Fallible::Ok(user)
+        ::axiom::result::Fallible::Ok(user)
     }
 
     async fn get_by_username(
         self: ::std::sync::Arc<Self>, username: ::domain::Username,
-    ) -> ::aliases::result::Fallible<::core::option::Option<::domain::User>> {
+    ) -> ::axiom::result::Fallible<::core::option::Option<::domain::User>> {
         let user = self.users_by_usernames.lock().await.get(&username).cloned();
 
-        ::aliases::result::Fallible::Ok(user)
+        ::axiom::result::Fallible::Ok(user)
     }
 
     async fn get_by_email(
         self: ::std::sync::Arc<Self>, email: ::domain::Email,
-    ) -> ::aliases::result::Fallible<::core::option::Option<::domain::User>> {
+    ) -> ::axiom::result::Fallible<::core::option::Option<::domain::User>> {
         let user = self.users_by_emails.lock().await.get(&email).cloned();
 
-        ::aliases::result::Fallible::Ok(user)
+        ::axiom::result::Fallible::Ok(user)
     }
 
-    async fn contains_id(self: ::std::sync::Arc<Self>, id: ::domain::Uuid) -> ::aliases::result::Fallible<bool> {
+    async fn contains_id(self: ::std::sync::Arc<Self>, id: ::domain::Uuid) -> ::axiom::result::Fallible<bool> {
         let contains = self.users_by_ids.lock().await.contains_key(&::core::cmp::Reverse(id));
 
-        ::aliases::result::Fallible::Ok(contains)
+        ::axiom::result::Fallible::Ok(contains)
     }
 
     async fn contains_username(
         self: ::std::sync::Arc<Self>, username: ::domain::Username,
-    ) -> ::aliases::result::Fallible<bool> {
+    ) -> ::axiom::result::Fallible<bool> {
         let contains = self.users_by_usernames.lock().await.contains_key(&username);
 
-        ::aliases::result::Fallible::Ok(contains)
+        ::axiom::result::Fallible::Ok(contains)
     }
 
-    async fn contains_email(self: ::std::sync::Arc<Self>, email: ::domain::Email) -> ::aliases::result::Fallible<bool> {
+    async fn contains_email(self: ::std::sync::Arc<Self>, email: ::domain::Email) -> ::axiom::result::Fallible<bool> {
         let contains = self.users_by_emails.lock().await.contains_key(&email);
 
-        ::aliases::result::Fallible::Ok(contains)
+        ::axiom::result::Fallible::Ok(contains)
     }
 }
 
@@ -84,28 +84,28 @@ impl UuidV7Generator {
 
 #[async_trait]
 impl UuidGenerator for UuidV7Generator {
-    async fn generate(self: ::std::sync::Arc<Self>) -> ::aliases::result::Fallible<::domain::Uuid> {
+    async fn generate(self: ::std::sync::Arc<Self>) -> ::axiom::result::Fallible<::domain::Uuid> {
         let uuid = ::uuid::Uuid::now_v7();
 
         let uuid = ::domain::Uuid::builder().value(uuid.into_bytes()).build();
 
-        ::aliases::result::Fallible::Ok(uuid)
+        ::axiom::result::Fallible::Ok(uuid)
     }
 
     async fn get_timestamp(
         self: ::std::sync::Arc<Self>, uuid: &::domain::Uuid,
-    ) -> ::aliases::result::Fallible<::aliases::time::Timestamp> {
+    ) -> ::axiom::result::Fallible<::axiom::time::Timestamp> {
         let uuid = ::uuid::Uuid::from_bytes(**uuid);
-        ::aliases::result::Fallible::Ok(uuid.into_timestamp()?)
+        ::axiom::result::Fallible::Ok(uuid.into_timestamp()?)
     }
 }
 
 trait UuidExt {
-    fn into_timestamp(self) -> ::core::result::Result<::aliases::time::Timestamp, UuidIntoTimestampError>;
+    fn into_timestamp(self) -> ::core::result::Result<::axiom::time::Timestamp, UuidIntoTimestampError>;
 }
 
 impl UuidExt for ::uuid::Uuid {
-    fn into_timestamp(self) -> ::core::result::Result<::aliases::time::Timestamp, UuidIntoTimestampError> {
+    fn into_timestamp(self) -> ::core::result::Result<::axiom::time::Timestamp, UuidIntoTimestampError> {
         match self.get_timestamp() {
             ::core::option::Option::Some(timestamp) => {
                 let (seconds, nanoseconds) = timestamp.to_unix();
@@ -146,22 +146,22 @@ impl LowerUrnUuidCodec {
 
 #[async_trait]
 impl UuidCodec for LowerUrnUuidCodec {
-    async fn format(self: ::std::sync::Arc<Self>, uuid: ::domain::Uuid) -> ::aliases::result::Fallible<::aliases::string::String> {
+    async fn format(self: ::std::sync::Arc<Self>, uuid: ::domain::Uuid) -> ::axiom::result::Fallible<::axiom::string::String> {
         let uuid = ::uuid::Uuid::from_bytes(*uuid);
 
         let mut buffer = [0u8; 45];
         let urn = uuid.as_urn().encode_lower(&mut buffer).to_string().into();
 
-        ::aliases::result::Fallible::Ok(urn)
+        ::axiom::result::Fallible::Ok(urn)
     }
 
-    async fn parse(self: ::std::sync::Arc<Self>, urn: ::aliases::string::String) -> ::aliases::result::Fallible<::domain::Uuid> {
+    async fn parse(self: ::std::sync::Arc<Self>, urn: ::axiom::string::String) -> ::axiom::result::Fallible<::domain::Uuid> {
         let uuid = ::uuid::Uuid::parse_str(&urn)?;
         let uuid = ::domain::Uuid::builder()
             .value(uuid.into_bytes())
             .build();
 
-        ::aliases::result::Fallible::Ok(uuid)
+        ::axiom::result::Fallible::Ok(uuid)
     }
 }
 
@@ -177,21 +177,21 @@ where
 {
     async fn generate(
         self: ::std::sync::Arc<Self>, payload: ::use_cases::gateways::AuthenticationTokenPayload,
-    ) -> ::aliases::result::Fallible<::aliases::string::String> {
+    ) -> ::axiom::result::Fallible<::axiom::string::String> {
         use ::jwt::SignWithKey as _;
 
         let token = payload.sign_with_key(&self.key)?;
-        ::aliases::result::Fallible::Ok(token.into())
+        ::axiom::result::Fallible::Ok(token.into())
     }
 
     async fn get_payload(
-        self: ::std::sync::Arc<Self>, token: ::aliases::string::String,
-    ) -> ::aliases::result::Fallible<::core::option::Option<::use_cases::gateways::AuthenticationTokenPayload>>
+        self: ::std::sync::Arc<Self>, token: ::axiom::string::String,
+    ) -> ::axiom::result::Fallible<::core::option::Option<::use_cases::gateways::AuthenticationTokenPayload>>
     {
         use ::jwt::VerifyWithKey as _;
 
         let payload = token.verify_with_key(&self.key)?;
-        ::aliases::result::Fallible::Ok(payload)
+        ::axiom::result::Fallible::Ok(payload)
     }
 }
 
@@ -205,7 +205,7 @@ pub struct Argon2PasswordHasher<'pepper> {
 impl<'pepper> PasswordHasher for Argon2PasswordHasher<'pepper> {
     async fn hash(
         self: ::std::sync::Arc<Self>, password: ::domain::Password,
-    ) -> ::aliases::result::Fallible<::domain::PasswordDigest> {
+    ) -> ::axiom::result::Fallible<::domain::PasswordDigest> {
         use ::argon2::PasswordHasher as _;
 
         // TODO: make `::argon2::password_hash::rand_core::OsError` implement
@@ -215,16 +215,16 @@ impl<'pepper> PasswordHasher for Argon2PasswordHasher<'pepper> {
             ::argon2::password_hash::SaltString::try_from_rng(&mut ::argon2::password_hash::rand_core::OsRng).unwrap();
         let digest = self.context.hash_password(password.as_bytes(), &salt)?;
 
-        ::aliases::result::Fallible::Ok(digest.to_string().into())
+        ::axiom::result::Fallible::Ok(digest.to_string().into())
     }
 
     async fn verify(
         self: ::std::sync::Arc<Self>, password: ::domain::Password, digest: ::domain::PasswordDigest,
-    ) -> ::aliases::result::Fallible<bool> {
+    ) -> ::axiom::result::Fallible<bool> {
         use ::argon2::PasswordVerifier as _;
 
         let digest = ::argon2::password_hash::PasswordHash::new(&digest)?;
 
-        ::aliases::result::Fallible::Ok(self.context.verify_password(password.as_bytes(), &digest).is_ok())
+        ::axiom::result::Fallible::Ok(self.context.verify_password(password.as_bytes(), &digest).is_ok())
     }
 }

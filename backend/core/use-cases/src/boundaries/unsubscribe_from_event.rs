@@ -7,30 +7,35 @@ pub trait UnsubscribeFromEventBoundary {
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
 #[builder(on(_, into))]
-#[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(::serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
-#[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
+#[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi))]
 pub struct UnsubscribeFromEventRequest {
-    token: ::axiom::string::String,
-    event_id: ::axiom::string::String,
+    pub token: ::axiom::string::String,
+    pub event_id: ::axiom::string::String,
 }
 
+#[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
 pub type UnsubscribeFromEventResponse = ::core::result::Result<UnsubscribeFromEventOkResponse, ::std::vec::Vec<UnsubscribeFromEventErrResponse>>;
 
 #[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
 pub type UnsubscribeFromEventOkResponse = ();
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::thiserror::Error)]
-#[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(::serde::Serialize))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
-#[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
+#[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
 pub enum UnsubscribeFromEventErrResponse {
     #[error("Invalid or expired authentication token")]
     AuthenticationTokenInvalid,
 
     #[error("User not authorized: expecting role `{expected_user_role}`, found `{user_role}`", expected_user_role = UnsubscribeFromEventUserRole::Volunteer)]
-    UserUnauthorized { user_role: UnsubscribeFromEventUserRole },
+    UserUnauthorized {
+        #[allow(private_interfaces)]
+        #[cfg_attr(feature = "serde", serde(skip))]
+        user_role: UnsubscribeFromEventUserRole,
+    },
     
     #[error("Event not found")]  // or not published yet
     EventNotFound,
@@ -40,11 +45,11 @@ pub enum UnsubscribeFromEventErrResponse {
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::strum::Display)]
-#[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(::serde::Serialize))]
 #[cfg_attr(feature = "serde", serde(untagged, rename_all = "kebab-case"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
-#[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
-pub enum UnsubscribeFromEventUserRole {
+#[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
+enum UnsubscribeFromEventUserRole {
     Volunteer,
     EventManager,
     Administrator,

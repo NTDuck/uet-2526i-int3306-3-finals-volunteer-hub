@@ -8,10 +8,10 @@ pub trait ViewPublishedEventsBoundary {
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
 #[builder(on(_, into))]
-#[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(::serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
-#[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
+#[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi))]
 pub struct ViewPublishedEventsRequest {
     pub token: ::axiom::string::String,
 
@@ -19,72 +19,12 @@ pub struct ViewPublishedEventsRequest {
     pub filter: ViewPublishedEventsFilter,
 }
 
-#[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
-pub type ViewPublishedEventsResponse = ::core::result::Result<ViewPublishedEventsOkResponse, ::std::vec::Vec<ViewPublishedEventsErrResponse>>;
-
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
 #[builder(on(_, into))]
-#[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(::serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
-#[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
-pub struct ViewPublishedEventsOkResponse {
-    pub events: ::std::vec::Vec<ViewPublishedEventsEvent>,
-}
-
-#[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
-#[builder(on(_, into))]
-#[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
-#[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
-#[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
-pub struct ViewPublishedEventsEvent {
-    pub id: ::axiom::string::String,
-
-    pub status: ViewPublishedEventsEventStatus,
-
-    pub name: ::axiom::string::String,
-    pub categories: ::std::vec::Vec<::axiom::string::String>,
-}
-
-#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::strum::Display)]
-#[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-#[cfg_attr(feature = "serde", serde(untagged, rename_all = "kebab-case"))]
-#[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
-#[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
-pub enum ViewPublishedEventsEventStatus {
-    Created,
-    Approved,
-    Rejected,
-    Completed,
-}
-
-impl ::core::convert::From<::domain::EventStatus> for ViewPublishedEventsEventStatus {
-    fn from(value: ::domain::EventStatus) -> Self {
-        match value {
-            ::domain::EventStatus::Created { .. } => Self::Created,
-            ::domain::EventStatus::Approved { .. } => Self::Approved,
-            ::domain::EventStatus::Rejected { .. } => Self::Rejected,
-            ::domain::EventStatus::Completed { .. } => Self::Completed,
-        }
-    }
-}
-
-#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::thiserror::Error)]
-#[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-#[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
-#[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
-pub enum ViewPublishedEventsErrResponse {
-    #[error("Invalid or expired authentication token")]
-    AuthenticationTokenInvalid,
-}
-
-#[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
-#[builder(on(_, into))]
-#[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
-#[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
-#[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
+#[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi))]
 pub struct ViewPublishedEventsFilter {
     pub name: ::core::option::Option<::axiom::string::String>,
     pub description: ::core::option::Option<::axiom::string::String>,
@@ -108,4 +48,64 @@ impl ::core::convert::From<ViewPublishedEventsFilter> for crate::gateways::Event
             .timestamps(value.timestamps)
             .build()
     }
+}
+
+#[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
+pub type ViewPublishedEventsResponse = ::core::result::Result<ViewPublishedEventsOkResponse, ::std::vec::Vec<ViewPublishedEventsErrResponse>>;
+
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
+#[builder(on(_, into))]
+#[cfg_attr(feature = "serde", derive(::serde::Serialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
+#[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
+pub struct ViewPublishedEventsOkResponse {
+    pub events: ::std::vec::Vec<ViewPublishedEventsEvent>,
+}
+
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
+#[builder(on(_, into))]
+#[cfg_attr(feature = "serde", derive(::serde::Serialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
+#[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
+pub struct ViewPublishedEventsEvent {
+    pub id: ::axiom::string::String,
+
+    pub status: ViewPublishedEventsEventStatus,
+
+    pub name: ::axiom::string::String,
+    pub categories: ::std::vec::Vec<::axiom::string::String>,
+}
+
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::strum::Display)]
+#[cfg_attr(feature = "serde", derive(::serde::Serialize))]
+#[cfg_attr(feature = "serde", serde(untagged, rename_all = "kebab-case"))]
+#[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
+#[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
+pub enum ViewPublishedEventsEventStatus {
+    Created,
+    Approved,
+    Rejected,
+    Completed,
+}
+
+impl ::core::convert::From<::domain::EventStatus> for ViewPublishedEventsEventStatus {
+    fn from(value: ::domain::EventStatus) -> Self {
+        match value {
+            ::domain::EventStatus::Created { .. } => Self::Created,
+            ::domain::EventStatus::Approved { .. } => Self::Approved,
+            ::domain::EventStatus::Rejected { .. } => Self::Rejected,
+            ::domain::EventStatus::Completed { .. } => Self::Completed,
+        }
+    }
+}
+
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::thiserror::Error)]
+#[cfg_attr(feature = "serde", derive(::serde::Serialize))]
+#[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
+#[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
+pub enum ViewPublishedEventsErrResponse {
+    #[error("Invalid or expired authentication token")]
+    AuthenticationTokenInvalid,
 }

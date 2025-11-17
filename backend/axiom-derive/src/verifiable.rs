@@ -95,6 +95,20 @@ impl ::quote::ToTokens for Verifiable {
                 }
             }
 
+            impl #impl_generics ::core::convert::Into<::axiom::aliases::string::String> for #ident #ty_generics #where_clause {
+                fn into(self) -> ::axiom::aliases::string::String {
+                    self.0
+                }
+            }
+
+            impl #impl_generics ::core::convert::TryFrom<::axiom::aliases::string::String> for #ident #ty_generics #where_clause {
+                type Error = #error_ident;
+
+                fn try_from(value: ::axiom::aliases::string::String) -> ::core::result::Result<Self, Self::Error> {
+                    Self::builder().value(value).build()
+                }
+            }
+
             #[derive(::core::fmt::Debug, ::core::clone::Clone, ::thiserror::Error)]
             #vis enum #error_ident {
                 #[error(#error)]

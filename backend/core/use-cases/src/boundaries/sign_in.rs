@@ -11,10 +11,10 @@ pub trait SignInBoundary {
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
 #[builder(on(_, into))]
-#[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(::serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
-#[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
+#[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi))]
 pub struct SignInRequest {
     pub username_or_email: ::axiom::string::String,
     pub password: ::axiom::string::String,
@@ -25,20 +25,20 @@ pub type SignInResponse = ::core::result::Result<SignInOkResponse, ::std::vec::V
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
 #[builder(on(_, into))]
-#[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(::serde::Serialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
-#[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
+#[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
 pub struct SignInOkResponse {
     pub user_role: SignInUserRole,
     pub token: ::axiom::string::String,
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::strum::Display)]
-#[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(::serde::Serialize))]
 #[cfg_attr(feature = "serde", serde(untagged, rename_all = "kebab-case"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
-#[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
+#[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
 pub enum SignInUserRole {
     Volunteer,
     EventManager,
@@ -66,24 +66,28 @@ impl ::core::convert::From<SignInUserRole> for ::domain::UserRole {
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::thiserror::Error)]
-#[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(::serde::Serialize))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
-#[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
+#[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
 pub enum SignInErrResponse {
     #[error("User with username `{username}` not found")]
     UsernameNotFound {
+        #[cfg_attr(feature = "serde", serde(skip))]
         username: ::axiom::string::String,
     },
 
     #[error("User with email `{email}` not found")]
     EmailNotFound {
+        #[cfg_attr(feature = "serde", serde(skip))]
         email: ::axiom::string::String,
     },
 
-    #[error("{} or {}", 0.0, 0.1)]
+    #[error("{0} or {1}")]
     UsernameOrEmailInvalid(
         #[cfg_attr(feature = "serde", serde(skip))]
-        (::domain::UsernameBuilderError, ::domain::EmailBuilderError),
+        ::domain::UsernameBuilderError,
+        #[cfg_attr(feature = "serde", serde(skip))]
+        ::domain::EmailBuilderError,
     ),
 
     #[error(transparent)]

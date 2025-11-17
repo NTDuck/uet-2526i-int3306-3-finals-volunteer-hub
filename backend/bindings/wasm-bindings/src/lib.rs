@@ -24,7 +24,7 @@ impl Application {
             .into_promise()
     }
 
-    async fn new() -> ::aliases::result::Fallible<Self> {
+    async fn new() -> ::axiom::result::Fallible<Self> {
         Gateways::new().await.map(::core::convert::Into::into)
     }
 
@@ -74,7 +74,7 @@ struct Gateways {
 }
 
 impl Gateways {
-    async fn new() -> ::aliases::result::Fallible<Self> {
+    async fn new() -> ::axiom::result::Fallible<Self> {
         use ::hmac::Mac as _;
 
         // let logger = ::tracing_appender::rolling::never("/logs/wasm-bindings/",
@@ -89,7 +89,7 @@ impl Gateways {
 
         ::tracing_wasm::try_set_as_global_default()?;
 
-        ::aliases::result::Fallible::Ok(
+        ::axiom::result::Fallible::Ok(
             Self::builder()
                 .user_repository(::std::sync::Arc::new(InMemoryUserRepository::builder().build()))
                 .uuid_generator(::std::sync::Arc::new(UuidV7Generator::builder().build()))
@@ -119,13 +119,13 @@ trait IntoPromise<T = ()> {
     fn into_promise(self) -> Promise<T>;
 }
 
-impl<T> IntoPromise<T> for ::aliases::result::Fallible<T> {
+impl<T> IntoPromise<T> for ::axiom::result::Fallible<T> {
     fn into_promise(self) -> Promise<T> {
         self.map_err(|error| ::wasm_bindgen::JsValue::from_str(&error.to_string()))
     }
 }
 
-impl<T, E> IntoPromise<T> for ::aliases::result::Fallible<::core::result::Result<T, ::std::vec::Vec<E>>>
+impl<T, E> IntoPromise<T> for ::axiom::result::Fallible<::core::result::Result<T, ::std::vec::Vec<E>>>
 where
     E: ::core::error::Error,
 {
