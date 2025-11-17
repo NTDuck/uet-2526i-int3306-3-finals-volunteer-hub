@@ -6,10 +6,10 @@ pub struct Event {
 
     pub statuses: ::std::vec::Vec<EventStatus>,
 
-    pub name: ::axiom::string::String,
-    pub description: ::axiom::string::String,
-    pub categories: ::std::vec::Vec<::axiom::string::String>,
-    pub location: ::axiom::string::String,
+    pub name: EventName,
+    pub description: EventDescription,
+    pub categories: ::std::vec::Vec<EventCategory>,
+    pub location: EventLocation,
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
@@ -31,9 +31,21 @@ pub enum EventStatus {
     },
 }
 
-#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::cmp::Eq, ::core::cmp::PartialEq, ::core::cmp::Ord, ::core::cmp::PartialOrd, ::axiom::Verifiable)]
-#[verifiable(regex = r"^[a-zA-Z0-9_]{1,32}$", error = "Invalid name format `{value}`: must be between 1 and 32 characters")]
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::axiom::Verifiable)]
+#[verifiable(regex = r#"^.{4,64}$"#, error = "Invalid event name `{value}`: must be between 4 and 64 characters")]
 pub struct EventName(::axiom::string::String);
+
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::axiom::Verifiable)]
+#[verifiable(regex = r#"^.{0,512}$"#, error = "Invalid event description `{value}`: must be at most 512 characters")]
+pub struct EventDescription(::axiom::string::String);
+
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::axiom::Verifiable)]
+#[verifiable(regex = r#"^[a-zA-Z0-9 ]{2,32}$"#, error = "Invalid event category `{value}`: must be between 2 and 32 characters; letters, digits, or spaces only")]
+pub struct EventCategory(::axiom::string::String);
+
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::axiom::Verifiable)]
+#[verifiable(regex = r#"^.{4,128}$"#, error = "Invalid event location `{value}`: must be between 4 and 128 characters")]
+pub struct EventLocation(::axiom::string::String);
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
 pub struct EventChannel {
@@ -58,8 +70,12 @@ pub struct EventChannelPostComment {
     pub id: Uuid,
     pub volunteer_id: Uuid,
 
-    pub content: ::axiom::string::String,
+    pub content: EventChannelPostCommentContent,
 }
+
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::axiom::Verifiable)]
+#[verifiable(regex = r#"^.{1,256}$"#, error = "Invalid comment `{value}`: must be between 1 and 256 characters")]
+pub struct EventChannelPostCommentContent(::axiom::string::String);
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
 #[builder(on(_, into))]
@@ -82,180 +98,19 @@ pub enum UserRole {
     Administrator,
 }
 
-#[derive(
-    ::core::fmt::Debug,
-    ::core::clone::Clone,
-    ::core::cmp::Eq,
-    ::core::cmp::PartialEq,
-    ::core::cmp::Ord,
-    ::core::cmp::PartialOrd,
-    ::core::hash::Hash
-)]
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::axiom::Verifiable)]
+#[verifiable(regex = "^[a-z0-9_-]{4,16}$", error = "Invalid username format `{value}`: must be between 4 and 16 characters; lowercase letters, digits, underscores (`_`), or hyphens (`-`) only")]
 pub struct Username(::axiom::string::String);
 
-#[::bon::bon]
-impl Username {
-    #[builder(on(_, into))]
-    pub fn new(value: ::axiom::string::String) -> ::core::result::Result<Self, UsernameBuilderError> {
-        let value = Self::normalize(value);
-        Self::validate(value).map(Self)
-    }
-
-    fn normalize(value: ::axiom::string::String) -> ::axiom::string::String {
-        let trimmed = value.trim();
-
-        if value.len() == trimmed.len() {
-            value
-        } else {
-            trimmed.chars().collect()
-        }
-    }
-
-    fn validate(
-        value: ::axiom::string::String,
-    ) -> ::core::result::Result<::axiom::string::String, UsernameBuilderError> {
-        let regex = ::axiom::regex!("^[a-z0-9_-]{4,16}$");
-
-        if !regex.is_match(&value) {
-            ::core::result::Result::Err(UsernameBuilderError::InvalidFormat { value })
-        } else {
-            ::core::result::Result::Ok(value)
-        }
-    }
-}
-
-impl ::core::ops::Deref for Username {
-    type Target = ::axiom::string::String;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-#[derive(::core::fmt::Debug, ::core::clone::Clone, ::thiserror::Error)]
-pub enum UsernameBuilderError {
-    #[error(
-        "Invalid username format `{value}`: must be between 4 and 16 characters; lowercase letters, digits, underscores, or \
-         hyphens (`-`) only"
-    )]
-    InvalidFormat { value: ::axiom::string::String },
-}
-
-#[derive(
-    ::core::fmt::Debug,
-    ::core::clone::Clone,
-    ::core::cmp::Eq,
-    ::core::cmp::PartialEq,
-    ::core::cmp::Ord,
-    ::core::cmp::PartialOrd,
-    ::core::hash::Hash
-)]
+// RFC 5322 Official Standard
+// https://emailregex.com/
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::axiom::Verifiable)]
+#[verifiable(regex = r#"(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])"#, error = "Invalid email format `{value}`: does not comply with RFC 5322")]
 pub struct Email(::axiom::string::String);
 
-#[::bon::bon]
-impl Email {
-    #[builder(on(_, into))]
-    pub fn new(value: ::axiom::string::String) -> ::core::result::Result<Self, EmailBuilderError> {
-        let value = Self::normalize(value);
-        Self::validate(value).map(Self)
-    }
-
-    fn normalize(value: ::axiom::string::String) -> ::axiom::string::String {
-        let trimmed = value.trim();
-
-        if value.len() == trimmed.len()
-            && !trimmed.chars().any(|char| char.is_control())
-            && !trimmed.chars().any(|char| char.is_uppercase())
-        {
-            value
-        } else {
-            trimmed
-                .chars()
-                .filter(|char| !char.is_control())
-                .flat_map(|char| char.to_lowercase())
-                .collect()
-        }
-    }
-
-    fn validate(
-        value: ::axiom::string::String,
-    ) -> ::core::result::Result<::axiom::string::String, EmailBuilderError> {
-        // RFC 5322 Official Standard
-        // https://emailregex.com/
-        let regex = ::axiom::regex!(
-            r#"(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])"#
-        );
-
-        if !regex.is_match(&value) {
-            ::core::result::Result::Err(EmailBuilderError::InvalidFormat { value })
-        } else {
-            ::core::result::Result::Ok(value)
-        }
-    }
-}
-
-impl ::core::ops::Deref for Email {
-    type Target = ::axiom::string::String;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-#[derive(::core::fmt::Debug, ::core::clone::Clone, ::thiserror::Error)]
-pub enum EmailBuilderError {
-    #[error("Invalid email format `{value}`: does not comply with RFC 5322")]
-    InvalidFormat { value: ::axiom::string::String },
-}
-
-#[derive(::core::fmt::Debug, ::core::clone::Clone)]
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::axiom::Verifiable)]
+#[verifiable(regex = "^.{8,32}$", error = "Invalid password format: must be between 8 and 32 characters")]
 pub struct Password(::axiom::string::String);
-
-#[::bon::bon]
-impl Password {
-    #[builder(on(_, into))]
-    pub fn new(value: ::axiom::string::String) -> ::core::result::Result<Self, PasswordBuilderError> {
-        let value = Self::normalize(value);
-        return Self::validate(value).map(Self);
-    }
-
-    fn normalize(value: ::axiom::string::String) -> ::axiom::string::String {
-        let trimmed = value.trim();
-
-        if value.len() == trimmed.len() {
-            value
-        } else {
-            trimmed.chars().collect()
-        }
-    }
-
-    fn validate(
-        value: ::axiom::string::String,
-    ) -> ::core::result::Result<::axiom::string::String, PasswordBuilderError> {
-        let regex = ::axiom::regex!("^\\w{8,32}$");
-
-        if !regex.is_match(&value) {
-            ::core::result::Result::Err(PasswordBuilderError::InvalidFormat)
-        } else {
-            ::core::result::Result::Ok(value)
-        }
-    }
-}
-
-impl ::core::ops::Deref for Password {
-    type Target = ::axiom::string::String;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::core::default::Default, ::thiserror::Error)]
-pub enum PasswordBuilderError {
-    #[default]
-    #[error("Invalid password format: must be between 8 and 32 characters")]
-    InvalidFormat,
-}
 
 pub type PasswordDigest = ::axiom::string::String;
 

@@ -40,13 +40,20 @@ impl ::quote::ToTokens for Verifiable {
             ::core::option::Option::Some(error) => error.value(),
             ::core::option::Option::None => ::std::format!(
                 "Invalid {} format: does not match `{}`",
-                ident.to_string().to_title_case(), regex.value(),
+                ident.to_string().to_title_case(),
+                regex.value().replace('{', "{{").replace('}', "}}"),
             )
         };
 
         let error_ident = ::quote::format_ident!("{ident}BuilderError");
 
         tokens.extend(::quote::quote! {
+            impl #impl_generics #ident #ty_generics #where_clause {
+                #vis fn new(value: ::axiom::aliases::string::String) -> ::core::result::Result<Self, #error_ident> {
+                    Self::builder().value(value).build()
+                }
+            }
+
             #[::bon::bon]
             impl #impl_generics #ident #ty_generics #where_clause {
                 #[builder(on(_, into))]
