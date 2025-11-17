@@ -31,6 +31,10 @@ pub enum EventStatus {
     },
 }
 
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::cmp::Eq, ::core::cmp::PartialEq, ::core::cmp::Ord, ::core::cmp::PartialOrd, ::axiom::Verifiable)]
+#[verifiable(regex = r"^[a-zA-Z0-9_]{1,32}$", error = "Invalid name format `{value}`: must be between 1 and 32 characters")]
+pub struct EventName(::axiom::string::String);
+
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
 pub struct EventChannel {
     pub id: Uuid,

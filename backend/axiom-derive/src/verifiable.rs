@@ -24,11 +24,6 @@ struct Verifiable {
     vis: ::syn::Visibility,
     generics: ::syn::Generics,
 
-    args: VerifiableArgs,
-}
-
-#[derive(::darling::FromMeta)]
-struct VerifiableArgs {
     regex: ::syn::LitStr,
     error: ::core::option::Option<::syn::LitStr>,
 }
@@ -37,11 +32,10 @@ impl ::quote::ToTokens for Verifiable {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
         use ::heck::ToTitleCase as _;
 
-        let Self { ident, vis, generics, args } = self;
+        let Self { ident, vis, generics, regex, error } = self;
         
         let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
-        let VerifiableArgs { regex, error } = args;
         let error = match error {
             ::core::option::Option::Some(error) => error.value(),
             ::core::option::Option::None => ::std::format!(
