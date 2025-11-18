@@ -19,8 +19,7 @@ pub struct SignUpRequest {
     pub email: ::axiom::string::String,
     pub password: ::axiom::string::String,
 
-    pub first_name: ::axiom::string::String,
-    pub last_name: ::axiom::string::String,
+    pub full_name: ::axiom::string::String,
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::strum::Display)]
@@ -79,6 +78,12 @@ pub enum SignUpErrResponse {
 
     #[error("Invalid password: {hint}", hint = ::domain::Password::hint())]
     PasswordInvalid,
+
+    #[error("Invalid full name `{full_name}`: {hint}", hint = ::domain::FullName::hint())]
+    FullNameInvalid {
+        #[cfg_attr(feature = "serde", serde(skip))]
+        full_name: ::axiom::string::String,
+    },
 
     #[error("User with username `{username}` already exists")]
     UsernameAlreadyExists {

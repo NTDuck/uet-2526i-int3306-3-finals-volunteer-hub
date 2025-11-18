@@ -12,10 +12,12 @@ pub trait CreateEventBoundary {
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi))]
 pub struct CreateEventRequest {
-    pub name: ::axiom::string::String,
-    pub description: ::axiom::string::String,
-    pub categories: ::std::vec::Vec<::axiom::string::String>,
-    pub location: ::axiom::string::String,
+    pub token: ::axiom::string::String,
+
+    pub event_name: ::axiom::string::String,
+    pub event_description: ::axiom::string::String,
+    pub event_categories: ::std::vec::Vec<::axiom::string::String>,
+    pub event_location: ::axiom::string::String,
 }
 
 #[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
@@ -34,6 +36,7 @@ pub enum CreateEventErrResponse {
 
     #[error("User not authorized: expecting role `{expected_user_role}`, found `{user_role}`", expected_user_role = CreateEventUserRole::EventManager)]
     UserUnauthorized {
+        #[allow(private_interfaces)]
         #[cfg_attr(feature = "serde", serde(skip))]
         user_role: CreateEventUserRole,
     },
@@ -50,11 +53,10 @@ pub enum CreateEventErrResponse {
         event_description: ::axiom::string::String,
     },
 
-    #[error("Invalid event categories `{event_categories}`: {hint}", hint = ::domain::EventCategory::hint())]
+    #[error("Invalid event categories `{}`: {hint}", format(.event_categories), hint = ::domain::EventCategory::hint())]
     EventCategoriesInvalid {
-        // Formatted: backtick-wrapped, comma-separated
         #[cfg_attr(feature = "serde", serde(skip))]
-        event_categories: ::axiom::string::String,
+        event_categories: ::std::vec::Vec<::axiom::string::String>,
     },
 
     #[error("Invalid event location `{event_location}`: {hint}", hint = ::domain::EventLocation::hint())]
@@ -64,9 +66,17 @@ pub enum CreateEventErrResponse {
     },
 
     #[error("Event with name `{event_name}` already exists")]
-    EventAlreadyExists {
+    EventNameAlreadyExists {
         event_name: ::axiom::string::String,
     },
+}
+
+fn format(values: &::std::vec::Vec<::axiom::string::String>) -> ::axiom::string::String {
+    values.into_iter()
+        .map(|value| ::std::format!("`{}`", value))
+        .collect::<::std::vec::Vec<_>>()
+        .join(", ")
+        .into()
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::strum::Display)]
@@ -74,7 +84,7 @@ pub enum CreateEventErrResponse {
 #[cfg_attr(feature = "serde", serde(rename_all = "kebab-case"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
-pub enum CreateEventUserRole {
+enum CreateEventUserRole {
     Volunteer,
     EventManager,
     Administrator,

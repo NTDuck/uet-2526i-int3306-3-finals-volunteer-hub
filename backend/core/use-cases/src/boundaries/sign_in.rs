@@ -1,8 +1,5 @@
 use ::async_trait::async_trait;
 
-#[cfg(feature = "wasm-bindings")]
-use ::wasm_bindgen::prelude::*;
-
 #[async_trait]
 pub trait SignInBoundary {
     async fn apply(self: ::std::sync::Arc<Self>, request: SignInRequest)

@@ -1,11 +1,11 @@
 pub mod option {
     pub trait OptionExt<T> {
-        fn ok(self) -> crate::aliases::result::Fallible<T>;
+        fn some(self) -> crate::aliases::result::Fallible<T>;
     }
 
     impl<T> OptionExt<T> for ::core::option::Option<T> {
         #[track_caller]
-        fn ok(self) -> crate::aliases::result::Fallible<T> {
+        fn some(self) -> crate::aliases::result::Fallible<T> {
             match self {
                 ::core::option::Option::Some(val) => crate::aliases::result::Fallible::Ok(val),
                 ::core::option::Option::None => {

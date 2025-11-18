@@ -19,22 +19,27 @@ impl SignUpBoundary for SignUpInteractor {
         let mut errors = ::std::vec::Vec::new();
 
         let username = ::domain::Username::try_from(request.username)
-            .map_err(|error| errors.push(SignUpErrResponse::UsernameInvalid(error)))
+            .map_err(|error| errors.push(SignUpErrResponse::UsernameInvalid { username: error.into() }))
             .ok();
 
         let email = ::domain::Email::try_from(request.email)
-            .map_err(|error| errors.push(SignUpErrResponse::EmailInvalid(error)))
+            .map_err(|error| errors.push(SignUpErrResponse::EmailInvalid { email: error.into() }))
             .ok();
 
         let password = ::domain::Password::try_from(request.password)
-            .map_err(|error| errors.push(SignUpErrResponse::PasswordInvalid(error)))
+            .map_err(|_| errors.push(SignUpErrResponse::PasswordInvalid))
+            .ok();
+
+        let full_name = ::domain::FullName::try_from(request.full_name)
+            .map_err(|error| errors.push(SignUpErrResponse::FullNameInvalid { full_name: error.into() }))
             .ok();
 
         let (
             ::core::option::Option::Some(username),
             ::core::option::Option::Some(email),
             ::core::option::Option::Some(password),
-        ) = (username, email, password)
+            ::core::option::Option::Some(full_name),
+        ) = (username, email, password, full_name)
         else {
             return ::axiom::result::Fallible::Ok(SignUpResponse::Err(errors));
         };
@@ -71,8 +76,7 @@ impl SignUpBoundary for SignUpInteractor {
             .username(username)
             .email(email)
             .password(password)
-            .first_name(request.first_name)
-            .last_name(request.last_name)
+            .full_name(full_name)
             .build();
 
         ::std::sync::Arc::clone(&self.user_repository).save(user).await?;

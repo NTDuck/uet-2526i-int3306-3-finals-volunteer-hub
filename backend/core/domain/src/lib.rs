@@ -92,8 +92,7 @@ pub struct User {
     pub email: Email,
     pub password: PasswordDigest,
 
-    pub first_name: ::axiom::string::String,
-    pub last_name: ::axiom::string::String,
+    pub full_name: FullName,
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
@@ -121,6 +120,11 @@ pub struct Email(::axiom::string::String);
 pub struct Password(::axiom::string::String);
 
 pub type PasswordDigest = ::axiom::string::String;
+
+#[repr(transparent)]
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::axiom::Verifiable)]
+#[verifiable(regex = r"^[A-Za-z][A-Za-z\s'-]{4,128}[A-Za-z]$", hint = "must be between 4 and 128 characters; letters, spaces, apostrophes (`'`), or hyphens (`-`) only")]
+pub struct FullName(::axiom::string::String);
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
 pub struct EventRegistration {

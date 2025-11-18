@@ -18,6 +18,7 @@ impl SignInBoundary for SignInInteractor {
         self: ::std::sync::Arc<Self>, request: SignInRequest,
     ) -> ::axiom::result::Fallible<SignInResponse> {
         use ::axiom::time::TimestampExt as _;
+        use ::axiom::option::OptionExt as _;
 
         let mut errors = ::std::vec::Vec::new();
 
@@ -26,38 +27,33 @@ impl SignInBoundary for SignInInteractor {
             ::domain::Username::try_from(request.username_or_email.clone())
         {
             ::std::sync::Arc::clone(&self.user_repository).get_by_username(username).await?
-                .or_else(|| {
-                    errors.push(SignInErrResponse::UsernameNotFound { username: request.username_or_email.clone() });
-                    ::core::option::Option::None
-                })
+                .some()
+                .map_err(|_| errors.push(SignInErrResponse::UsernameNotFound { username: request.username_or_email.clone() }))
+                .ok()
         } else if let ::core::result::Result::Ok(email) =
             ::domain::Email::try_from(request.username_or_email.clone())
         {
             ::std::sync::Arc::clone(&self.user_repository).get_by_email(email).await?
-                .or_else(|| {
-                    errors.push(SignInErrResponse::EmailNotFound { email: request.username_or_email.clone() });
-                    ::core::option::Option::None
-                })
+                .some()
+                .map_err(|_| errors.push(SignInErrResponse::EmailNotFound { email: request.username_or_email.clone() }))
+                .ok()
+                
         } else {
-            errors.push(SignInErrResponse::UsernameOrEmailInvalid(
-                ::domain::UsernameBuilderError::InvalidFormat { value: request.username_or_email.clone() },
-                ::domain::EmailBuilderError::InvalidFormat { value: request.username_or_email.clone() },
-            ));
+            errors.push(SignInErrResponse::UsernameOrEmailInvalid { username_or_email: request.username_or_email.clone() });
             ::core::option::Option::None
         };
 
         let password = ::domain::Password::try_from(request.password.clone())
-            .map_err(|error| errors.push(SignInErrResponse::PasswordInvalid(error)))
+            .map_err(|_| errors.push(SignInErrResponse::PasswordInvalid))
             .ok();
 
         let (::core::option::Option::Some(user), ::core::option::Option::Some(password)) = (user, password) else {
             return ::axiom::result::Fallible::Ok(SignInResponse::Err(errors));
         };
 
-        if !::std::sync::Arc::clone(&self.password_hasher)
-            .verify(password, user.password)
-            .await?
-        {
+        let password_matches = ::std::sync::Arc::clone(&self.password_hasher).verify(password, user.password).await?;
+
+        if !password_matches {
             errors.push(SignInErrResponse::PasswordMismatch);
             return ::axiom::result::Fallible::Ok(SignInResponse::Err(errors));
         }

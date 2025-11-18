@@ -49,8 +49,8 @@ impl ::quote::ToTokens for Verifiable {
                     Self::builder().value(value).build()
                 }
 
-                #vis fn hint() -> ::axiom::aliases::string::String {
-                    ::axiom::aliases::string::String::from(#hint)
+                #vis const fn hint() -> ::axiom::aliases::string::String {
+                    ::axiom::aliases::string::String::Borrowed(#hint)
                 }
             }
 
@@ -113,6 +113,20 @@ impl ::quote::ToTokens for Verifiable {
             #vis enum #error_ident {
                 #[error(#error_msg)]
                 InvalidFormat { value: ::axiom::aliases::string::String },
+            }
+
+            impl #error_ident {
+                #vis const fn hint() -> ::axiom::aliases::string::String {
+                    #ident::hint()
+                }
+            }
+
+            impl ::core::convert::Into<::axiom::aliases::string::String> for #error_ident {
+                fn into(self) -> ::axiom::aliases::string::String {
+                    match self {
+                        Self::InvalidFormat { value } => value,
+                    }
+                }
             }
         });
     }

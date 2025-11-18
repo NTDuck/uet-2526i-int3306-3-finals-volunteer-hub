@@ -39,7 +39,7 @@ impl ViewEventRecommendationBoundary for ViewEventRecommendationInteractor {
             async move {
                 ::futures::future::ok::<_, ::axiom::result::Error>(crate::boundaries::ViewEventRecommendationEvent::builder()
                     .id(uuid_codec.format(event.id).await?)
-                    .status(*event.statuses.first().ok()?)
+                    .status(*event.statuses.first().some()?)
                     .name(event.name)
                     .categories(event.categories)
                     .build())
