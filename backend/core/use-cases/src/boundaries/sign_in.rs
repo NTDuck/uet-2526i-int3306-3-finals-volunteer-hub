@@ -64,6 +64,7 @@ impl ::core::convert::From<SignInUserRole> for ::domain::UserRole {
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::thiserror::Error)]
 #[cfg_attr(feature = "serde", derive(::serde::Serialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "kebab-case", rename_all_fields = "kebab-case", tag = "error"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
 pub enum SignInErrResponse {

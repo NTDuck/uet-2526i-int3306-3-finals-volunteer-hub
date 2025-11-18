@@ -51,7 +51,26 @@ pub struct EventLocation(::axiom::string::String);
 pub struct EventPost {
     pub id: Uuid,
     pub volunteer_id: Uuid,
+
+    pub title: EventPostTitle,
+    pub content: EventPostContent,
 }
+
+#[repr(transparent)]
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::axiom::Verifiable)]
+#[verifiable(
+    regex = r#"^.{1,128}$"#,
+    hint = "must be between 1 and 128 characters"
+)]
+pub struct EventPostTitle(::axiom::string::String);
+
+#[repr(transparent)]
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::axiom::Verifiable)]
+#[verifiable(
+    regex = r#"^.{1,4096}$"#,
+    hint = "must be between 1 and 4096 characters"
+)]
+pub struct EventPostContent(::axiom::string::String);
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
 #[builder(on(_, into))]
@@ -100,6 +119,7 @@ pub enum UserRole {
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
 pub enum UserStatus {
+    Created,
     Suspended {
         suspended_by_administrator_id: Uuid,
         suspended_at: ::axiom::time::Timestamp,

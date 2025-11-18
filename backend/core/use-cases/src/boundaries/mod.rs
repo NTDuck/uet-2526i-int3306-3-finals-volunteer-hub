@@ -26,6 +26,7 @@ mod view_non_admin_user;
 mod view_non_admin_users;
 mod view_published_events;
 mod view_event;
+mod update_event_registration;
 
 pub use self::accept_event_registration::*;
 pub use self::approve_event::*;
@@ -55,3 +56,4 @@ pub use self::view_non_admin_user::*;
 pub use self::view_non_admin_users::*;
 pub use self::view_published_events::*;
 pub use self::view_event::*;
+pub use self::update_event_registration::*;

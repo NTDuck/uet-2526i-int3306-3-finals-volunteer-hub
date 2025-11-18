@@ -28,7 +28,6 @@ pub enum EventRepositoryViewFilterEventStatus {
     Created,
     Approved,
     Rejected,
-    Completed,
 }
 
 impl ::core::convert::From<::domain::EventStatus> for EventRepositoryViewFilterEventStatus {
@@ -37,7 +36,6 @@ impl ::core::convert::From<::domain::EventStatus> for EventRepositoryViewFilterE
             ::domain::EventStatus::Created { .. } => Self::Created,
             ::domain::EventStatus::Approved { .. } => Self::Approved,
             ::domain::EventStatus::Rejected { .. } => Self::Rejected,
-            ::domain::EventStatus::Completed { .. } => Self::Completed,
         }
     }
 }
