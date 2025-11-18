@@ -65,14 +65,20 @@ pub type SignUpOkResponse = ();
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
 pub enum SignUpErrResponse {
-    #[error(transparent)]
-    UsernameInvalid(#[from] #[cfg_attr(feature = "serde", serde(skip))] ::domain::UsernameBuilderError),
+    #[error("Invalid username `{username}`: {hint}", hint = ::domain::Username::hint())]
+    UsernameInvalid {
+        #[cfg_attr(feature = "serde", serde(skip))]
+        username: ::axiom::string::String,
+    },
 
-    #[error(transparent)]
-    EmailInvalid(#[from] #[cfg_attr(feature = "serde", serde(skip))] ::domain::EmailBuilderError),
+    #[error("Invalid email `{email}`: {hint}", hint = ::domain::Email::hint())]
+    EmailInvalid {
+        #[cfg_attr(feature = "serde", serde(skip))]
+        email: ::axiom::string::String,
+    },
 
-    #[error(transparent)]
-    PasswordInvalid(#[from] #[cfg_attr(feature = "serde", serde(skip))] ::domain::PasswordBuilderError),
+    #[error("Invalid password: {hint}", hint = ::domain::Password::hint())]
+    PasswordInvalid,
 
     #[error("User with username `{username}` already exists")]
     UsernameAlreadyExists {

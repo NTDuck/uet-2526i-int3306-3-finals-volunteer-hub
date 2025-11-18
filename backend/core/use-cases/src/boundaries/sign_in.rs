@@ -82,16 +82,17 @@ pub enum SignInErrResponse {
         email: ::axiom::string::String,
     },
 
-    #[error("{0} or {1}")]
-    UsernameOrEmailInvalid(
+    #[error(
+        "Invalid username or email `{username_or_email}`: [username] {username_hint}, [email] {email_hint}",
+        username_hint = ::domain::Username::hint(), email_hint = ::domain::Email::hint(),
+    )]
+    UsernameOrEmailInvalid {
         #[cfg_attr(feature = "serde", serde(skip))]
-        ::domain::UsernameBuilderError,
-        #[cfg_attr(feature = "serde", serde(skip))]
-        ::domain::EmailBuilderError,
-    ),
+        username_or_email: ::axiom::string::String,
+    },
 
-    #[error(transparent)]
-    PasswordInvalid(#[from] #[cfg_attr(feature = "serde", serde(skip))] ::domain::PasswordBuilderError),
+    #[error("Invalid password: {hint}", hint = ::domain::Password::hint())]
+    PasswordInvalid,
 
     #[error("Passwords do not match")]
     PasswordMismatch,

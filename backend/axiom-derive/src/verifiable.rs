@@ -25,32 +25,32 @@ struct Verifiable {
     generics: ::syn::Generics,
 
     regex: ::syn::LitStr,
-    error: ::core::option::Option<::syn::LitStr>,
+    hint: ::core::option::Option<::syn::LitStr>,
 }
 
 impl ::quote::ToTokens for Verifiable {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
         use ::heck::ToTitleCase as _;
 
-        let Self { ident, vis, generics, regex, error } = self;
+        let Self { ident, vis, generics, regex, hint } = self;
         
         let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
-        let error = match error {
-            ::core::option::Option::Some(error) => error.value(),
-            ::core::option::Option::None => ::std::format!(
-                "Invalid {} format: does not match `{}`",
-                ident.to_string().to_title_case(),
-                regex.value().replace('{', "{{").replace('}', "}}"),
-            )
-        };
+        let hint = hint.as_ref()
+            .map(|hint| hint.value())
+            .unwrap_or(::std::format!("must match `{}`", regex.value().replace('{', "{{").replace('}', "}}")));
 
+        let error_msg = ::std::format!("Invalid {} format: {}", ident.to_string().to_title_case(), hint);
         let error_ident = ::quote::format_ident!("{ident}BuilderError");
 
         tokens.extend(::quote::quote! {
             impl #impl_generics #ident #ty_generics #where_clause {
                 #vis fn new(value: ::axiom::aliases::string::String) -> ::core::result::Result<Self, #error_ident> {
                     Self::builder().value(value).build()
+                }
+
+                #vis fn hint() -> ::axiom::aliases::string::String {
+                    ::axiom::aliases::string::String::from(#hint)
                 }
             }
 
@@ -111,7 +111,7 @@ impl ::quote::ToTokens for Verifiable {
 
             #[derive(::core::fmt::Debug, ::core::clone::Clone, ::thiserror::Error)]
             #vis enum #error_ident {
-                #[error(#error)]
+                #[error(#error_msg)]
                 InvalidFormat { value: ::axiom::aliases::string::String },
             }
         });

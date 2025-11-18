@@ -7,10 +7,10 @@ pub trait CreateEventBoundary {
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
 #[builder(on(_, into))]
-#[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(::serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
-#[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
+#[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi))]
 pub struct CreateEventRequest {
     pub name: ::axiom::string::String,
     pub description: ::axiom::string::String,
@@ -25,43 +25,55 @@ pub type CreateEventResponse = ::core::result::Result<CreateEventOkResponse, ::s
 pub type CreateEventOkResponse = ();
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::thiserror::Error)]
-#[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(::serde::Serialize))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
-#[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
+#[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
 pub enum CreateEventErrResponse {
     #[error("Invalid or expired authentication token")]
     AuthenticationTokenInvalid,
 
     #[error("User not authorized: expecting role `{expected_user_role}`, found `{user_role}`", expected_user_role = CreateEventUserRole::EventManager)]
-    UserUnauthorized { user_role: CreateEventUserRole },
+    UserUnauthorized {
+        #[cfg_attr(feature = "serde", serde(skip))]
+        user_role: CreateEventUserRole,
+    },
 
-    // EventNameInvalid {
-    //     name: ::axiom::string::String,
-    // },
+    #[error("Invalid event name `{event_name}`: {hint}", hint = ::domain::EventName::hint())]
+    EventNameInvalid {
+        #[cfg_attr(feature = "serde", serde(skip))]
+        event_name: ::axiom::string::String,
+    },
 
-    // EventDescriptionInvalid {
-    //     description: ::axiom::string::String,
-    // },
+    #[error("Invalid event description `{event_description}`: {hint}", hint = ::domain::EventDescription::hint())]
+    EventDescriptionInvalid {
+        #[cfg_attr(feature = "serde", serde(skip))]
+        event_description: ::axiom::string::String,
+    },
 
-    // EventCategoriesInvalid {
-    //     categories: ::std::vec::Vec<::axiom::string::String>,
-    // },
+    #[error("Invalid event categories `{event_categories}`: {hint}", hint = ::domain::EventCategory::hint())]
+    EventCategoriesInvalid {
+        // Formatted: backtick-wrapped, comma-separated
+        #[cfg_attr(feature = "serde", serde(skip))]
+        event_categories: ::axiom::string::String,
+    },
 
-    // EventLocationInvalid {
-    //     location: ::axiom::string::String,
-    // },
+    #[error("Invalid event location `{event_location}`: {hint}", hint = ::domain::EventLocation::hint())]
+    EventLocationInvalid {
+        #[cfg_attr(feature = "serde", serde(skip))]
+        event_location: ::axiom::string::String,
+    },
 
-    #[error("Event with name `{name}` already exists")]
+    #[error("Event with name `{event_name}` already exists")]
     EventAlreadyExists {
-        name: ::axiom::string::String,
+        event_name: ::axiom::string::String,
     },
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::strum::Display)]
-#[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(::serde::Serialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "kebab-case"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
-#[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
+#[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
 pub enum CreateEventUserRole {
     Volunteer,
     EventManager,

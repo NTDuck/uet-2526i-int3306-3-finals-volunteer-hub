@@ -33,22 +33,22 @@ pub enum EventStatus {
 
 #[repr(transparent)]
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::axiom::Verifiable)]
-#[verifiable(regex = r#"^.{4,64}$"#, error = "Invalid event name `{value}`: must be between 4 and 64 characters")]
+#[verifiable(regex = r#"^.{4,64}$"#, hint = "must be between 4 and 64 characters")]
 pub struct EventName(::axiom::string::String);
 
 #[repr(transparent)]
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::axiom::Verifiable)]
-#[verifiable(regex = r#"^.{0,512}$"#, error = "Invalid event description `{value}`: must be at most 512 characters")]
+#[verifiable(regex = r#"^.{0,512}$"#, hint = "must be at most 512 characters")]
 pub struct EventDescription(::axiom::string::String);
 
 #[repr(transparent)]
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::axiom::Verifiable)]
-#[verifiable(regex = r#"^[a-zA-Z0-9 ]{2,32}$"#, error = "Invalid event category `{value}`: must be between 2 and 32 characters; letters, digits, or spaces only")]
+#[verifiable(regex = r#"^[a-zA-Z0-9 ]{2,32}$"#, hint = "must be between 2 and 32 characters; letters, digits, or spaces only")]
 pub struct EventCategory(::axiom::string::String);
 
 #[repr(transparent)]
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::axiom::Verifiable)]
-#[verifiable(regex = r#"^.{4,128}$"#, error = "Invalid event location `{value}`: must be between 4 and 128 characters")]
+#[verifiable(regex = r#"^.{4,128}$"#, hint = "must be between 4 and 128 characters")]
 pub struct EventLocation(::axiom::string::String);
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
@@ -79,7 +79,7 @@ pub struct EventChannelPostComment {
 
 #[repr(transparent)]
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::axiom::Verifiable)]
-#[verifiable(regex = r#"^.{1,256}$"#, error = "Invalid comment `{value}`: must be between 1 and 256 characters")]
+#[verifiable(regex = r#"^.{1,256}$"#, hint = "must be between 1 and 256 characters")]
 pub struct EventChannelPostCommentContent(::axiom::string::String);
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
@@ -105,19 +105,19 @@ pub enum UserRole {
 
 #[repr(transparent)]
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::cmp::Eq, ::core::cmp::PartialEq, ::core::hash::Hash, ::axiom::Verifiable)]
-#[verifiable(regex = "^[a-z0-9_-]{4,16}$", error = "Invalid username format `{value}`: must be between 4 and 16 characters; lowercase letters, digits, underscores (`_`), or hyphens (`-`) only")]
+#[verifiable(regex = "^[a-z0-9_-]{4,16}$", hint = "must be between 4 and 16 characters; lowercase letters, digits, underscores (`_`), or hyphens (`-`) only")]
 pub struct Username(::axiom::string::String);
 
 // RFC 5322 Official Standard
 // https://emailregex.com/
 #[repr(transparent)]
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::cmp::Eq, ::core::cmp::PartialEq, ::core::hash::Hash, ::axiom::Verifiable)]
-#[verifiable(regex = r#"(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])"#, error = "Invalid email format `{value}`: does not comply with RFC 5322")]
+#[verifiable(regex = r#"(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])"#, hint = "must comply with RFC 5322")]
 pub struct Email(::axiom::string::String);
 
 #[repr(transparent)]
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::axiom::Verifiable)]
-#[verifiable(regex = "^.{8,32}$", error = "Invalid password format: must be between 8 and 32 characters")]
+#[verifiable(regex = "^.{8,32}$", hint = "must be between 8 and 32 characters")]
 pub struct Password(::axiom::string::String);
 
 pub type PasswordDigest = ::axiom::string::String;
