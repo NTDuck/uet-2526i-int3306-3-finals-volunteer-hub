@@ -2,13 +2,12 @@
 #[builder(on(_, into))]
 pub struct Event {
     pub id: Uuid,
-    pub channel_id: ::core::option::Option<Uuid>,
 
-    pub statuses: ::std::vec::Vec<EventStatus>,
+    pub statuses: ::vec1::Vec1<EventStatus>,
 
     pub name: EventName,
     pub description: EventDescription,
-    pub categories: ::std::vec::Vec<EventCategory>,
+    pub categories: ::vec1::Vec1<EventCategory>,
     pub location: EventLocation,
 }
 
@@ -24,10 +23,6 @@ pub enum EventStatus {
     Rejected {
         rejected_by_administrator_id: Uuid,
         rejected_at: ::axiom::time::Timestamp,
-    },
-    Completed {
-        completed_by_manager_id: Uuid,
-        completed_at: ::axiom::time::Timestamp,
     },
 }
 
@@ -52,41 +47,42 @@ pub struct EventCategory(::axiom::string::String);
 pub struct EventLocation(::axiom::string::String);
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
-pub struct EventChannel {
-    pub id: Uuid,
-    pub event_id: Uuid,
-}
-
-#[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
-pub struct EventChannelPost {
+#[builder(on(_, into))]
+pub struct EventPost {
     pub id: Uuid,
     pub volunteer_id: Uuid,
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
-pub struct EventChannelPostReaction {
+#[builder(on(_, into))]
+pub struct EventPostReaction {
     pub id: Uuid,
+    pub post_id: Uuid,
     pub volunteer_id: Uuid,
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
-pub struct EventChannelPostComment {
+#[builder(on(_, into))]
+pub struct EventPostComment {
     pub id: Uuid,
+    pub post_id: Uuid,
     pub volunteer_id: Uuid,
 
-    pub content: EventChannelPostCommentContent,
+    pub content: EventPostCommentContent,
 }
 
 #[repr(transparent)]
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::axiom::Verifiable)]
 #[verifiable(regex = r#"^.{1,256}$"#, hint = "must be between 1 and 256 characters")]
-pub struct EventChannelPostCommentContent(::axiom::string::String);
+pub struct EventPostCommentContent(::axiom::string::String);
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
 #[builder(on(_, into))]
 pub struct User {
     pub id: Uuid,
+
     pub role: UserRole,
+    pub statuses: ::vec1::Vec1<UserStatus>,
 
     pub username: Username,
     pub email: Email,
@@ -100,6 +96,18 @@ pub enum UserRole {
     Volunteer,
     EventManager,
     Administrator,
+}
+
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
+pub enum UserStatus {
+    Suspended {
+        suspended_by_administrator_id: Uuid,
+        suspended_at: ::axiom::time::Timestamp,
+    },
+    Unsuspended {
+        unsuspended_by_administrator_id: Uuid,
+        unsuspended_at: ::axiom::time::Timestamp,
+    },
 }
 
 #[repr(transparent)]
@@ -127,11 +135,12 @@ pub type PasswordDigest = ::axiom::string::String;
 pub struct FullName(::axiom::string::String);
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
+#[builder(on(_, into))]
 pub struct EventRegistration {
     pub event_id: Uuid,
     pub volunteer_id: Uuid,
 
-    pub statuses: ::std::vec::Vec<EventRegistrationStatus>,
+    pub statuses: ::vec1::Vec1<EventRegistrationStatus>,
 }
 
 /// Possible lifecycles

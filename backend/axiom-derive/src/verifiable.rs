@@ -56,7 +56,7 @@ impl ::quote::ToTokens for Verifiable {
 
             #[::bon::bon]
             impl #impl_generics #ident #ty_generics #where_clause {
-                #[builder(on(_, into))]
+                #[builder(on(::axiom::aliases::string::String, into))]
                 #vis fn new(value: ::axiom::aliases::string::String) -> ::core::result::Result<Self, #error_ident> {
                     let value = normalize(value);
                     return validate(value).map(Self);

@@ -5,17 +5,36 @@ pub trait ViewEventVolunteersBoundary {
     async fn apply(self: ::std::sync::Arc<Self>, request: ViewEventVolunteersRequest) -> ::axiom::result::Fallible<ViewEventVolunteersResponse>;
 }
 
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
+#[builder(on(_, into))]
+#[cfg_attr(feature = "serde", derive(::serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
+#[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi))]
 pub struct ViewEventVolunteersRequest {
     pub token: ::axiom::string::String,
     pub event_id: ::axiom::string::String,
 }
 
+#[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
 pub type ViewEventVolunteersResponse = ::core::result::Result<ViewEventVolunteersOkResponse, ::std::vec::Vec<ViewEventVolunteersErrResponse>>;
 
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
+#[builder(on(_, into))]
+#[cfg_attr(feature = "serde", derive(::serde::Serialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
+#[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
 pub struct ViewEventVolunteersOkResponse {
     pub volunteers: ::std::vec::Vec<ViewEventVolunteersVolunteer>,
 }
 
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
+#[builder(on(_, into))]
+#[cfg_attr(feature = "serde", derive(::serde::Serialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
+#[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
 pub struct ViewEventVolunteersVolunteer {
     pub id: ::axiom::string::String,
 

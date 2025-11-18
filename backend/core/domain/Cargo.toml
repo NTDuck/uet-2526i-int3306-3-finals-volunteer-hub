@@ -13,6 +13,7 @@ bon = { workspace = true }
 once_cell = { workspace = true }
 thiserror = { workspace = true }
 regex = { workspace = true }
+vec1 = { workspace = true }
 
 [lints]
 workspace = true

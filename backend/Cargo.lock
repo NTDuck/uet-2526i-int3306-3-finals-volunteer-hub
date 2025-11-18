@@ -304,6 +304,7 @@ dependencies = [
  "once_cell",
  "regex",
  "thiserror",
+ "vec1",
 ]
 
 [[package]]
@@ -1008,6 +1009,12 @@ dependencies = [
  "js-sys",
  "wasm-bindgen",
 ]
+
+[[package]]
+name = "vec1"
+version = "1.12.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "eab68b56840f69efb0fefbe3ab6661499217ffdc58e2eef7c3f6f69835386322"
 
 [[package]]
 name = "version_check"
