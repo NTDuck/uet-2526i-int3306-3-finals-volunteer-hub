@@ -111,12 +111,10 @@ impl ::quote::ToTokens for DeriveInput {
         let repr_lifetime = ::syn::Lifetime::new("'__serializable_error_repr", ::proc_macro2::Span::call_site());
 
         let rename_all = rename_all.as_ref()
-            .or(rename.as_ref())
-            .unwrap_or(&CaseConvention::KebabCase);
+            .or(rename.as_ref());
 
         let rename_all_fields = rename_all_fields.as_ref()
-            .or(rename.as_ref())
-            .unwrap_or(&CaseConvention::KebabCase);
+            .or(rename.as_ref());
 
         let tag = tag.as_ref()
             .cloned()
@@ -124,7 +122,7 @@ impl ::quote::ToTokens for DeriveInput {
 
         let content = content.as_ref()
             .cloned()
-            .unwrap_or_else(|| ::syn::LitStr::new("message", content.span()));
+            .unwrap_or_else(|| ::syn::LitStr::new("data", content.span()));
 
         let message = message.as_ref()
             .cloned()
@@ -170,7 +168,9 @@ impl ::quote::ToTokens for DeriveInput {
                     ::darling::ast::Style::Struct => ::quote::quote! { { .. }},
                     ::darling::ast::Style::Unit => ::quote::quote! {},
                 };
-                let error_codes = rename_all.rename(ident);
+                let error_codes = rename_all
+                    .map(|rename_all| rename_all.rename(variant_ident))
+                    .unwrap_or(variant_ident.to_string());
 
                 ::quote::quote! { #ident::#variant_ident #variant_fields => #error_codes }
             });
@@ -219,8 +219,32 @@ impl ::quote::ToTokens for DeriveInput {
                 ::quote::quote! { #ident::#variant_ident #ref_variant_fields => #repr_ident::#variant_ident #variant_fields }
             });
 
-        let rename_all = rename_all.as_str();
-        let rename_all_fields = rename_all_fields.as_str();
+        // let rename_all = rename_all
+        //     .map(CaseConvention::as_str)
+        //     .map(|rename_all| ::quote::quote! { rename_all = #rename_all })
+        //     .unwrap_or_default();
+
+        // let rename_all_fields = rename_all_fields
+        //     .map(CaseConvention::as_str)
+        //     .map(|rename_all_fields| ::quote::quote! { rename_all_fields = #rename_all_fields })
+        //     .unwrap_or_default();
+
+        let repr_serde_rename_attr = match (rename_all, rename_all_fields) {
+            (::core::option::Option::None, ::core::option::Option::None) => ::quote::quote! {},
+            (::core::option::Option::None, ::core::option::Option::Some(rename_all_fields)) => {
+                let rename_all_fields = rename_all_fields.as_str();
+                ::quote::quote! { #[serde(rename_all_fields = #rename_all_fields)] }
+            },
+            (::core::option::Option::Some(rename_all), ::core::option::Option::None) => {
+                let rename_all = rename_all.as_str();
+                ::quote::quote! { #[serde(rename_all = #rename_all)] }
+            },
+            (::core::option::Option::Some(rename_all), ::core::option::Option::Some(rename_all_fields)) => {
+                let rename_all = rename_all.as_str();
+                let rename_all_fields = rename_all_fields.as_str();
+                ::quote::quote! { #[serde(rename_all = #rename_all, rename_all_fields = #rename_all_fields)] }
+            },
+        };
 
         tokens.extend(::quote::quote! {
             impl #impl_generics ::serde::ser::Serialize for #ident #ty_generics #serialize_where_clause {
@@ -255,7 +279,8 @@ impl ::quote::ToTokens for DeriveInput {
             }
 
             #[derive(::core::fmt::Debug, ::serde::Serialize, ::thiserror::Error)]
-            #[serde(rename_all = #rename_all, rename_all_fields = #rename_all_fields, untagged)]
+            #[serde(untagged)]
+            #repr_serde_rename_attr
             enum #repr_ident #repr_ty_generics #repr_where_clause {
                 #( #repr_variants, )*
             }
