@@ -132,6 +132,10 @@ impl ::quote::ToTokens for DeriveInput {
 
         let data = data.as_ref().take_enum().unwrap();
 
+        let mut repr_generics = generics.clone();
+        repr_generics.params.insert(0, ::syn::GenericParam::Lifetime(::syn::LifetimeParam::new(repr_lifetime.clone())));
+        let (_, repr_ty_generics, repr_where_clause) = repr_generics.split_for_impl();
+
         let repr_variants = data.iter()
             .map(|variant| {
                 let variant_ident = &variant.ident;
@@ -252,7 +256,7 @@ impl ::quote::ToTokens for DeriveInput {
 
             #[derive(::core::fmt::Debug, ::serde::Serialize, ::thiserror::Error)]
             #[serde(rename_all = #rename_all, rename_all_fields = #rename_all_fields, untagged)]
-            enum #repr_ident #ty_generics #where_clause<#repr_lifetime> {
+            enum #repr_ident #repr_ty_generics #repr_where_clause {
                 #( #repr_variants, )*
             }
         });
