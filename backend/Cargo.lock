@@ -76,6 +76,7 @@ dependencies = [
  "heck",
  "proc-macro2",
  "quote",
+ "strum",
  "syn",
 ]
 
@@ -318,6 +319,17 @@ name = "either"
 version = "1.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "48c757948c5ede0e46177b7add2e67155f70e33c07fea8284df6576da70b3719"
+
+[[package]]
+name = "erased-serde"
+version = "0.4.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "89e8918065695684b2b0702da20382d5ae6065cf3327bc2d6436bd49a71ce9f3"
+dependencies = [
+ "serde",
+ "serde_core",
+ "typeid",
+]
 
 [[package]]
 name = "find-msvc-tools"
@@ -972,6 +984,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "typeid"
+version = "1.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bc7d623258602320d5c55d1bc22793b57daff0ec7efc270ea7d55ce1d5f5471c"
+
+[[package]]
 name = "typenum"
 version = "1.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -991,8 +1009,10 @@ dependencies = [
  "axiom",
  "bon",
  "domain",
+ "erased-serde",
  "futures",
  "serde",
+ "serde_json",
  "strum",
  "thiserror",
  "tsify",

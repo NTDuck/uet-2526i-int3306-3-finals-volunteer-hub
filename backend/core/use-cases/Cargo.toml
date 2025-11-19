@@ -14,6 +14,9 @@ wasm-bindings = ["dep:tsify", "dep:wasm-bindgen"]
 axiom = { path = "../../axiom" }
 domain = { path = "../domain" }
 
+erased-serde = "0.4.9"
+
+serde_json = "*"
 vec1 = { workspace = true }
 async-trait = { workspace = true }
 bon = { workspace = true }

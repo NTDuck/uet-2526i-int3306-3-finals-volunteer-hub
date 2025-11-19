@@ -1,7 +1,14 @@
+mod serializable_error;
 mod verifiable;
 
-/// Usable only on tuple structs containing exactly one field typed `::axiom::string::String`.
+/// Assumes: **(1)** the target is a tuple struct containing exactly one field typed `::axiom::string::String`; **(2)** `bon` and `thiserror` are within scope.
 #[proc_macro_derive(Verifiable, attributes(verifiable))]
 pub fn derive_verifiable(tokens: ::proc_macro::TokenStream) -> ::proc_macro::TokenStream {
     self::verifiable::derive(tokens)
+}
+
+/// Assumes: **(1)** the target is an enum; **(2)** `serde` and `thiserror` are within scope.
+#[proc_macro_derive(SerializableError, attributes(error))]
+pub fn derive_serializable_error(tokens: ::proc_macro::TokenStream) -> ::proc_macro::TokenStream {
+    self::serializable_error::derive(tokens)
 }

@@ -9,7 +9,7 @@ pub fn derive(tokens: ::proc_macro::TokenStream) -> ::proc_macro::TokenStream {
         ::core::result::Result::Err(error) => return error.into_compile_error().into(),
     };
 
-    let input = match Verifiable::from_derive_input(&input) {
+    let input = match DeriveInput::from_derive_input(&input) {
         ::core::result::Result::Ok(input) => input,
         ::core::result::Result::Err(error) => return error.write_errors().into(),
     };
@@ -19,7 +19,7 @@ pub fn derive(tokens: ::proc_macro::TokenStream) -> ::proc_macro::TokenStream {
 
 #[derive(::darling::FromDeriveInput)]
 #[darling(attributes(verifiable), supports(struct_newtype))]
-struct Verifiable {
+struct DeriveInput {
     ident: ::syn::Ident,
     vis: ::syn::Visibility,
     generics: ::syn::Generics,
@@ -28,8 +28,9 @@ struct Verifiable {
     hint: ::core::option::Option<::syn::LitStr>,
 }
 
-impl ::quote::ToTokens for Verifiable {
+impl ::quote::ToTokens for DeriveInput {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+        use ::syn::spanned::Spanned as _;
         use ::heck::ToTitleCase as _;
 
         let Self { ident, vis, generics, regex, hint } = self;
@@ -37,10 +38,10 @@ impl ::quote::ToTokens for Verifiable {
         let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
         let hint = hint.as_ref()
-            .map(|hint| hint.value())
-            .unwrap_or(::std::format!("must match `{}`", regex.value().replace('{', "{{").replace('}', "}}")));
+            .cloned()
+            .unwrap_or_else(|| ::syn::LitStr::new(&::std::format!("must match `{}`", regex.value().replace('{', "{{").replace('}', "}}")), hint.span()));
 
-        let error_msg = ::std::format!("Invalid {} format: {}", ident.to_string().to_title_case(), hint);
+        let error_msg = ::std::format!("Invalid {} format: {}", ident.to_string().to_title_case(), hint.value());
         let error_ident = ::quote::format_ident!("{ident}BuilderError");
 
         tokens.extend(::quote::quote! {
