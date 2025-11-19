@@ -53,7 +53,6 @@ pub enum ViewEventHistoryEventStatus {
     Created,
     Approved,
     Rejected,
-    Completed,
 }
 
 impl ::core::convert::From<::domain::EventStatus> for ViewEventHistoryEventStatus {
@@ -62,7 +61,6 @@ impl ::core::convert::From<::domain::EventStatus> for ViewEventHistoryEventStatu
             ::domain::EventStatus::Created { .. } => Self::Created,
             ::domain::EventStatus::Approved { .. } => Self::Approved,
             ::domain::EventStatus::Rejected { .. } => Self::Rejected,
-            ::domain::EventStatus::Completed { .. } => Self::Completed,
         }
     }
 }

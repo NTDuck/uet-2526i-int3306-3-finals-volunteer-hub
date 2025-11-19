@@ -68,7 +68,6 @@ pub enum ViewEventRecommendationEventStatus {
     Created,
     Approved,
     Rejected,
-    Completed,
 }
 
 impl ::core::convert::From<::domain::EventStatus> for ViewEventRecommendationEventStatus {
@@ -77,7 +76,6 @@ impl ::core::convert::From<::domain::EventStatus> for ViewEventRecommendationEve
             ::domain::EventStatus::Created { .. } => Self::Created,
             ::domain::EventStatus::Approved { .. } => Self::Approved,
             ::domain::EventStatus::Rejected { .. } => Self::Rejected,
-            ::domain::EventStatus::Completed { .. } => Self::Completed,
         }
     }
 }

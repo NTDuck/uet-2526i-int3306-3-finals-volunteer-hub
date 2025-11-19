@@ -72,6 +72,7 @@ impl SignUpBoundary for SignUpInteractor {
 
         let user = ::domain::User::builder()
             .id(user_id)
+            .statuses(::vec1::Vec1::new(::domain::UserStatus::Created))
             .role(request.user_role)
             .username(username)
             .email(email)

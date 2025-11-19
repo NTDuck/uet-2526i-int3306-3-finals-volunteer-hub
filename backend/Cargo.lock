@@ -996,6 +996,7 @@ dependencies = [
  "strum",
  "thiserror",
  "tsify",
+ "vec1",
  "wasm-bindgen",
 ]
 
