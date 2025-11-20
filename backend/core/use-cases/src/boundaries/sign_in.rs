@@ -62,21 +62,19 @@ impl ::core::convert::From<SignInUserRole> for ::domain::UserRole {
     }
 }
 
-#[derive(::core::fmt::Debug, ::core::clone::Clone, ::thiserror::Error)]
-#[cfg_attr(feature = "serde", derive(::serde::Serialize))]
-#[cfg_attr(feature = "serde", serde(rename_all = "kebab-case", rename_all_fields = "kebab-case", tag = "error"))]
+#[derive(::core::fmt::Debug, ::core::clone::Clone)]
+#[cfg_attr(feature = "serde", derive(::axiom::Erratum))]
+#[cfg_attr(feature = "serde", erratum(rename_all = "kebab-case", rename_all_fields = "kebab-case"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
 pub enum SignInErrResponse {
     #[error("User with username `{username}` not found")]
     UsernameNotFound {
-        #[cfg_attr(feature = "serde", serde(skip))]
         username: ::axiom::string::String,
     },
 
     #[error("User with email `{email}` not found")]
     EmailNotFound {
-        #[cfg_attr(feature = "serde", serde(skip))]
         email: ::axiom::string::String,
     },
 
@@ -85,7 +83,6 @@ pub enum SignInErrResponse {
         username_hint = ::domain::Username::hint(), email_hint = ::domain::Email::hint(),
     )]
     UsernameOrEmailInvalid {
-        #[cfg_attr(feature = "serde", serde(skip))]
         username_or_email: ::axiom::string::String,
     },
 

@@ -18,14 +18,13 @@ pub fn derive(tokens: ::proc_macro::TokenStream) -> ::proc_macro::TokenStream {
 }
 
 #[derive(::darling::FromDeriveInput)]
-#[darling(attributes(error), supports(enum_any))]
+#[darling(attributes(ser_error), supports(enum_any))]
 struct DeriveInput {
     ident: ::syn::Ident,
     generics: ::syn::Generics,
 
-    rename: ::core::option::Option<CaseConvention>,
-    rename_all: ::core::option::Option<CaseConvention>,
-    rename_all_fields: ::core::option::Option<CaseConvention>,
+    rename_all: ::core::option::Option<Case>,
+    rename_all_fields: ::core::option::Option<Case>,
 
     tag: ::core::option::Option<::syn::LitStr>,
     content: ::core::option::Option<::syn::LitStr>,
@@ -36,7 +35,7 @@ struct DeriveInput {
 
 // https://serde.rs/container-attrs.html#rename_all
 #[derive(::core::clone::Clone, ::core::marker::Copy, ::darling::FromMeta)]
-enum CaseConvention {
+enum Case {
     #[darling(rename = "lowercase")]
     Lowercase,
     #[darling(rename = "UPPERCASE")]
@@ -55,7 +54,7 @@ enum CaseConvention {
     ScreamingKebabCase,
 }
 
-impl CaseConvention {
+impl Case {
     const fn as_str(&self) -> &'static str {
         match self {
             Self::Lowercase => "lowercase",
@@ -91,30 +90,23 @@ impl CaseConvention {
 }
 
 #[derive(::core::clone::Clone, ::darling::FromVariant)]
-#[darling(attributes(error))]
+#[darling(forward_attrs)]
 struct DeriveInputVariant {
     ident: ::syn::Ident,
     fields: ::darling::ast::Fields<::syn::Field>,
-
-    message: ::syn::LitStr,
+    attrs: ::std::vec::Vec<::syn::Attribute>,
 }
 
 impl ::quote::ToTokens for DeriveInput {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
         use ::syn::spanned::Spanned as _;
 
-        let Self { ident, generics, rename, rename_all, rename_all_fields, tag, content, message, data } = self;
+        let Self { ident, generics, rename_all, rename_all_fields, tag, content, message, data } = self;
 
         let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
         let serialize_where_clause = extend_where_clause(generics, |ty_ident| ::quote::quote! { #ty_ident: ::serde::ser::Serialize });
-        let repr_ident = ::quote::format_ident!("__{ident}SerializableErrorRepr");
-        let repr_lifetime = ::syn::Lifetime::new("'__serializable_error_repr", ::proc_macro2::Span::call_site());
-
-        let rename_all = rename_all.as_ref()
-            .or(rename.as_ref());
-
-        let rename_all_fields = rename_all_fields.as_ref()
-            .or(rename.as_ref());
+        let repr_ident = ::quote::format_ident!("__{ident}ErratumRepr");
+        let repr_lifetime = ::syn::Lifetime::new("'__erratum_repr", ::proc_macro2::Span::call_site());
 
         let tag = tag.as_ref()
             .cloned()
@@ -134,10 +126,32 @@ impl ::quote::ToTokens for DeriveInput {
         repr_generics.params.insert(0, ::syn::GenericParam::Lifetime(::syn::LifetimeParam::new(repr_lifetime.clone())));
         let (_, repr_ty_generics, repr_where_clause) = repr_generics.split_for_impl();
 
+        let repr_serde_rename_attr = match (rename_all, rename_all_fields) {
+            (::core::option::Option::None, ::core::option::Option::None) => ::quote::quote! {},
+            (::core::option::Option::None, ::core::option::Option::Some(rename_all_fields)) => {
+                let rename_all_fields = rename_all_fields.as_str();
+                ::quote::quote! { #[serde(rename_all_fields = #rename_all_fields)] }
+            },
+            (::core::option::Option::Some(rename_all), ::core::option::Option::None) => {
+                let rename_all = rename_all.as_str();
+                ::quote::quote! { #[serde(rename_all = #rename_all)] }
+            },
+            (::core::option::Option::Some(rename_all), ::core::option::Option::Some(rename_all_fields)) => {
+                let rename_all = rename_all.as_str();
+                let rename_all_fields = rename_all_fields.as_str();
+                ::quote::quote! { #[serde(rename_all = #rename_all, rename_all_fields = #rename_all_fields)] }
+            },
+        };
+
         let repr_variants = data.iter()
             .map(|variant| {
                 let variant_ident = &variant.ident;
-                let variant_message = &variant.message;
+                let variant_message = &variant.attrs.iter()
+                    .find(|attr| attr.path().is_ident("error")).unwrap()
+                    .meta
+                    .require_list().unwrap()
+                    .tokens;
+
                 let variant_fields = match variant.fields.style {
                     ::darling::ast::Style::Tuple => {
                         let variant_field_tys = variant.fields.iter().map(|field| &field.ty);
@@ -157,7 +171,7 @@ impl ::quote::ToTokens for DeriveInput {
                     ::darling::ast::Style::Unit => ::quote::quote! {},
                 };
 
-                ::quote::quote! { #[error(#variant_message)] #variant_ident #variant_fields }
+                ::quote::quote! { #[error( #variant_message )] #variant_ident #variant_fields }
             });
 
         let as_error_code = data.iter()
@@ -219,39 +233,14 @@ impl ::quote::ToTokens for DeriveInput {
                 ::quote::quote! { #ident::#variant_ident #ref_variant_fields => #repr_ident::#variant_ident #variant_fields }
             });
 
-        // let rename_all = rename_all
-        //     .map(CaseConvention::as_str)
-        //     .map(|rename_all| ::quote::quote! { rename_all = #rename_all })
-        //     .unwrap_or_default();
-
-        // let rename_all_fields = rename_all_fields
-        //     .map(CaseConvention::as_str)
-        //     .map(|rename_all_fields| ::quote::quote! { rename_all_fields = #rename_all_fields })
-        //     .unwrap_or_default();
-
-        let repr_serde_rename_attr = match (rename_all, rename_all_fields) {
-            (::core::option::Option::None, ::core::option::Option::None) => ::quote::quote! {},
-            (::core::option::Option::None, ::core::option::Option::Some(rename_all_fields)) => {
-                let rename_all_fields = rename_all_fields.as_str();
-                ::quote::quote! { #[serde(rename_all_fields = #rename_all_fields)] }
-            },
-            (::core::option::Option::Some(rename_all), ::core::option::Option::None) => {
-                let rename_all = rename_all.as_str();
-                ::quote::quote! { #[serde(rename_all = #rename_all)] }
-            },
-            (::core::option::Option::Some(rename_all), ::core::option::Option::Some(rename_all_fields)) => {
-                let rename_all = rename_all.as_str();
-                let rename_all_fields = rename_all_fields.as_str();
-                ::quote::quote! { #[serde(rename_all = #rename_all, rename_all_fields = #rename_all_fields)] }
-            },
-        };
-
         tokens.extend(::quote::quote! {
             impl #impl_generics ::serde::ser::Serialize for #ident #ty_generics #serialize_where_clause {
                 fn serialize<Serializer>(&self, serializer: Serializer) -> ::core::result::Result<Serializer::Ok, Serializer::Error>
                 where
                     Serializer: ::serde::ser::Serializer,
                 {
+                    use ::serde::ser::SerializeMap as _;
+
                     let mut map = serializer.serialize_map(::core::option::Option::Some(3))?;
 
                     map.serialize_entry(#tag, as_error_code(&self))?;
