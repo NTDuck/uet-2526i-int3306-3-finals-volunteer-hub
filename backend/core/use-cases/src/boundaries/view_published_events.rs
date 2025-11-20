@@ -98,8 +98,9 @@ impl ::core::convert::From<::domain::EventStatus> for ViewPublishedEventsEventSt
     }
 }
 
-#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::thiserror::Error)]
-#[cfg_attr(feature = "serde", derive(::serde::Serialize))]
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
+#[cfg_attr(feature = "serde", derive(::axiom::Erratum))]
+#[cfg_attr(feature = "serde", erratum(rename_all = "kebab-case", rename_all_fields = "kebab-case"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
 pub enum ViewPublishedEventsErrResponse {
@@ -109,7 +110,6 @@ pub enum ViewPublishedEventsErrResponse {
     #[error("User with role `{user_role}` not authorized: must be `{expected_user_role}`", expected_user_role = ViewPublishedEventsUserRole::Volunteer)]
     UserUnauthorized {
         #[allow(private_interfaces)]
-        #[cfg_attr(feature = "serde", serde(skip))]
         user_role: ViewPublishedEventsUserRole,
     },
 

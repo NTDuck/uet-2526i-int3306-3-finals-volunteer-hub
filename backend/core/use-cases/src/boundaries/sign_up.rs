@@ -59,20 +59,19 @@ pub type SignUpResponse = ::core::result::Result<SignUpOkResponse, ::std::vec::V
 #[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
 pub type SignUpOkResponse = ();
 
-#[derive(::core::fmt::Debug, ::core::clone::Clone, ::thiserror::Error)]
-#[cfg_attr(feature = "serde", derive(::serde::Serialize))]
+#[derive(::core::fmt::Debug, ::core::clone::Clone)]
+#[cfg_attr(feature = "serde", derive(::axiom::Erratum))]
+#[cfg_attr(feature = "serde", erratum(rename_all = "kebab-case", rename_all_fields = "kebab-case"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
 pub enum SignUpErrResponse {
     #[error("Invalid username `{username}`: {hint}", hint = ::domain::Username::hint())]
     UsernameInvalid {
-        #[cfg_attr(feature = "serde", serde(skip))]
         username: ::axiom::string::String,
     },
 
     #[error("Invalid email `{email}`: {hint}", hint = ::domain::Email::hint())]
     EmailInvalid {
-        #[cfg_attr(feature = "serde", serde(skip))]
         email: ::axiom::string::String,
     },
 
@@ -81,19 +80,16 @@ pub enum SignUpErrResponse {
 
     #[error("Invalid full name `{full_name}`: {hint}", hint = ::domain::FullName::hint())]
     FullNameInvalid {
-        #[cfg_attr(feature = "serde", serde(skip))]
         full_name: ::axiom::string::String,
     },
 
     #[error("User with username `{username}` already exists")]
     UsernameAlreadyExists {
-        #[cfg_attr(feature = "serde", serde(skip))]
         username: ::axiom::string::String,
     },
 
     #[error("User with email `{email}` already exists")]
     EmailAlreadyExists {
-        #[cfg_attr(feature = "serde", serde(skip))]
         email: ::axiom::string::String,
     },
 }
