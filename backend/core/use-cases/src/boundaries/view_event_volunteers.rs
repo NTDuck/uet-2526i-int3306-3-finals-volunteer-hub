@@ -43,18 +43,17 @@ pub struct ViewEventVolunteersVolunteer {
     pub full_name: ::axiom::string::String,
 }
 
-#[derive(::core::fmt::Debug, ::core::clone::Clone, ::thiserror::Error)]
-#[cfg_attr(feature = "serde", derive(::serde::Serialize))]
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
+#[cfg_attr(feature = "serde", derive(::axiom::Erratum))]
+#[cfg_attr(feature = "serde", erratum(rename_all = "kebab-case", rename_all_fields = "camelCase"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
 pub enum ViewEventVolunteersErrResponse {
     #[error("Invalid or expired authentication token")]
     AuthenticationTokenInvalid,
 
-    #[error("User not authorized: expecting role `{expected_user_role}`, found `{user_role}`", expected_user_role = ViewEventVolunteersUserRole::Volunteer)]
+    #[error("User with role `{user_role}` not authorized: must be `{expected_user_role}`", expected_user_role = ViewEventVolunteersUserRole::EventManager)]
     UserUnauthorized {
-        #[allow(private_interfaces)]
-        #[cfg_attr(feature = "serde", serde(skip))]
         user_role: ViewEventVolunteersUserRole,
     },
 
@@ -67,7 +66,7 @@ pub enum ViewEventVolunteersErrResponse {
 #[cfg_attr(feature = "serde", serde(rename_all = "kebab-case"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
-enum ViewEventVolunteersUserRole {
+pub enum ViewEventVolunteersUserRole {
     Volunteer,
     EventManager,
     Administrator,

@@ -26,42 +26,37 @@ pub type CreateEventResponse = ::core::result::Result<CreateEventOkResponse, ::s
 #[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
 pub type CreateEventOkResponse = ();
 
-#[derive(::core::fmt::Debug, ::core::clone::Clone, ::thiserror::Error)]
-#[cfg_attr(feature = "serde", derive(::serde::Serialize))]
+#[derive(::core::fmt::Debug, ::core::clone::Clone)]
+#[cfg_attr(feature = "serde", derive(::axiom::Erratum))]
+#[cfg_attr(feature = "serde", erratum(rename_all = "kebab-case", rename_all_fields = "camelCase"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
 pub enum CreateEventErrResponse {
     #[error("Invalid or expired authentication token")]
     AuthenticationTokenInvalid,
 
-    #[error("User not authorized: expecting role `{expected_user_role}`, found `{user_role}`", expected_user_role = CreateEventUserRole::EventManager)]
+    #[error("User with role `{user_role}` not authorized: must be `{expected_user_role}`", expected_user_role = CreateEventUserRole::EventManager)]
     UserUnauthorized {
-        #[allow(private_interfaces)]
-        #[cfg_attr(feature = "serde", serde(skip))]
         user_role: CreateEventUserRole,
     },
 
     #[error("Invalid event name `{event_name}`: {hint}", hint = ::domain::EventName::hint())]
     EventNameInvalid {
-        #[cfg_attr(feature = "serde", serde(skip))]
         event_name: ::axiom::string::String,
     },
 
     #[error("Invalid event description `{event_description}`: {hint}", hint = ::domain::EventDescription::hint())]
     EventDescriptionInvalid {
-        #[cfg_attr(feature = "serde", serde(skip))]
         event_description: ::axiom::string::String,
     },
 
     #[error("Invalid event categories `{}`: {hint}", format(.event_categories), hint = ::domain::EventCategory::hint())]
     EventCategoriesInvalid {
-        #[cfg_attr(feature = "serde", serde(skip))]
         event_categories: ::std::vec::Vec<::axiom::string::String>,
     },
 
     #[error("Invalid event location `{event_location}`: {hint}", hint = ::domain::EventLocation::hint())]
     EventLocationInvalid {
-        #[cfg_attr(feature = "serde", serde(skip))]
         event_location: ::axiom::string::String,
     },
 
@@ -84,7 +79,7 @@ fn format(values: &::std::vec::Vec<::axiom::string::String>) -> ::axiom::string:
 #[cfg_attr(feature = "serde", serde(rename_all = "kebab-case"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
-enum CreateEventUserRole {
+pub enum CreateEventUserRole {
     Volunteer,
     EventManager,
     Administrator,

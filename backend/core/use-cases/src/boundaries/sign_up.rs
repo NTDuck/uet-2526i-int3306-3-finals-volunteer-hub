@@ -61,7 +61,7 @@ pub type SignUpOkResponse = ();
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone)]
 #[cfg_attr(feature = "serde", derive(::axiom::Erratum))]
-#[cfg_attr(feature = "serde", erratum(rename_all = "kebab-case", rename_all_fields = "kebab-case"))]
+#[cfg_attr(feature = "serde", erratum(rename_all = "kebab-case", rename_all_fields = "camelCase"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
 pub enum SignUpErrResponse {

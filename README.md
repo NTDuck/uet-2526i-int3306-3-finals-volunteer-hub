@@ -113,17 +113,14 @@ $ deno task preview-sveltekit-minimal
   > |
   > [./backend/core/use-cases/src/interactors/remove_event.rs](./backend/core/use-cases/src/interactors/remove_event.rs)\
 - **Xác nhận đăng ký**: Duyệt/hủy đăng ký của tình nguyện viên.
-  > [./backend/core/use-cases/src/boundaries/accept_event_registration.rs](./backend/core/use-cases/src/boundaries/accept_event_registration.rs)
+  > [./backend/core/use-cases/src/boundaries/moderate_event_registration.rs](./backend/core/use-cases/src/boundaries/moderate_event_registration.rs)
   > |
-  > [./backend/core/use-cases/src/interactors/accept_event_registration.rs](./backend/core/use-cases/src/interactors/accept_event_registration.rs)\
-  > [./backend/core/use-cases/src/boundaries/decline_event_registration.rs](./backend/core/use-cases/src/boundaries/decline_event_registration.rs)
-  > |
-  > [./backend/core/use-cases/src/interactors/decline_event_registration.rs](./backend/core/use-cases/src/interactors/decline_event_registration.rs)
+  > [./backend/core/use-cases/src/interactors/moderate_event_registration.rs](./backend/core/use-cases/src/interactors/moderate_event_registration.rs)
 - **Đánh dấu hoàn thành**: Cập nhật trạng thái hoàn thành cho tình nguyện viên
   sau sự kiện.
-  > [./backend/core/use-cases/src/boundaries/complete_event_registration.rs](./backend/core/use-cases/src/boundaries/complete_event_registration.rs)
+  > [./backend/core/use-cases/src/boundaries/moderate_event_registration.rs](./backend/core/use-cases/src/boundaries/moderate_event_registration.rs)
   > |
-  > [./backend/core/use-cases/src/interactors/complete_event_registration.rs](./backend/core/use-cases/src/interactors/complete_event_registration.rs)
+  > [./backend/core/use-cases/src/interactors/moderate_event_registration.rs](./backend/core/use-cases/src/interactors/moderate_event_registration.rs)
 - **Xem báo cáo**: Xem danh sách tình nguyện viên tham gia sự kiện.
   > [./backend/core/use-cases/src/boundaries/view_event_volunteers.rs](./backend/core/use-cases/src/boundaries/view_event_volunteers.rs)
   > |
@@ -163,12 +160,9 @@ $ deno task preview-sveltekit-minimal
   > |
   > [./backend/core/use-cases/src/interactors/sign_up.rs](./backend/core/use-cases/src/interactors/sign_up.rs)
 - **Quản lý sự kiện**: Duyệt/xóa sự kiện do quản lý sự kiện tạo.
-  > [./backend/core/use-cases/src/boundaries/approve_event.rs](./backend/core/use-cases/src/boundaries/approve_event.rs)
+  > [./backend/core/use-cases/src/boundaries/moderate_event.rs](./backend/core/use-cases/src/boundaries/moderate_event.rs)
   > |
-  > [./backend/core/use-cases/src/interactors/approve_event.rs](./backend/core/use-cases/src/interactors/approve_event.rs)\
-  > [./backend/core/use-cases/src/boundaries/reject_event.rs](./backend/core/use-cases/src/boundaries/reject_event.rs)
-  > |
-  > [./backend/core/use-cases/src/interactors/reject_event.rs](./backend/core/use-cases/src/interactors/reject_event.rs)
+  > [./backend/core/use-cases/src/interactors/moderate_event.rs](./backend/core/use-cases/src/interactors/moderate_event.rs)
 - **Quản lý người dùng**: Xem, khóa/mở tài khoản tình nguyện viên/quản lý sự
   kiện.
   > [./backend/core/use-cases/src/boundaries/view_non_admin_users.rs](./backend/core/use-cases/src/boundaries/view_non_admin_users.rs)

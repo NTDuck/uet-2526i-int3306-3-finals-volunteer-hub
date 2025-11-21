@@ -1,8 +1,8 @@
 use ::async_trait::async_trait;
 
 #[async_trait]
-pub trait UnsubscribeFromEventBoundary {
-    async fn apply(self: ::std::sync::Arc<Self>, request: UnsubscribeFromEventRequest) -> ::axiom::result::Fallible<UnsubscribeFromEventResponse>;
+pub trait ModerateEventBoundary {
+    async fn apply(self: ::std::sync::Arc<Self>, request: ModerateEventRequest) -> ::axiom::result::Fallible<ModerateEventResponse>;
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
@@ -11,39 +11,51 @@ pub trait UnsubscribeFromEventBoundary {
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi))]
-pub struct UnsubscribeFromEventRequest {
+pub struct ModerateEventRequest {
     pub token: ::axiom::string::String,
-    pub event_or_registration_id: ::axiom::string::String,
+
+    pub event_id: ::axiom::string::String,
+    pub event_status: ModerateEventEventStatus,
+}
+
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
+#[cfg_attr(feature = "serde", derive(::serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "kebab-case"))]
+#[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
+#[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi))]
+pub enum ModerateEventEventStatus {
+    Approved,
+    Rejected,
 }
 
 #[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
-pub type UnsubscribeFromEventResponse = ::core::result::Result<UnsubscribeFromEventOkResponse, ::std::vec::Vec<UnsubscribeFromEventErrResponse>>;
+pub type ModerateEventResponse = ::core::result::Result<ModerateEventOkResponse, ::std::vec::Vec<ModerateEventErrResponse>>;
 
 #[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
-pub type UnsubscribeFromEventOkResponse = ();
+pub type ModerateEventOkResponse = ();
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
 #[cfg_attr(feature = "serde", derive(::axiom::Erratum))]
 #[cfg_attr(feature = "serde", erratum(rename_all = "kebab-case", rename_all_fields = "camelCase"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
-pub enum UnsubscribeFromEventErrResponse {
+pub enum ModerateEventErrResponse {
     #[error("Invalid or expired authentication token")]
     AuthenticationTokenInvalid,
 
-    #[error("User with role `{user_role}` not authorized: must be `{expected_user_role}`", expected_user_role = UnsubscribeFromEventUserRole::Volunteer)]
+    #[error("User with role `{user_role}` not authorized: must be `{expected_user_role}`", expected_user_role = ModerateEventUserRole::Administrator)]
     UserUnauthorized {
-        user_role: UnsubscribeFromEventUserRole,
+        user_role: ModerateEventUserRole,
     },
-    
-    #[error("Event not found")]  // or not published yet
+
+    #[error("Event not found")]
     EventNotFound,
 
-    #[error("Event registration not found")]
-    UserNotSubscribedToEvent,
+    #[error("Event already approved")]
+    EventAlreadyApproved,
 
-    #[error("User already unsubscribed")]
-    UserAlreadyUnsubscribed,
+    #[error("Event already completed")]
+    EventAlreadyCompleted,
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::strum::Display)]
@@ -51,13 +63,13 @@ pub enum UnsubscribeFromEventErrResponse {
 #[cfg_attr(feature = "serde", serde(rename_all = "kebab-case"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
-pub enum UnsubscribeFromEventUserRole {
+pub enum ModerateEventUserRole {
     Volunteer,
     EventManager,
     Administrator,
 }
 
-impl ::core::convert::From<::domain::UserRole> for UnsubscribeFromEventUserRole {
+impl ::core::convert::From<::domain::UserRole> for ModerateEventUserRole {
     fn from(value: ::domain::UserRole) -> Self {
         match value {
             ::domain::UserRole::Volunteer => Self::Volunteer,
@@ -67,12 +79,12 @@ impl ::core::convert::From<::domain::UserRole> for UnsubscribeFromEventUserRole 
     }
 }
 
-impl ::core::convert::From<UnsubscribeFromEventUserRole> for ::domain::UserRole {
-    fn from(value: UnsubscribeFromEventUserRole) -> Self {
+impl ::core::convert::From<ModerateEventUserRole> for ::domain::UserRole {
+    fn from(value: ModerateEventUserRole) -> Self {
         match value {
-            UnsubscribeFromEventUserRole::Volunteer => Self::Volunteer,
-            UnsubscribeFromEventUserRole::EventManager => Self::EventManager,
-            UnsubscribeFromEventUserRole::Administrator => Self::Administrator,
+            ModerateEventUserRole::Volunteer => Self::Volunteer,
+            ModerateEventUserRole::EventManager => Self::EventManager,
+            ModerateEventUserRole::Administrator => Self::Administrator,
         }
     }
 }

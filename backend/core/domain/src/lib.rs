@@ -157,6 +157,7 @@ pub struct FullName(::axiom::string::String);
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
 #[builder(on(_, into))]
 pub struct EventRegistration {
+    pub id: Uuid,
     pub event_id: Uuid,
     pub volunteer_id: Uuid,
 

@@ -23,18 +23,17 @@ pub type RemoveEventResponse = ::core::result::Result<RemoveEventOkResponse, ::s
 #[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
 pub type RemoveEventOkResponse = ();
 
-#[derive(::core::fmt::Debug, ::core::clone::Clone, ::thiserror::Error)]
-#[cfg_attr(feature = "serde", derive(::serde::Serialize))]
+#[derive(::core::fmt::Debug, ::core::clone::Clone)]
+#[cfg_attr(feature = "serde", derive(::axiom::Erratum))]
+#[cfg_attr(feature = "serde", erratum(rename_all = "kebab-case", rename_all_fields = "camelCase"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
 pub enum RemoveEventErrResponse {
     #[error("Invalid or expired authentication token")]
     AuthenticationTokenInvalid,
 
-    #[error("User not authorized: expecting role `{expected_user_role}`, found `{user_role}`", expected_user_role = RemoveEventUserRole::EventManager)]
+    #[error("User with role `{user_role}` not authorized: must be `{expected_user_role}`", expected_user_role = RemoveEventUserRole::EventManager)]
     UserUnauthorized {
-        #[allow(private_interfaces)]
-        #[cfg_attr(feature = "serde", serde(skip))]
         user_role: RemoveEventUserRole,
     },
 
@@ -47,7 +46,7 @@ pub enum RemoveEventErrResponse {
 #[cfg_attr(feature = "serde", serde(rename_all = "kebab-case"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
-enum RemoveEventUserRole {
+pub enum RemoveEventUserRole {
     Volunteer,
     EventManager,
     Administrator,

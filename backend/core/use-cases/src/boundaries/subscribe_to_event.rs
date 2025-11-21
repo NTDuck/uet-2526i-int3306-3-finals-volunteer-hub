@@ -22,18 +22,17 @@ pub type SubscribeToEventResponse = ::core::result::Result<SubscribeToEventOkRes
 #[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
 pub type SubscribeToEventOkResponse = ();
 
-#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::thiserror::Error)]
-#[cfg_attr(feature = "serde", derive(::serde::Serialize))]
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
+#[cfg_attr(feature = "serde", derive(::axiom::Erratum))]
+#[cfg_attr(feature = "serde", erratum(rename_all = "kebab-case", rename_all_fields = "camelCase"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
 pub enum SubscribeToEventErrResponse {
     #[error("Invalid or expired authentication token")]
     AuthenticationTokenInvalid,
 
-    #[error("User not authorized: expecting role `{expected_user_role}`, found `{user_role}`", expected_user_role = SubscribeToEventUserRole::Volunteer)]
+    #[error("User with role `{user_role}` not authorized: must be `{expected_user_role}`", expected_user_role = SubscribeToEventUserRole::Volunteer)]
     UserUnauthorized {
-        #[allow(private_interfaces)]
-        #[cfg_attr(feature = "serde", serde(skip))]
         user_role: SubscribeToEventUserRole,
     },
     
@@ -49,7 +48,7 @@ pub enum SubscribeToEventErrResponse {
 #[cfg_attr(feature = "serde", serde(rename_all = "kebab-case"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
-enum SubscribeToEventUserRole {
+pub enum SubscribeToEventUserRole {
     Volunteer,
     EventManager,
     Administrator,

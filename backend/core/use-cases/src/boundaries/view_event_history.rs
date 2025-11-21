@@ -90,18 +90,17 @@ impl ::core::convert::From<::domain::EventRegistrationStatus> for ViewEventHisto
     }
 }
 
-#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::thiserror::Error)]
-#[cfg_attr(feature = "serde", derive(::serde::Serialize))]
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
+#[cfg_attr(feature = "serde", derive(::axiom::Erratum))]
+#[cfg_attr(feature = "serde", erratum(rename_all = "kebab-case", rename_all_fields = "camelCase"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
 pub enum ViewEventHistoryErrResponse {
     #[error("Invalid or expired authentication token")]
     AuthenticationTokenInvalid,
 
-    #[error("User not authorized: expecting role `{expected_user_role}`, found `{user_role}`", expected_user_role = ViewEventHistoryUserRole::Volunteer)]
+    #[error("User with role `{user_role}` not authorized: must be `{expected_user_role}`", expected_user_role = ViewEventHistoryUserRole::Volunteer)]
     UserUnauthorized {
-        #[allow(private_interfaces)]
-        #[cfg_attr(feature = "serde", serde(skip))]
         user_role: ViewEventHistoryUserRole,
     },
 }
@@ -111,7 +110,7 @@ pub enum ViewEventHistoryErrResponse {
 #[cfg_attr(feature = "serde", serde(rename_all = "kebab-case"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
-enum ViewEventHistoryUserRole {
+pub enum ViewEventHistoryUserRole {
     Volunteer,
     EventManager,
     Administrator,
