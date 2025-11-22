@@ -4,6 +4,7 @@ mod verifiable;
 // TODO
 // - Support `bon` proc macro attrs for `::axiom::Verifiable`
 // - Remove `Case`, forward `#[erratum(rename_* = ...)]` proc macro attrs directly to `serde`
+// - (`erratum`) handles empty enums
 
 /// `#[derive(::axiom::Erratum)]` achieves the same thing as `#[derive(::serde::Serialize)]`. The difference is that `::serde::Serialize` serializes as `{ #error: ..., #data: ... }` while `::axiom::Erratum` serializes as `{ #error: ..., #message: ..., #data: ... }`; the `#message` uses `::thiserror::Error` syntax.
 /// 

@@ -165,18 +165,12 @@ $ deno task preview-sveltekit-minimal
   > [./backend/core/use-cases/src/interactors/moderate_event.rs](./backend/core/use-cases/src/interactors/moderate_event.rs)
 - **Quản lý người dùng**: Xem, khóa/mở tài khoản tình nguyện viên/quản lý sự
   kiện.
-  > [./backend/core/use-cases/src/boundaries/view_non_admin_users.rs](./backend/core/use-cases/src/boundaries/view_non_admin_users.rs)
+  > [./backend/core/use-cases/src/boundaries/view_users.rs](./backend/core/use-cases/src/boundaries/view_users.rs)
   > |
-  > [./backend/core/use-cases/src/interactors/view_non_admin_users.rs](./backend/core/use-cases/src/interactors/view_non_admin_users.rs)\
-  > [./backend/core/use-cases/src/boundaries/view_non_admin_user.rs](./backend/core/use-cases/src/boundaries/view_non_admin_user.rs)
+  > [./backend/core/use-cases/src/interactors/view_users.rs](./backend/core/use-cases/src/interactors/view_users.rs)\
+  > [./backend/core/use-cases/src/boundaries/moderate_user.rs](./backend/core/use-cases/src/boundaries/moderate_user.rs)
   > |
-  > [./backend/core/use-cases/src/interactors/view_non_admin_user.rs](./backend/core/use-cases/src/interactors/view_non_admin_user.rs)\
-  > [./backend/core/use-cases/src/boundaries/suspend_non_admin_user.rs](./backend/core/use-cases/src/boundaries/suspend_non_admin_user.rs)
-  > |
-  > [./backend/core/use-cases/src/interactors/suspend_non_admin_user.rs](./backend/core/use-cases/src/interactors/suspend_non_admin_user.rs)\
-  > [./backend/core/use-cases/src/boundaries/reinstate_non_admin_user.rs](./backend/core/use-cases/src/boundaries/reinstate_non_admin_user.rs)
-  > |
-  > [./backend/core/use-cases/src/interactors/reinstate_non_admin_user.rs](./backend/core/use-cases/src/interactors/reinstate_non_admin_user.rs)
+  > [./backend/core/use-cases/src/interactors/moderate_user.rs](./backend/core/use-cases/src/interactors/moderate_user.rs)
 - **Xuất dữ liệu**: Export danh sách sự kiện/tình nguyện viên (CSV/JSON).
   > [./backend/core/use-cases/src/boundaries/export_events.rs](./backend/core/use-cases/src/boundaries/export_events.rs)
   > |
