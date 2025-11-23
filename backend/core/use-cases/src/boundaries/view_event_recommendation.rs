@@ -2,8 +2,9 @@ use ::async_trait::async_trait;
 
 #[async_trait]
 pub trait ViewEventRecommendationBoundary {
-    async fn apply(self: ::std::sync::Arc<Self>, request: ViewEventRecommendationRequest)
-        -> ::axiom::result::Fallible<ViewEventRecommendationResponse>;
+    async fn apply(
+        self: ::std::sync::Arc<Self>, request: ViewEventRecommendationRequest,
+    ) -> ::axiom::result::Fallible<ViewEventRecommendationResponse>;
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
@@ -30,7 +31,8 @@ pub enum ViewEventRecommendationRecommendationType {
 }
 
 #[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
-pub type ViewEventRecommendationResponse = ::core::result::Result<ViewEventRecommendationOkResponse, ::std::vec::Vec<ViewEventRecommendationErrResponse>>;
+pub type ViewEventRecommendationResponse =
+    ::core::result::Result<ViewEventRecommendationOkResponse, ::std::vec::Vec<ViewEventRecommendationErrResponse>>;
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
 #[builder(on(_, into))]
@@ -54,7 +56,7 @@ pub struct ViewEventRecommendationEvent {
     pub status: ViewEventRecommendationEventStatus,
 
     pub name: ::axiom::string::String,
-    
+
     #[builder(with = |values: ::std::vec::Vec<impl ::core::convert::Into<::axiom::string::String>>| values.into_iter().map(::core::convert::Into::into).collect())]
     pub categories: ::std::vec::Vec<::axiom::string::String>,
 }

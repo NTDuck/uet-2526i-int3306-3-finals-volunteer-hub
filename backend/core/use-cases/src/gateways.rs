@@ -2,11 +2,19 @@ use ::async_trait::async_trait;
 
 #[async_trait]
 pub trait EventRepository {
-    async fn view_recently_approved(self: ::std::sync::Arc<Self>, limit: usize) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::Event>>;
-    async fn view_recently_posted(self: ::std::sync::Arc<Self>, limit: usize) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::Event>>;
-    async fn view_trending(self: ::std::sync::Arc<Self>, limit: usize) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::Event>>;
+    async fn view_recently_approved(
+        self: ::std::sync::Arc<Self>, limit: usize,
+    ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::Event>>;
+    async fn view_recently_posted(
+        self: ::std::sync::Arc<Self>, limit: usize,
+    ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::Event>>;
+    async fn view_trending(
+        self: ::std::sync::Arc<Self>, limit: usize,
+    ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::Event>>;
 
-    async fn view(self: ::std::sync::Arc<Self>, filter: EventRepositoryViewFilter) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::Event>>;
+    async fn view(
+        self: ::std::sync::Arc<Self>, filter: EventRepositoryViewFilter,
+    ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::Event>>;
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
@@ -80,8 +88,12 @@ pub trait UuidGenerator {
 
 #[async_trait]
 pub trait UuidCodec {
-    async fn format(self: ::std::sync::Arc<Self>, uuid: ::domain::Uuid) -> ::axiom::result::Fallible<::axiom::string::String>;
-    async fn parse(self: ::std::sync::Arc<Self>, uuid: ::axiom::string::String) -> ::axiom::result::Fallible<::domain::Uuid>;
+    async fn format(
+        self: ::std::sync::Arc<Self>, uuid: ::domain::Uuid,
+    ) -> ::axiom::result::Fallible<::axiom::string::String>;
+    async fn parse(
+        self: ::std::sync::Arc<Self>, uuid: ::axiom::string::String,
+    ) -> ::axiom::result::Fallible<::domain::Uuid>;
 }
 
 #[async_trait]
@@ -112,9 +124,7 @@ pub trait AuthenticationTokenGenerator {
         ::axiom::result::Fallible::Ok(self.get_payload(token).await?.map(|payload| payload.expiry_timestamp))
     }
 
-    async fn verify(
-        self: ::std::sync::Arc<Self>, token: ::axiom::string::String,
-    ) -> ::axiom::result::Fallible<bool> {
+    async fn verify(self: ::std::sync::Arc<Self>, token: ::axiom::string::String) -> ::axiom::result::Fallible<bool> {
         ::axiom::result::Fallible::Ok(self.get_payload(token).await?.is_some())
     }
 }
@@ -124,7 +134,11 @@ pub trait AuthenticationTokenGenerator {
 #[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
 #[cfg_attr(
     feature = "serde",
-    serde(from = "AuthenticationTokenPayloadSerdeImpl", into = "AuthenticationTokenPayloadSerdeImpl", rename_all = "camelCase")
+    serde(
+        from = "AuthenticationTokenPayloadSerdeImpl",
+        into = "AuthenticationTokenPayloadSerdeImpl",
+        rename_all = "camelCase"
+    )
 )]
 pub struct AuthenticationTokenPayload {
     pub user_id: ::domain::Uuid,

@@ -2,7 +2,9 @@ use ::async_trait::async_trait;
 
 #[async_trait]
 pub trait CreateEventPostReactionBoundary {
-    async fn apply(self: ::std::sync::Arc<Self>, request: CreateEventPostReactionRequest) -> ::axiom::result::Fallible<CreateEventPostReactionResponse>;
+    async fn apply(
+        self: ::std::sync::Arc<Self>, request: CreateEventPostReactionRequest,
+    ) -> ::axiom::result::Fallible<CreateEventPostReactionResponse>;
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
@@ -17,7 +19,8 @@ pub struct CreateEventPostReactionRequest {
 }
 
 #[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
-pub type CreateEventPostReactionResponse = ::core::result::Result<CreateEventPostReactionOkResponse, ::std::vec::Vec<CreateEventPostReactionErrResponse>>;
+pub type CreateEventPostReactionResponse =
+    ::core::result::Result<CreateEventPostReactionOkResponse, ::std::vec::Vec<CreateEventPostReactionErrResponse>>;
 
 #[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
 pub type CreateEventPostReactionOkResponse = ();
@@ -28,13 +31,13 @@ pub type CreateEventPostReactionOkResponse = ();
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
 pub enum CreateEventPostReactionErrResponse {
-	#[error("Invalid or expired authentication token")]
-	AuthenticationTokenInvalid,
+    #[error("Invalid or expired authentication token")]
+    AuthenticationTokenInvalid,
 
-	#[error("User with role `{user_role}` not authorized: must be `{first_expected_user_role}` or `{second_expected_user_role}`", first_expected_user_role = CreateEventPostReactionUserRole::Volunteer, second_expected_user_role = CreateEventPostReactionUserRole::EventManager)]
-	UserUnauthorized {
-		user_role: CreateEventPostReactionUserRole,
-	},
+    #[error("User with role `{user_role}` not authorized: must be `{first_expected_user_role}` or `{second_expected_user_role}`", first_expected_user_role = CreateEventPostReactionUserRole::Volunteer, second_expected_user_role = CreateEventPostReactionUserRole::EventManager)]
+    UserUnauthorized {
+        user_role: CreateEventPostReactionUserRole,
+    },
 
     #[error("User temporarily suspended")]
     UserSuspended,

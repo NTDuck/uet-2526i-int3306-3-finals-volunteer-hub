@@ -2,7 +2,9 @@ use ::async_trait::async_trait;
 
 #[async_trait]
 pub trait ViewEventVolunteersBoundary {
-    async fn apply(self: ::std::sync::Arc<Self>, request: ViewEventVolunteersRequest) -> ::axiom::result::Fallible<ViewEventVolunteersResponse>;
+    async fn apply(
+        self: ::std::sync::Arc<Self>, request: ViewEventVolunteersRequest,
+    ) -> ::axiom::result::Fallible<ViewEventVolunteersResponse>;
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
@@ -17,7 +19,8 @@ pub struct ViewEventVolunteersRequest {
 }
 
 #[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
-pub type ViewEventVolunteersResponse = ::core::result::Result<ViewEventVolunteersOkResponse, ::std::vec::Vec<ViewEventVolunteersErrResponse>>;
+pub type ViewEventVolunteersResponse =
+    ::core::result::Result<ViewEventVolunteersOkResponse, ::std::vec::Vec<ViewEventVolunteersErrResponse>>;
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
 #[builder(on(_, into))]

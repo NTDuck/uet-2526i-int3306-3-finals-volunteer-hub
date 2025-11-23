@@ -146,7 +146,9 @@ impl LowerUrnUuidCodec {
 
 #[async_trait]
 impl UuidCodec for LowerUrnUuidCodec {
-    async fn format(self: ::std::sync::Arc<Self>, uuid: ::domain::Uuid) -> ::axiom::result::Fallible<::axiom::string::String> {
+    async fn format(
+        self: ::std::sync::Arc<Self>, uuid: ::domain::Uuid,
+    ) -> ::axiom::result::Fallible<::axiom::string::String> {
         let uuid = ::uuid::Uuid::from_bytes(*uuid);
 
         let mut buffer = [0u8; 45];
@@ -155,11 +157,11 @@ impl UuidCodec for LowerUrnUuidCodec {
         ::axiom::result::Fallible::Ok(urn)
     }
 
-    async fn parse(self: ::std::sync::Arc<Self>, urn: ::axiom::string::String) -> ::axiom::result::Fallible<::domain::Uuid> {
+    async fn parse(
+        self: ::std::sync::Arc<Self>, urn: ::axiom::string::String,
+    ) -> ::axiom::result::Fallible<::domain::Uuid> {
         let uuid = ::uuid::Uuid::parse_str(&urn)?;
-        let uuid = ::domain::Uuid::builder()
-            .value(uuid.into_bytes())
-            .build();
+        let uuid = ::domain::Uuid::builder().value(uuid.into_bytes()).build();
 
         ::axiom::result::Fallible::Ok(uuid)
     }
@@ -186,8 +188,7 @@ where
 
     async fn get_payload(
         self: ::std::sync::Arc<Self>, token: ::axiom::string::String,
-    ) -> ::axiom::result::Fallible<::core::option::Option<::use_cases::gateways::AuthenticationTokenPayload>>
-    {
+    ) -> ::axiom::result::Fallible<::core::option::Option<::use_cases::gateways::AuthenticationTokenPayload>> {
         use ::jwt::VerifyWithKey as _;
 
         let payload = token.verify_with_key(&self.key)?;

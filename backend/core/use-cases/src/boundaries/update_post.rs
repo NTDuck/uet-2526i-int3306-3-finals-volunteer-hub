@@ -2,7 +2,9 @@ use ::async_trait::async_trait;
 
 #[async_trait]
 pub trait UpdateEventPostBoundary {
-	async fn apply(self: ::std::sync::Arc<Self>, request: UpdateEventPostRequest) -> ::axiom::result::Fallible<UpdateEventPostResponse>;
+    async fn apply(
+        self: ::std::sync::Arc<Self>, request: UpdateEventPostRequest,
+    ) -> ::axiom::result::Fallible<UpdateEventPostResponse>;
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
@@ -12,16 +14,17 @@ pub trait UpdateEventPostBoundary {
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi))]
 pub struct UpdateEventPostRequest {
-	pub token: ::axiom::string::String,
+    pub token: ::axiom::string::String,
 
     pub post_id: ::axiom::string::String,
 
-	pub post_title: ::core::option::Option<::axiom::string::String>,
-	pub post_content: ::core::option::Option<::axiom::string::String>,
+    pub post_title: ::core::option::Option<::axiom::string::String>,
+    pub post_content: ::core::option::Option<::axiom::string::String>,
 }
 
 #[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
-pub type UpdateEventPostResponse = ::core::result::Result<UpdateEventPostOkResponse, ::std::vec::Vec<UpdateEventPostErrResponse>>;
+pub type UpdateEventPostResponse =
+    ::core::result::Result<UpdateEventPostOkResponse, ::std::vec::Vec<UpdateEventPostErrResponse>>;
 
 #[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
 pub type UpdateEventPostOkResponse = ();
@@ -32,29 +35,29 @@ pub type UpdateEventPostOkResponse = ();
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
 pub enum UpdateEventPostErrResponse {
-	#[error("Invalid or expired authentication token")]
-	AuthenticationTokenInvalid,
+    #[error("Invalid or expired authentication token")]
+    AuthenticationTokenInvalid,
 
-	#[error("User with role `{user_role}` not authorized: must be `{first_expected_user_role}` or `{second_expected_user_role}`", first_expected_user_role = UpdateEventPostUserRole::Volunteer, second_expected_user_role = UpdateEventPostUserRole::EventManager)]
-	UserUnauthorized {
-		user_role: UpdateEventPostUserRole,
-	},
+    #[error("User with role `{user_role}` not authorized: must be `{first_expected_user_role}` or `{second_expected_user_role}`", first_expected_user_role = UpdateEventPostUserRole::Volunteer, second_expected_user_role = UpdateEventPostUserRole::EventManager)]
+    UserUnauthorized {
+        user_role: UpdateEventPostUserRole,
+    },
 
     #[error("User temporarily suspended")]
     UserSuspended,
 
-	#[error("Invalid post title `{post_title}`: {hint}", hint = ::domain::EventPostTitle::hint())]
-	PostTitleInvalid {
-		post_title: ::axiom::string::String,
-	},
+    #[error("Invalid post title `{post_title}`: {hint}", hint = ::domain::EventPostTitle::hint())]
+    PostTitleInvalid {
+        post_title: ::axiom::string::String,
+    },
 
-	#[error("Invalid post content `{post_content}`: {hint}", hint = ::domain::EventPostContent::hint())]
+    #[error("Invalid post content `{post_content}`: {hint}", hint = ::domain::EventPostContent::hint())]
     PostContentInvalid {
         post_content: ::axiom::string::String,
     },
 
-	#[error("Post not found")]
-	PostNotFound,
+    #[error("Post not found")]
+    PostNotFound,
 
     #[error("Post not owned by user")]
     OwnershipMismatch,

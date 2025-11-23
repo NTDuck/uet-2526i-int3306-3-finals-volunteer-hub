@@ -2,7 +2,9 @@ use ::async_trait::async_trait;
 
 #[async_trait]
 pub trait ModerateUserBoundary {
-    async fn apply(self: ::std::sync::Arc<Self>, request: ModerateUserRequest) -> ::axiom::result::Fallible<ModerateUserResponse>;
+    async fn apply(
+        self: ::std::sync::Arc<Self>, request: ModerateUserRequest,
+    ) -> ::axiom::result::Fallible<ModerateUserResponse>;
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
@@ -29,7 +31,8 @@ pub enum ModerateUserUserStatus {
 }
 
 #[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
-pub type ModerateUserResponse = ::core::result::Result<ModerateUserOkResponse, ::std::vec::Vec<ModerateUserErrResponse>>;
+pub type ModerateUserResponse =
+    ::core::result::Result<ModerateUserOkResponse, ::std::vec::Vec<ModerateUserErrResponse>>;
 
 #[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
 pub type ModerateUserOkResponse = ();

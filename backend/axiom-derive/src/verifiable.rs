@@ -30,16 +30,19 @@ struct DeriveInput {
 
 impl ::quote::ToTokens for DeriveInput {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-        use ::syn::spanned::Spanned as _;
         use ::heck::ToTitleCase as _;
+        use ::syn::spanned::Spanned as _;
 
         let Self { ident, vis, generics, regex, hint } = self;
-        
+
         let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
-        let hint = hint.as_ref()
-            .cloned()
-            .unwrap_or_else(|| ::syn::LitStr::new(&::std::format!("must match `{}`", regex.value().replace('{', "{{").replace('}', "}}")), hint.span()));
+        let hint = hint.as_ref().cloned().unwrap_or_else(|| {
+            ::syn::LitStr::new(
+                &::std::format!("must match `{}`", regex.value().replace('{', "{{").replace('}', "}}")),
+                hint.span(),
+            )
+        });
 
         let error_msg = ::std::format!("Invalid {} format: {}", ident.to_string().to_title_case(), hint.value());
         let error_ident = ::quote::format_ident!("{ident}BuilderError");

@@ -23,8 +23,8 @@ struct DeriveInput {
     ident: ::syn::Ident,
     generics: ::syn::Generics,
 
-    rename_all: ::core::option::Option<Case>,
-    rename_all_fields: ::core::option::Option<Case>,
+    rename_all: ::core::option::Option<CaseConvention>,
+    rename_all_fields: ::core::option::Option<CaseConvention>,
 
     tag: ::core::option::Option<::syn::LitStr>,
     content: ::core::option::Option<::syn::LitStr>,
@@ -35,7 +35,7 @@ struct DeriveInput {
 
 // https://serde.rs/container-attrs.html#rename_all
 #[derive(::core::clone::Clone, ::core::marker::Copy, ::darling::FromMeta)]
-enum Case {
+enum CaseConvention {
     #[darling(rename = "lowercase")]
     Lowercase,
     #[darling(rename = "UPPERCASE")]
@@ -54,7 +54,7 @@ enum Case {
     ScreamingKebabCase,
 }
 
-impl Case {
+impl CaseConvention {
     const fn as_str(&self) -> &'static str {
         match self {
             Self::Lowercase => "lowercase",
@@ -69,22 +69,22 @@ impl Case {
     }
 
     fn rename(&self, ident: &::syn::Ident) -> ::std::string::String {
-        use ::heck::ToPascalCase as _;
-        use ::heck::ToLowerCamelCase as _;
-        use ::heck::ToSnakeCase as _;
-        use ::heck::ToShoutySnakeCase as _;
         use ::heck::ToKebabCase as _;
+        use ::heck::ToLowerCamelCase as _;
+        use ::heck::ToPascalCase as _;
         use ::heck::ToShoutyKebabCase as _;
+        use ::heck::ToShoutySnakeCase as _;
+        use ::heck::ToSnakeCase as _;
 
         match self {
-            Self::Lowercase => ::std::format!("{}", ident.to_string().to_lowercase()),
-            Self::Uppercase => ::std::format!("{}", ident.to_string().to_uppercase()),
-            Self::PascalCase => ::std::format!("{}", ident.to_string().to_pascal_case()),
-            Self::CamelCase => ::std::format!("{}", ident.to_string().to_lower_camel_case()),
-            Self::SnakeCase => ::std::format!("{}", ident.to_string().to_snake_case()),
-            Self::ScreamingSnakeCase => ::std::format!("{}", ident.to_string().to_shouty_snake_case()),
-            Self::KebabCase => ::std::format!("{}", ident.to_string().to_kebab_case()),
-            Self::ScreamingKebabCase => ::std::format!("{}", ident.to_string().to_shouty_kebab_case()),
+            Self::Lowercase => ident.to_string().to_lowercase(),
+            Self::Uppercase => ident.to_string().to_uppercase(),
+            Self::PascalCase => ident.to_string().to_pascal_case(),
+            Self::CamelCase => ident.to_string().to_lower_camel_case(),
+            Self::SnakeCase => ident.to_string().to_snake_case(),
+            Self::ScreamingSnakeCase => ident.to_string().to_shouty_snake_case(),
+            Self::KebabCase => ident.to_string().to_kebab_case(),
+            Self::ScreamingKebabCase => ident.to_string().to_shouty_kebab_case(),
         }
     }
 }
@@ -101,29 +101,41 @@ impl ::quote::ToTokens for DeriveInput {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
         use ::syn::spanned::Spanned as _;
 
-        let Self { ident, generics, rename_all, rename_all_fields, tag, content, message, data } = self;
+        let Self {
+            ident,
+            generics,
+            rename_all,
+            rename_all_fields,
+            tag,
+            content,
+            message,
+            data,
+        } = self;
 
         let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
-        let serialize_where_clause = extend_where_clause(generics, |ty_ident| ::quote::quote! { #ty_ident: ::serde::ser::Serialize });
+        let serialize_where_clause =
+            extend_where_clause(generics, |ty_ident| ::quote::quote! { #ty_ident: ::serde::ser::Serialize });
         let repr_ident = ::quote::format_ident!("__{ident}ErratumRepr");
         let repr_lifetime = ::syn::Lifetime::new("'__erratum_repr", ::proc_macro2::Span::call_site());
 
-        let tag = tag.as_ref()
-            .cloned()
-            .unwrap_or_else(|| ::syn::LitStr::new("error", tag.span()));
+        let tag = tag.as_ref().cloned().unwrap_or_else(|| ::syn::LitStr::new("error", tag.span()));
 
-        let content = content.as_ref()
+        let content = content
+            .as_ref()
             .cloned()
             .unwrap_or_else(|| ::syn::LitStr::new("data", content.span()));
 
-        let message = message.as_ref()
+        let message = message
+            .as_ref()
             .cloned()
             .unwrap_or_else(|| ::syn::LitStr::new("message", message.span()));
 
         let data = data.as_ref().take_enum().unwrap();
 
         let mut repr_generics = generics.clone();
-        repr_generics.params.insert(0, ::syn::GenericParam::Lifetime(::syn::LifetimeParam::new(repr_lifetime.clone())));
+        repr_generics
+            .params
+            .insert(0, ::syn::GenericParam::Lifetime(::syn::LifetimeParam::new(repr_lifetime.clone())));
         let (_, repr_ty_generics, repr_where_clause) = repr_generics.split_for_impl();
 
         let repr_serde_rename_attr = match (rename_all, rename_all_fields) {
@@ -143,51 +155,53 @@ impl ::quote::ToTokens for DeriveInput {
             },
         };
 
-        let repr_variants = data.iter()
-            .map(|variant| {
-                let variant_ident = &variant.ident;
-                let variant_message = &variant.attrs.iter()
-                    .find(|attr| attr.path().is_ident("error")).unwrap()
-                    .meta
-                    .require_list().unwrap()
-                    .tokens;
+        let repr_variants = data.iter().map(|variant| {
+            let variant_ident = &variant.ident;
+            let variant_message = &variant
+                .attrs
+                .iter()
+                .find(|attr| attr.path().is_ident("error"))
+                .unwrap()
+                .meta
+                .require_list()
+                .unwrap()
+                .tokens;
 
-                let variant_fields = match variant.fields.style {
-                    ::darling::ast::Style::Tuple => {
-                        let variant_field_tys = variant.fields.iter().map(|field| &field.ty);
+            let variant_fields = match variant.fields.style {
+                ::darling::ast::Style::Tuple => {
+                    let variant_field_tys = variant.fields.iter().map(|field| &field.ty);
 
-                        ::quote::quote! {
-                            ( #( &#repr_lifetime #variant_field_tys, )* )
-                        }
-                    },
-                    ::darling::ast::Style::Struct => {
-                        let variant_field_idents = variant.fields.iter().map(|field| &field.ident);
-                        let variant_field_tys = variant.fields.iter().map(|field| &field.ty);
+                    ::quote::quote! {
+                        ( #( &#repr_lifetime #variant_field_tys, )* )
+                    }
+                },
+                ::darling::ast::Style::Struct => {
+                    let variant_field_idents = variant.fields.iter().map(|field| &field.ident);
+                    let variant_field_tys = variant.fields.iter().map(|field| &field.ty);
 
-                        ::quote::quote! {
-                            { #( #variant_field_idents: &#repr_lifetime #variant_field_tys, )* }
-                        }
-                    },
-                    ::darling::ast::Style::Unit => ::quote::quote! {},
-                };
+                    ::quote::quote! {
+                        { #( #variant_field_idents: &#repr_lifetime #variant_field_tys, )* }
+                    }
+                },
+                ::darling::ast::Style::Unit => ::quote::quote! {},
+            };
 
-                ::quote::quote! { #[error( #variant_message )] #variant_ident #variant_fields }
-            });
+            ::quote::quote! { #[error( #variant_message )] #variant_ident #variant_fields }
+        });
 
-        let as_error_code = data.iter()
-            .map(|variant| {
-                let variant_ident = &variant.ident;
-                let variant_fields = match variant.fields.style {
-                    ::darling::ast::Style::Tuple => ::quote::quote! { (..) },
-                    ::darling::ast::Style::Struct => ::quote::quote! { { .. }},
-                    ::darling::ast::Style::Unit => ::quote::quote! {},
-                };
-                let error_codes = rename_all
-                    .map(|rename_all| rename_all.rename(variant_ident))
-                    .unwrap_or(variant_ident.to_string());
+        let as_error_code = data.iter().map(|variant| {
+            let variant_ident = &variant.ident;
+            let variant_fields = match variant.fields.style {
+                ::darling::ast::Style::Tuple => ::quote::quote! { (..) },
+                ::darling::ast::Style::Struct => ::quote::quote! { { .. }},
+                ::darling::ast::Style::Unit => ::quote::quote! {},
+            };
+            let error_codes = rename_all
+                .map(|rename_all| rename_all.rename(variant_ident))
+                .unwrap_or(variant_ident.to_string());
 
-                ::quote::quote! { #ident::#variant_ident #variant_fields => #error_codes }
-            });
+            ::quote::quote! { #ident::#variant_ident #variant_fields => #error_codes }
+        });
 
         let as_repr = data.iter()
             .map(|variant| {
@@ -278,8 +292,7 @@ impl ::quote::ToTokens for DeriveInput {
 }
 
 pub fn extend_where_clause(
-    generics: &::syn::Generics,
-    trait_bounds: impl ::core::ops::Fn(&syn::Ident) -> ::proc_macro2::TokenStream,
+    generics: &::syn::Generics, trait_bounds: impl ::core::ops::Fn(&syn::Ident) -> ::proc_macro2::TokenStream,
 ) -> ::proc_macro2::TokenStream {
     let (_, _, where_clause) = generics.split_for_impl();
 

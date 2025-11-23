@@ -2,7 +2,9 @@ use ::async_trait::async_trait;
 
 #[async_trait]
 pub trait CreateEventPostBoundary {
-	async fn apply(self: ::std::sync::Arc<Self>, request: CreateEventPostRequest) -> ::axiom::result::Fallible<CreateEventPostResponse>;
+    async fn apply(
+        self: ::std::sync::Arc<Self>, request: CreateEventPostRequest,
+    ) -> ::axiom::result::Fallible<CreateEventPostResponse>;
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
@@ -12,14 +14,15 @@ pub trait CreateEventPostBoundary {
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi))]
 pub struct CreateEventPostRequest {
-	pub token: ::axiom::string::String,
+    pub token: ::axiom::string::String,
 
-	pub post_title: ::axiom::string::String,
-	pub post_content: ::axiom::string::String,
+    pub post_title: ::axiom::string::String,
+    pub post_content: ::axiom::string::String,
 }
 
 #[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
-pub type CreateEventPostResponse = ::core::result::Result<CreateEventPostOkResponse, ::std::vec::Vec<CreateEventPostErrResponse>>;
+pub type CreateEventPostResponse =
+    ::core::result::Result<CreateEventPostOkResponse, ::std::vec::Vec<CreateEventPostErrResponse>>;
 
 #[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
 pub type CreateEventPostOkResponse = ();
@@ -30,23 +33,23 @@ pub type CreateEventPostOkResponse = ();
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
 pub enum CreateEventPostErrResponse {
-	#[error("Invalid or expired authentication token")]
-	AuthenticationTokenInvalid,
+    #[error("Invalid or expired authentication token")]
+    AuthenticationTokenInvalid,
 
-	#[error("User with role `{user_role}` not authorized: must be `{first_expected_user_role}` or `{second_expected_user_role}`", first_expected_user_role = CreateEventPostUserRole::Volunteer, second_expected_user_role = CreateEventPostUserRole::EventManager)]
-	UserUnauthorized {
-		user_role: CreateEventPostUserRole,
-	},
+    #[error("User with role `{user_role}` not authorized: must be `{first_expected_user_role}` or `{second_expected_user_role}`", first_expected_user_role = CreateEventPostUserRole::Volunteer, second_expected_user_role = CreateEventPostUserRole::EventManager)]
+    UserUnauthorized {
+        user_role: CreateEventPostUserRole,
+    },
 
     #[error("User temporarily suspended")]
     UserSuspended,
 
-	#[error("Invalid post title `{post_title}`: {hint}", hint = ::domain::EventPostTitle::hint())]
-	PostTitleInvalid {
-		post_title: ::axiom::string::String,
-	},
+    #[error("Invalid post title `{post_title}`: {hint}", hint = ::domain::EventPostTitle::hint())]
+    PostTitleInvalid {
+        post_title: ::axiom::string::String,
+    },
 
-	#[error("Invalid post content `{post_content}`: {hint}", hint = ::domain::EventPostContent::hint())]
+    #[error("Invalid post content `{post_content}`: {hint}", hint = ::domain::EventPostContent::hint())]
     PostContentInvalid {
         post_content: ::axiom::string::String,
     },

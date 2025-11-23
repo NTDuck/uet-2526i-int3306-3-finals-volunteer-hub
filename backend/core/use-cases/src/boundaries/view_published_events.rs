@@ -2,8 +2,9 @@ use ::async_trait::async_trait;
 
 #[async_trait]
 pub trait ViewPublishedEventsBoundary {
-    async fn apply(self: ::std::sync::Arc<Self>, request: ViewPublishedEventsRequest)
-        -> ::axiom::result::Fallible<ViewPublishedEventsResponse>;
+    async fn apply(
+        self: ::std::sync::Arc<Self>, request: ViewPublishedEventsRequest,
+    ) -> ::axiom::result::Fallible<ViewPublishedEventsResponse>;
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
@@ -36,9 +37,7 @@ pub struct ViewPublishedEventsFilter {
 impl ::core::convert::From<ViewPublishedEventsFilter> for crate::gateways::EventRepositoryViewFilter {
     fn from(value: ViewPublishedEventsFilter) -> Self {
         Self::builder()
-            .statuses(::std::vec![
-                crate::gateways::EventRepositoryViewFilterEventStatus::Approved,
-            ])
+            .statuses(::std::vec![crate::gateways::EventRepositoryViewFilterEventStatus::Approved,])
             .maybe_name(value.name)
             .maybe_description(value.description)
             .maybe_category(value.category)
@@ -49,7 +48,8 @@ impl ::core::convert::From<ViewPublishedEventsFilter> for crate::gateways::Event
 }
 
 #[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
-pub type ViewPublishedEventsResponse = ::core::result::Result<ViewPublishedEventsOkResponse, ::std::vec::Vec<ViewPublishedEventsErrResponse>>;
+pub type ViewPublishedEventsResponse =
+    ::core::result::Result<ViewPublishedEventsOkResponse, ::std::vec::Vec<ViewPublishedEventsErrResponse>>;
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
 #[builder(on(_, into))]

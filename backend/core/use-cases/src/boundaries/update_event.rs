@@ -2,7 +2,9 @@ use ::async_trait::async_trait;
 
 #[async_trait]
 pub trait UpdateEventBoundary {
-	async fn apply(self: ::std::sync::Arc<Self>, request: UpdateEventRequest) -> ::axiom::result::Fallible<UpdateEventResponse>;
+    async fn apply(
+        self: ::std::sync::Arc<Self>, request: UpdateEventRequest,
+    ) -> ::axiom::result::Fallible<UpdateEventResponse>;
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
@@ -75,7 +77,8 @@ pub enum UpdateEventErrResponse {
 }
 
 fn format(values: &::std::vec::Vec<::axiom::string::String>) -> ::axiom::string::String {
-    values.into_iter()
+    values
+        .iter()
         .map(|value| ::std::format!("`{}`", value))
         .collect::<::std::vec::Vec<_>>()
         .join(", ")

@@ -2,7 +2,9 @@ use ::async_trait::async_trait;
 
 #[async_trait]
 pub trait ExportEventsBoundary {
-    async fn apply(self: ::std::sync::Arc<Self>, request: ExportEventsRequest) -> ::axiom::result::Fallible<ExportEventsResponse>;
+    async fn apply(
+        self: ::std::sync::Arc<Self>, request: ExportEventsRequest,
+    ) -> ::axiom::result::Fallible<ExportEventsResponse>;
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
@@ -27,7 +29,8 @@ pub enum ExportEventsExportFormat {
 }
 
 #[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
-pub type ExportEventsResponse = ::core::result::Result<ExportEventsOkResponse, ::std::vec::Vec<ExportEventsErrResponse>>;
+pub type ExportEventsResponse =
+    ::core::result::Result<ExportEventsOkResponse, ::std::vec::Vec<ExportEventsErrResponse>>;
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
 #[builder(on(_, into))]

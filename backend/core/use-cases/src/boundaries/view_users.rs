@@ -2,7 +2,9 @@ use ::async_trait::async_trait;
 
 #[async_trait]
 pub trait ViewUsersBoundary {
-    async fn apply(self: ::std::sync::Arc<Self>, request: ViewUsersRequest) -> ::axiom::result::Fallible<ViewUsersResponse>;
+    async fn apply(
+        self: ::std::sync::Arc<Self>, request: ViewUsersRequest,
+    ) -> ::axiom::result::Fallible<ViewUsersResponse>;
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]

@@ -14,11 +14,9 @@ pub struct SignInInteractor {
 
 #[async_trait]
 impl SignInBoundary for SignInInteractor {
-    async fn apply(
-        self: ::std::sync::Arc<Self>, request: SignInRequest,
-    ) -> ::axiom::result::Fallible<SignInResponse> {
-        use ::axiom::time::TimestampExt as _;
+    async fn apply(self: ::std::sync::Arc<Self>, request: SignInRequest) -> ::axiom::result::Fallible<SignInResponse> {
         use ::axiom::option::OptionExt as _;
+        use ::axiom::time::TimestampExt as _;
 
         let mut errors = ::std::vec::Vec::new();
 
@@ -26,20 +24,27 @@ impl SignInBoundary for SignInInteractor {
         let user: ::core::option::Option<::domain::User> = if let ::core::result::Result::Ok(username) =
             ::domain::Username::try_from(request.username_or_email.clone())
         {
-            ::std::sync::Arc::clone(&self.user_repository).get_by_username(username).await?
+            ::std::sync::Arc::clone(&self.user_repository)
+                .get_by_username(username)
+                .await?
                 .some()
-                .map_err(|_| errors.push(SignInErrResponse::UsernameNotFound { username: request.username_or_email.clone() }))
+                .map_err(|_| {
+                    errors.push(SignInErrResponse::UsernameNotFound {
+                        username: request.username_or_email.clone(),
+                    })
+                })
                 .ok()
-        } else if let ::core::result::Result::Ok(email) =
-            ::domain::Email::try_from(request.username_or_email.clone())
-        {
-            ::std::sync::Arc::clone(&self.user_repository).get_by_email(email).await?
+        } else if let ::core::result::Result::Ok(email) = ::domain::Email::try_from(request.username_or_email.clone()) {
+            ::std::sync::Arc::clone(&self.user_repository)
+                .get_by_email(email)
+                .await?
                 .some()
                 .map_err(|_| errors.push(SignInErrResponse::EmailNotFound { email: request.username_or_email.clone() }))
                 .ok()
-                
         } else {
-            errors.push(SignInErrResponse::UsernameOrEmailInvalid { username_or_email: request.username_or_email.clone() });
+            errors.push(SignInErrResponse::UsernameOrEmailInvalid {
+                username_or_email: request.username_or_email.clone(),
+            });
             ::core::option::Option::None
         };
 
@@ -51,7 +56,9 @@ impl SignInBoundary for SignInInteractor {
             return ::axiom::result::Fallible::Ok(SignInResponse::Err(errors));
         };
 
-        let password_matches = ::std::sync::Arc::clone(&self.password_hasher).verify(password, user.password).await?;
+        let password_matches = ::std::sync::Arc::clone(&self.password_hasher)
+            .verify(password, user.password)
+            .await?;
 
         if !password_matches {
             errors.push(SignInErrResponse::PasswordMismatch);

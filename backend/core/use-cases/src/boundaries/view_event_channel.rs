@@ -2,7 +2,9 @@ use ::async_trait::async_trait;
 
 #[async_trait]
 pub trait ViewEventChannelBoundary {
-	async fn apply(self: ::std::sync::Arc<Self>, request: ViewEventChannelRequest) -> ::axiom::result::Fallible<ViewEventChannelResponse>;
+    async fn apply(
+        self: ::std::sync::Arc<Self>, request: ViewEventChannelRequest,
+    ) -> ::axiom::result::Fallible<ViewEventChannelResponse>;
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
@@ -12,12 +14,13 @@ pub trait ViewEventChannelBoundary {
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi))]
 pub struct ViewEventChannelRequest {
-	pub token: ::axiom::string::String,
-	pub event_id: ::axiom::string::String,
+    pub token: ::axiom::string::String,
+    pub event_id: ::axiom::string::String,
 }
 
 #[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
-pub type ViewEventChannelResponse = ::core::result::Result<ViewEventChannelOkResponse, ::std::vec::Vec<ViewEventChannelErrResponse>>;
+pub type ViewEventChannelResponse =
+    ::core::result::Result<ViewEventChannelOkResponse, ::std::vec::Vec<ViewEventChannelErrResponse>>;
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
 #[builder(on(_, into))]
@@ -26,7 +29,7 @@ pub type ViewEventChannelResponse = ::core::result::Result<ViewEventChannelOkRes
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
 pub struct ViewEventChannelOkResponse {
-	pub posts: ::std::vec::Vec<ViewEventChannelEventPost>,
+    pub posts: ::std::vec::Vec<ViewEventChannelEventPost>,
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
@@ -36,9 +39,9 @@ pub struct ViewEventChannelOkResponse {
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
 pub struct ViewEventChannelEventPost {
-	pub id: ::axiom::string::String,
-	pub title: ::axiom::string::String,
-	pub content: ::axiom::string::String,
+    pub id: ::axiom::string::String,
+    pub title: ::axiom::string::String,
+    pub content: ::axiom::string::String,
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
@@ -47,16 +50,16 @@ pub struct ViewEventChannelEventPost {
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
 pub enum ViewEventChannelErrResponse {
-	#[error("Invalid or expired authentication token")]
-	AuthenticationTokenInvalid,
+    #[error("Invalid or expired authentication token")]
+    AuthenticationTokenInvalid,
 
-	#[error("User with role `{user_role}` not authorized: must be `{first_expected_user_role}` or `{second_expected_user_role}`", first_expected_user_role = ViewEventChannelUserRole::Volunteer, second_expected_user_role = ViewEventChannelUserRole::EventManager)]
-	UserUnauthorized {
-		user_role: ViewEventChannelUserRole,
-	},
+    #[error("User with role `{user_role}` not authorized: must be `{first_expected_user_role}` or `{second_expected_user_role}`", first_expected_user_role = ViewEventChannelUserRole::Volunteer, second_expected_user_role = ViewEventChannelUserRole::EventManager)]
+    UserUnauthorized {
+        user_role: ViewEventChannelUserRole,
+    },
 
-	#[error("Event not found")]  // or not published
-	EventNotFound,
+    #[error("Event not found")] // or not published
+    EventNotFound,
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::strum::Display)]

@@ -2,8 +2,7 @@ use ::async_trait::async_trait;
 
 #[async_trait]
 pub trait SignUpBoundary {
-    async fn apply(self: ::std::sync::Arc<Self>, request: SignUpRequest)
-        -> ::axiom::result::Fallible<SignUpResponse>;
+    async fn apply(self: ::std::sync::Arc<Self>, request: SignUpRequest) -> ::axiom::result::Fallible<SignUpResponse>;
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]

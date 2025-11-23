@@ -2,7 +2,9 @@ use ::async_trait::async_trait;
 
 #[async_trait]
 pub trait ViewEventHistoryBoundary {
-    async fn apply(self: ::std::sync::Arc<Self>, request: ViewEventHistoryRequest) -> ::axiom::result::Fallible<ViewEventHistoryResponse>;
+    async fn apply(
+        self: ::std::sync::Arc<Self>, request: ViewEventHistoryRequest,
+    ) -> ::axiom::result::Fallible<ViewEventHistoryResponse>;
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
@@ -16,7 +18,8 @@ pub struct ViewEventHistoryRequest {
 }
 
 #[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
-pub type ViewEventHistoryResponse = ::core::result::Result<ViewEventHistoryOkResponse, ::std::vec::Vec<ViewEventHistoryErrResponse>>;
+pub type ViewEventHistoryResponse =
+    ::core::result::Result<ViewEventHistoryOkResponse, ::std::vec::Vec<ViewEventHistoryErrResponse>>;
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
 #[builder(on(_, into))]

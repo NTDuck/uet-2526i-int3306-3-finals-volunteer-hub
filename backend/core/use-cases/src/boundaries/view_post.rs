@@ -2,7 +2,9 @@ use ::async_trait::async_trait;
 
 #[async_trait]
 pub trait ViewEventPostBoundary {
-	async fn apply(self: ::std::sync::Arc<Self>, request: ViewEventPostRequest) -> ::axiom::result::Fallible<ViewEventPostResponse>;
+    async fn apply(
+        self: ::std::sync::Arc<Self>, request: ViewEventPostRequest,
+    ) -> ::axiom::result::Fallible<ViewEventPostResponse>;
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
@@ -12,12 +14,13 @@ pub trait ViewEventPostBoundary {
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi))]
 pub struct ViewEventPostRequest {
-	pub token: ::axiom::string::String,
-	pub event_post_id: ::axiom::string::String,
+    pub token: ::axiom::string::String,
+    pub event_post_id: ::axiom::string::String,
 }
 
 #[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
-pub type ViewEventPostResponse = ::core::result::Result<ViewEventPostOkResponse, ::std::vec::Vec<ViewEventPostErrResponse>>;
+pub type ViewEventPostResponse =
+    ::core::result::Result<ViewEventPostOkResponse, ::std::vec::Vec<ViewEventPostErrResponse>>;
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
 #[builder(on(_, into))]
@@ -26,12 +29,12 @@ pub type ViewEventPostResponse = ::core::result::Result<ViewEventPostOkResponse,
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
 pub struct ViewEventPostOkResponse {
-	pub id: ::axiom::string::String,
-	pub title: ::axiom::string::String,
-	pub content: ::axiom::string::String,
+    pub id: ::axiom::string::String,
+    pub title: ::axiom::string::String,
+    pub content: ::axiom::string::String,
 
-	pub reactions: ::std::vec::Vec<ViewEventPostEventPostReaction>,
-	pub comments: ::std::vec::Vec<ViewEventPostEventPostComment>,
+    pub reactions: ::std::vec::Vec<ViewEventPostEventPostReaction>,
+    pub comments: ::std::vec::Vec<ViewEventPostEventPostComment>,
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
@@ -41,7 +44,7 @@ pub struct ViewEventPostOkResponse {
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
 pub struct ViewEventPostEventPostReaction {
-	pub user: ViewEventPostUser,
+    pub user: ViewEventPostUser,
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
@@ -52,8 +55,8 @@ pub struct ViewEventPostEventPostReaction {
 #[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
 pub struct ViewEventPostEventPostComment {
     pub id: ::axiom::string::String,
-	pub user: ViewEventPostUser,
-	pub content: ::axiom::string::String,
+    pub user: ViewEventPostUser,
+    pub content: ::axiom::string::String,
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
@@ -73,13 +76,13 @@ pub struct ViewEventPostUser {
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
 pub enum ViewEventPostErrResponse {
-	#[error("Invalid or expired authentication token")]
-	AuthenticationTokenInvalid,
+    #[error("Invalid or expired authentication token")]
+    AuthenticationTokenInvalid,
 
-	#[error("User with role `{user_role}` not authorized: must be `{first_expected_user_role}` or `{second_expected_user_role}`", first_expected_user_role = ViewEventPostUserRole::Volunteer, second_expected_user_role = ViewEventPostUserRole::EventManager)]
-	UserUnauthorized {
-		user_role: ViewEventPostUserRole,
-	},
+    #[error("User with role `{user_role}` not authorized: must be `{first_expected_user_role}` or `{second_expected_user_role}`", first_expected_user_role = ViewEventPostUserRole::Volunteer, second_expected_user_role = ViewEventPostUserRole::EventManager)]
+    UserUnauthorized {
+        user_role: ViewEventPostUserRole,
+    },
 
     #[error("Post not found")]
     PostNotFound,

@@ -13,9 +13,7 @@ pub struct SignUpInteractor {
 
 #[async_trait]
 impl SignUpBoundary for SignUpInteractor {
-    async fn apply(
-        self: ::std::sync::Arc<Self>, request: SignUpRequest,
-    ) -> ::axiom::result::Fallible<SignUpResponse> {
+    async fn apply(self: ::std::sync::Arc<Self>, request: SignUpRequest) -> ::axiom::result::Fallible<SignUpResponse> {
         let mut errors = ::std::vec::Vec::new();
 
         let username = ::domain::Username::try_from(request.username)
@@ -44,8 +42,12 @@ impl SignUpBoundary for SignUpInteractor {
             return ::axiom::result::Fallible::Ok(SignUpResponse::Err(errors));
         };
 
-        let username_exists = ::std::sync::Arc::clone(&self.user_repository).contains_username(username.clone()).await?;
-        let email_exists = ::std::sync::Arc::clone(&self.user_repository).contains_email(email.clone()).await?;
+        let username_exists = ::std::sync::Arc::clone(&self.user_repository)
+            .contains_username(username.clone())
+            .await?;
+        let email_exists = ::std::sync::Arc::clone(&self.user_repository)
+            .contains_email(email.clone())
+            .await?;
 
         if username_exists {
             errors.push(SignUpErrResponse::UsernameAlreadyExists { username: username.to_string().into() });

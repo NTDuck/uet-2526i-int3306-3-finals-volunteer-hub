@@ -2,7 +2,9 @@ use ::async_trait::async_trait;
 
 #[async_trait]
 pub trait SubscribeToEventBoundary {
-    async fn apply(self: ::std::sync::Arc<Self>, request: SubscribeToEventRequest) -> ::axiom::result::Fallible<SubscribeToEventResponse>;
+    async fn apply(
+        self: ::std::sync::Arc<Self>, request: SubscribeToEventRequest,
+    ) -> ::axiom::result::Fallible<SubscribeToEventResponse>;
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
@@ -17,7 +19,8 @@ pub struct SubscribeToEventRequest {
 }
 
 #[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
-pub type SubscribeToEventResponse = ::core::result::Result<SubscribeToEventOkResponse, ::std::vec::Vec<SubscribeToEventErrResponse>>;
+pub type SubscribeToEventResponse =
+    ::core::result::Result<SubscribeToEventOkResponse, ::std::vec::Vec<SubscribeToEventErrResponse>>;
 
 #[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
 pub type SubscribeToEventOkResponse = ();
@@ -38,8 +41,8 @@ pub enum SubscribeToEventErrResponse {
 
     #[error("User temporarily suspended")]
     UserSuspended,
-    
-    #[error("Event not found")]  // or not published yet
+
+    #[error("Event not found")] // or not published yet
     EventNotFound,
 
     #[error("User already subscribed")]

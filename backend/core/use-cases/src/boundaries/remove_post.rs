@@ -2,7 +2,9 @@ use ::async_trait::async_trait;
 
 #[async_trait]
 pub trait RemoveEventPostBoundary {
-    async fn apply(self: ::std::sync::Arc<Self>, request: RemoveEventPostRequest) -> ::axiom::result::Fallible<RemoveEventPostResponse>;
+    async fn apply(
+        self: ::std::sync::Arc<Self>, request: RemoveEventPostRequest,
+    ) -> ::axiom::result::Fallible<RemoveEventPostResponse>;
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
@@ -17,7 +19,8 @@ pub struct RemoveEventPostRequest {
 }
 
 #[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
-pub type RemoveEventPostResponse = ::core::result::Result<RemoveEventPostOkResponse, ::std::vec::Vec<RemoveEventPostErrResponse>>;
+pub type RemoveEventPostResponse =
+    ::core::result::Result<RemoveEventPostOkResponse, ::std::vec::Vec<RemoveEventPostErrResponse>>;
 
 #[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
 pub type RemoveEventPostOkResponse = ();
@@ -28,13 +31,13 @@ pub type RemoveEventPostOkResponse = ();
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
 pub enum RemoveEventPostErrResponse {
-	#[error("Invalid or expired authentication token")]
-	AuthenticationTokenInvalid,
+    #[error("Invalid or expired authentication token")]
+    AuthenticationTokenInvalid,
 
-	#[error("User with role `{user_role}` not authorized: must be `{first_expected_user_role}` or `{second_expected_user_role}`", first_expected_user_role = RemoveEventPostUserRole::Volunteer, second_expected_user_role = RemoveEventPostUserRole::EventManager)]
-	UserUnauthorized {
-		user_role: RemoveEventPostUserRole,
-	},
+    #[error("User with role `{user_role}` not authorized: must be `{first_expected_user_role}` or `{second_expected_user_role}`", first_expected_user_role = RemoveEventPostUserRole::Volunteer, second_expected_user_role = RemoveEventPostUserRole::EventManager)]
+    UserUnauthorized {
+        user_role: RemoveEventPostUserRole,
+    },
 
     #[error("User temporarily suspended")]
     UserSuspended,

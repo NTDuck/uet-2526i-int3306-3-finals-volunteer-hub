@@ -2,7 +2,9 @@ use ::async_trait::async_trait;
 
 #[async_trait]
 pub trait UpdateEventPostCommentBoundary {
-    async fn apply(self: ::std::sync::Arc<Self>, request: UpdateEventPostCommentRequest) -> ::axiom::result::Fallible<UpdateEventPostCommentResponse>;
+    async fn apply(
+        self: ::std::sync::Arc<Self>, request: UpdateEventPostCommentRequest,
+    ) -> ::axiom::result::Fallible<UpdateEventPostCommentResponse>;
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
@@ -19,7 +21,8 @@ pub struct UpdateEventPostCommentRequest {
 }
 
 #[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
-pub type UpdateEventPostCommentResponse = ::core::result::Result<UpdateEventPostCommentOkResponse, ::std::vec::Vec<UpdateEventPostCommentErrResponse>>;
+pub type UpdateEventPostCommentResponse =
+    ::core::result::Result<UpdateEventPostCommentOkResponse, ::std::vec::Vec<UpdateEventPostCommentErrResponse>>;
 
 #[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
 pub type UpdateEventPostCommentOkResponse = ();
@@ -30,13 +33,13 @@ pub type UpdateEventPostCommentOkResponse = ();
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
 pub enum UpdateEventPostCommentErrResponse {
-	#[error("Invalid or expired authentication token")]
-	AuthenticationTokenInvalid,
+    #[error("Invalid or expired authentication token")]
+    AuthenticationTokenInvalid,
 
-	#[error("User with role `{user_role}` not authorized: must be `{first_expected_user_role}` or `{second_expected_user_role}`", first_expected_user_role = UpdateEventPostCommentUserRole::Volunteer, second_expected_user_role = UpdateEventPostCommentUserRole::EventManager)]
-	UserUnauthorized {
-		user_role: UpdateEventPostCommentUserRole,
-	},
+    #[error("User with role `{user_role}` not authorized: must be `{first_expected_user_role}` or `{second_expected_user_role}`", first_expected_user_role = UpdateEventPostCommentUserRole::Volunteer, second_expected_user_role = UpdateEventPostCommentUserRole::EventManager)]
+    UserUnauthorized {
+        user_role: UpdateEventPostCommentUserRole,
+    },
 
     #[error("User temporarily suspended")]
     UserSuspended,

@@ -2,7 +2,9 @@ use ::async_trait::async_trait;
 
 #[async_trait]
 pub trait ModerateEventRegistrationBoundary {
-    async fn apply(self: ::std::sync::Arc<Self>, request: ModerateEventRegistrationRequest) -> ::axiom::result::Fallible<ModerateEventRegistrationResponse>;
+    async fn apply(
+        self: ::std::sync::Arc<Self>, request: ModerateEventRegistrationRequest,
+    ) -> ::axiom::result::Fallible<ModerateEventRegistrationResponse>;
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
@@ -30,7 +32,8 @@ pub enum ModerateEventRegistrationEventRegistrationStatus {
 }
 
 #[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
-pub type ModerateEventRegistrationResponse = ::core::result::Result<ModerateEventRegistrationOkResponse, ::std::vec::Vec<ModerateEventRegistrationErrResponse>>;
+pub type ModerateEventRegistrationResponse =
+    ::core::result::Result<ModerateEventRegistrationOkResponse, ::std::vec::Vec<ModerateEventRegistrationErrResponse>>;
 
 #[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
 pub type ModerateEventRegistrationOkResponse = ();
