@@ -21,11 +21,13 @@ sha2 = { version = "0.10.9" }
 dotenvy = { version = "0.15.7" }  # suggested in lieu of `dotenv` as of security advisory RUSTSEC-2021-0141
 tracing = { workspace = true }
 tracing-wasm = "0.2.1"
+colored = "3.0.0"
 
 # [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen = { version = "=0.2.102", features = ["strict-macro"] }  # jsr:@deno/wasmbuild@0.19.3
 wasm-bindgen-futures = "=0.4.52"  # jsr:@deno/wasmbuild@0.19.3
 serde-wasm-bindgen = "0.6.5"
+gloo-utils = { version = "0.2.0", features = ["serde"] }
 serde = { workspace = true }
 tsify = { version = "0.5.5", features = ["js"], default-features = false }
 

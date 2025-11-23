@@ -1,6 +1,6 @@
 import { Application, type Profile } from "@volunteer-hub";
 
-const profile: Profile = "dev";
+const profile = "dev" satisfies Profile;
 let app: Application | null = null;
 
 export async function getApp(): Promise<Application> {

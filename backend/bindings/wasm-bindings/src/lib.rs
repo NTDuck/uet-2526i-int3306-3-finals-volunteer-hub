@@ -4,6 +4,10 @@ use ::use_cases::gateways::*;
 use ::use_cases::interactors::*;
 use ::wasm_bindgen::prelude::*;
 
+/// A `Promise<<...>OkResponse>` returned by a non-static method is either
+/// fulfilled with `<...>OkResponse` or rejected with `<...>ErrResponse[]`. A
+/// `<...>ErrResponse` satisfies `{ error: <...>, message: <...>, data: { ... }
+/// }`.
 #[wasm_bindgen]
 #[derive(::bon::Builder)]
 pub struct Application {
@@ -121,7 +125,7 @@ pub enum Profile {
     Prod,
 }
 
-pub type Promise<T = ()> = ::core::result::Result<T, ::wasm_bindgen::JsValue>;
+pub type Promise<T> = ::core::result::Result<T, ::wasm_bindgen::JsValue>;
 
 trait IntoPromise<T = ()> {
     fn into_promise(self) -> Promise<T>;
@@ -129,7 +133,10 @@ trait IntoPromise<T = ()> {
 
 impl<T> IntoPromise<T> for ::axiom::result::Fallible<T> {
     fn into_promise(self) -> Promise<T> {
-        self.map_err(|error| ::wasm_bindgen::JsValue::from_str(&error.to_string()))
+        use ::colored::Colorize as _;
+
+        self.inspect_err(|error| ::tracing::debug!("{label} {error}", label = "[unexpected-error]".red()))
+            .map_err(|error| ::wasm_bindgen::JsValue::from_str(&error.to_string()))
     }
 }
 
@@ -138,13 +145,19 @@ where
     E: ::serde::Serialize,
 {
     fn into_promise(self) -> Promise<T> {
-        self.map_err(|error| ::wasm_bindgen::JsValue::from_str(&error.to_string()))
+        use ::colored::Colorize as _;
+
+        self
+            .inspect_err(|error| ::tracing::debug!("{label} {error}", label = "[unexpected-error]".red()))
+            .map_err(|error| ::wasm_bindgen::JsValue::from_str(&error.to_string()))
             .and_then(|inner| {
                 inner
                     .map_err(|errors| {
                         errors
                             .into_iter()
-                            .map(unsafe { |error| ::serde_wasm_bindgen::to_value(&error).unwrap_unchecked() })  // We kinda know what we're doing
+                            .map(|error| unsafe { <::wasm_bindgen::JsValue as ::gloo_utils::format::JsValueSerdeExt>::from_serde(&error)
+                                .inspect(|error| ::tracing::debug!("{label} {error:?}", label = "[expected-error]".red()))
+                                .unwrap_unchecked() })  // We kinda know what we're doing
                             .collect::<::std::vec::Vec<_>>()
                     })
                     .map_err(::core::convert::Into::into)
