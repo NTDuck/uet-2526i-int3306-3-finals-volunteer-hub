@@ -36,6 +36,9 @@ pub enum CreateEventPostReactionErrResponse {
 		user_role: CreateEventPostReactionUserRole,
 	},
 
+    #[error("User temporarily suspended")]
+    UserSuspended,
+
     #[error("Post not found")]
     PostNotFound,
 

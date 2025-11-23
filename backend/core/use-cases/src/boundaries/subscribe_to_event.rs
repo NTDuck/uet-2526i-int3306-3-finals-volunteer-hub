@@ -35,6 +35,9 @@ pub enum SubscribeToEventErrResponse {
     UserUnauthorized {
         user_role: SubscribeToEventUserRole,
     },
+
+    #[error("User temporarily suspended")]
+    UserSuspended,
     
     #[error("Event not found")]  // or not published yet
     EventNotFound,

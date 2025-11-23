@@ -40,6 +40,9 @@ pub enum CreateEventErrResponse {
         user_role: CreateEventUserRole,
     },
 
+    #[error("User temporarily suspended")]
+    UserSuspended,
+
     #[error("Invalid event name `{event_name}`: {hint}", hint = ::domain::EventName::hint())]
     EventNameInvalid {
         event_name: ::axiom::string::String,

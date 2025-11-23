@@ -36,6 +36,9 @@ pub enum RemoveEventPostErrResponse {
 		user_role: RemoveEventPostUserRole,
 	},
 
+    #[error("User temporarily suspended")]
+    UserSuspended,
+
     #[error("Post not found")]
     PostNotFound,
 

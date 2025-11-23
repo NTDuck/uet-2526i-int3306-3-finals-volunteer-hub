@@ -40,6 +40,9 @@ pub enum UpdateEventPostErrResponse {
 		user_role: UpdateEventPostUserRole,
 	},
 
+    #[error("User temporarily suspended")]
+    UserSuspended,
+
 	#[error("Invalid post title `{post_title}`: {hint}", hint = ::domain::EventPostTitle::hint())]
 	PostTitleInvalid {
 		post_title: ::axiom::string::String,

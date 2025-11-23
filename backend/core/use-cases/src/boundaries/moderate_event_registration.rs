@@ -49,6 +49,9 @@ pub enum ModerateEventRegistrationErrResponse {
         user_role: ModerateEventRegistrationUserRole,
     },
 
+    #[error("User temporarily suspended")]
+    UserSuspended,
+
     #[error("Event registration not found")]
     EventRegistrationNotFound,
 

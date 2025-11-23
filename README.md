@@ -84,6 +84,12 @@ $ deno task preview-sveltekit-minimal
   > [./backend/core/use-cases/src/boundaries/create_comment.rs](./backend/core/use-cases/src/boundaries/create_comment.rs)
   > |
   > [./backend/core/use-cases/src/interactors/create_comment.rs](./backend/core/use-cases/src/interactors/create_comment.rs)\
+  > [./backend/core/use-cases/src/boundaries/update_post.rs](./backend/core/use-cases/src/boundaries/update_post.rs)
+  > |
+  > [./backend/core/use-cases/src/interactors/update_post.rs](./backend/core/use-cases/src/interactors/update_post.rs)\
+  > [./backend/core/use-cases/src/boundaries/update_comment.rs](./backend/core/use-cases/src/boundaries/update_comment.rs)
+  > |
+  > [./backend/core/use-cases/src/interactors/update_comment.rs](./backend/core/use-cases/src/interactors/update_comment.rs)\
   > [./backend/core/use-cases/src/boundaries/remove_post.rs](./backend/core/use-cases/src/boundaries/remove_post.rs)
   > |
   > [./backend/core/use-cases/src/interactors/remove_post.rs](./backend/core/use-cases/src/interactors/remove_post.rs)\
@@ -151,6 +157,12 @@ $ deno task preview-sveltekit-minimal
   > [./backend/core/use-cases/src/boundaries/create_comment.rs](./backend/core/use-cases/src/boundaries/create_comment.rs)
   > |
   > [./backend/core/use-cases/src/interactors/create_comment.rs](./backend/core/use-cases/src/interactors/create_comment.rs)\
+  > [./backend/core/use-cases/src/boundaries/update_post.rs](./backend/core/use-cases/src/boundaries/update_post.rs)
+  > |
+  > [./backend/core/use-cases/src/interactors/update_post.rs](./backend/core/use-cases/src/interactors/update_post.rs)\
+  > [./backend/core/use-cases/src/boundaries/update_comment.rs](./backend/core/use-cases/src/boundaries/update_comment.rs)
+  > |
+  > [./backend/core/use-cases/src/interactors/update_comment.rs](./backend/core/use-cases/src/interactors/update_comment.rs)\
   > [./backend/core/use-cases/src/boundaries/remove_post.rs](./backend/core/use-cases/src/boundaries/remove_post.rs)
   > |
   > [./backend/core/use-cases/src/interactors/remove_post.rs](./backend/core/use-cases/src/interactors/remove_post.rs)\

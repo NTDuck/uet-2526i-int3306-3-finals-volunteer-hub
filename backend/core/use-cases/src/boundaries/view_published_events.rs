@@ -111,9 +111,6 @@ pub enum ViewPublishedEventsErrResponse {
     UserUnauthorized {
         user_role: ViewPublishedEventsUserRole,
     },
-
-    #[error("User temporarily suspended")]
-    UserSuspended,
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::strum::Display)]

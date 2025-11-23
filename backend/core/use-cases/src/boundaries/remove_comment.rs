@@ -36,6 +36,9 @@ pub enum RemoveEventPostCommentErrResponse {
 		user_role: RemoveEventPostCommentUserRole,
 	},
 
+    #[error("User temporarily suspended")]
+    UserSuspended,
+
     #[error("Comment not found")]
     CommentNotFound,
 
