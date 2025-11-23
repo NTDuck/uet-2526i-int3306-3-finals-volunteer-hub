@@ -79,16 +79,7 @@ impl ::core::convert::TryFrom<Profile> for Gateways {
     fn try_from(_profile: Profile) -> ::core::result::Result<Self, Self::Error> {
         use ::hmac::Mac as _;
 
-        // let logger = ::tracing_appender::rolling::never("/logs/wasm-bindings/",
-        // ".log"); let (logger, _logger_guard) =
-        // ::tracing_appender::non_blocking(logger);
-
-        // ::tracing_subscriber::fmt()
-        //     .with_writer(logger)
-        //     .with_env_filter(::tracing_subscriber::EnvFilter::try_from_default_env()?
-        // )     .with_ansi(false)
-        //     .init();
-
+        ::console_error_panic_hook::set_once();
         ::tracing_wasm::try_set_as_global_default()?;
 
         let gateways = Self::builder()
