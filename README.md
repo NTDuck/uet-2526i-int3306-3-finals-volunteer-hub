@@ -3,72 +3,213 @@
 ## Deps
 
 - [Rust](https://rust-lang.org/tools/install/)
-- [wasm-pack](https://drager.github.io/wasm-pack/) basically
-  `cargo install wasm-pack`
+- [wasm-pack](https://drager.github.io/wasm-pack/)
+  > basically `cargo install wasm-pack`
 - [Deno](https://docs.deno.com/runtime/getting_started/installation/)
 
 ## How to install
 
 ```cmd
-cd ./frontend/sveltekit-minimal && deno install
+$ cd ./frontend/sveltekit-minimal && deno install
 ```
 
 ## How to run
 
 ```cmd
-deno task build-wasm
+$ deno task build-wasm
 ```
 
 Development
 
 ```cmd
-deno task dev-sveltekit-minimal
+$ deno task dev-sveltekit-minimal
 ```
 
 Production
 
 ```cmd
-deno task build-sveltekit-minimal
-deno task preview-sveltekit-minimal
+$ deno task build-sveltekit-minimal
+$ deno task preview-sveltekit-minimal
 ```
 
-# Notes
+## Use cases
 
-- Domain
-  - Volunteer
-  - Manager
-  - Administrator
+> https://itest.com.vn/lects/webappdev/mockproj/VolunteerHub.htm
 
-  - Event: name, date(time?), location, description, category, channel
-  - EventChannel (like Facebook wall)
-- Use cases
-  - Common
-    - Create account
-    - Sign in (email, pw)
-    - Dashboard
-      - View events: newly announced/created?, having new posts, popular events
-        (increasing fast: members, likes)
-  - Volunteer
-    - View events + by chrono/category
-    - Subcribe to event (recv confirmation noti) // simple return, noti doesnt
-      persist
-    - Unsubscribe to event (before it happens)
-    - View participated events + completion status
-    - || Web push API for certain momentos (subscribed approved, completion
-      status)
-    - Post on EventChannel, Comment on Post, Like on Post (all of those after
-      event is approved)
+---
 
-  - Event Manager
-    - Create, Update, Delete Event + Input Validation stuff
-    - Approve / Disapprove Volunteer's subscription
-    - Update Volunteer's completion status
-    - View voluteers
-    - Post on EventChannel, Comment on Post, Like on Post (all of those after
-      event is approved)
+### Tình nguyện viên
 
-  - Administrator
-    - Approve, Delete Event (that are created by Manager)
-    - View, lock/unlocked V/EM accs
-    - Export Events/Vs (CSV/JSON)
-    -
+- **Đăng ký/Đăng nhập**: Tạo tài khoản, đăng nhập bằng email/password.
+  > [./backend/core/use-cases/src/boundaries/sign_in.rs](./backend/core/use-cases/src/boundaries/sign_in.rs)
+  > |
+  > [./backend/core/use-cases/src/interactors/sign_in.rs](./backend/core/use-cases/src/interactors/sign_in.rs)\
+  > [./backend/core/use-cases/src/boundaries/sign_up.rs](./backend/core/use-cases/src/boundaries/sign_up.rs)
+  > |
+  > [./backend/core/use-cases/src/interactors/sign_up.rs](./backend/core/use-cases/src/interactors/sign_up.rs)
+- **Xem sự kiện**: Xem danh sách sự kiện (tên, ngày, địa điểm, mô tả), lọc theo
+  thời gian/danh mục.
+  > [./backend/core/use-cases/src/boundaries/view_published_events.rs](./backend/core/use-cases/src/boundaries/view_published_events.rs)
+  > |
+  > [./backend/core/use-cases/src/interactors/view_published_events.rs](./backend/core/use-cases/src/interactors/view_published_events.rs)
+- **Đăng ký sự kiện**: Đăng ký tham gia sự kiện, nhận thông báo xác nhận.
+  > [./backend/core/use-cases/src/boundaries/subscribe_to_event.rs](./backend/core/use-cases/src/boundaries/subscribe_to_event.rs)
+  > |
+  > [./backend/core/use-cases/src/interactors/subscribe_to_event.rs](./backend/core/use-cases/src/interactors/subscribe_to_event.rs)
+- **Thoái đăng sự kiện**: Hủy đăng ký trước khi sự kiện diễn ra.
+  > [./backend/core/use-cases/src/boundaries/unsubscribe_from_event.rs](./backend/core/use-cases/src/boundaries/unsubscribe_from_event.rs)
+  > |
+  > [./backend/core/use-cases/src/interactors/unsubscribe_from_event.rs](./backend/core/use-cases/src/interactors/unsubscribe_from_event.rs)
+- **Xem lịch sử tham gia**: Xem danh sách sự kiện đã tham gia, trạng thái hoàn
+  thành.
+  > [./backend/core/use-cases/src/boundaries/view_event_history.rs](./backend/core/use-cases/src/boundaries/view_event_history.rs)
+  > |
+  > [./backend/core/use-cases/src/interactors/view_event_history.rs](./backend/core/use-cases/src/interactors/view_event_history.rs)
+- **Nhận thông báo**: Nhận thông báo trạng thái đăng ký/hoàn thành (Web Push
+  API).
+- **Truy cập kênh trao đổi**: Post bài, comment, like trên kênh sự kiện (tương
+  tự wall Facebook), chỉ sau khi sự kiện được duyệt.
+  > [./backend/core/use-cases/src/boundaries/view_event_channel.rs](./backend/core/use-cases/src/boundaries/view_event_channel.rs)
+  > |
+  > [./backend/core/use-cases/src/interactors/view_event_channel.rs](./backend/core/use-cases/src/interactors/view_event_channel.rs)\
+  > [./backend/core/use-cases/src/boundaries/view_post.rs](./backend/core/use-cases/src/boundaries/view_post.rs)
+  > |
+  > [./backend/core/use-cases/src/interactors/view_post.rs](./backend/core/use-cases/src/interactors/view_post.rs)\
+  > [./backend/core/use-cases/src/boundaries/create_post.rs](./backend/core/use-cases/src/boundaries/create_post.rs)
+  > |
+  > [./backend/core/use-cases/src/interactors/create_post.rs](./backend/core/use-cases/src/interactors/create_post.rs)\
+  > [./backend/core/use-cases/src/boundaries/create_reaction.rs](./backend/core/use-cases/src/boundaries/create_reaction.rs)
+  > |
+  > [./backend/core/use-cases/src/interactors/create_reaction.rs](./backend/core/use-cases/src/interactors/create_reaction.rs)\
+  > [./backend/core/use-cases/src/boundaries/create_comment.rs](./backend/core/use-cases/src/boundaries/create_comment.rs)
+  > |
+  > [./backend/core/use-cases/src/interactors/create_comment.rs](./backend/core/use-cases/src/interactors/create_comment.rs)\
+  > [./backend/core/use-cases/src/boundaries/update_post.rs](./backend/core/use-cases/src/boundaries/update_post.rs)
+  > |
+  > [./backend/core/use-cases/src/interactors/update_post.rs](./backend/core/use-cases/src/interactors/update_post.rs)\
+  > [./backend/core/use-cases/src/boundaries/update_comment.rs](./backend/core/use-cases/src/boundaries/update_comment.rs)
+  > |
+  > [./backend/core/use-cases/src/interactors/update_comment.rs](./backend/core/use-cases/src/interactors/update_comment.rs)\
+  > [./backend/core/use-cases/src/boundaries/remove_post.rs](./backend/core/use-cases/src/boundaries/remove_post.rs)
+  > |
+  > [./backend/core/use-cases/src/interactors/remove_post.rs](./backend/core/use-cases/src/interactors/remove_post.rs)\
+  > [./backend/core/use-cases/src/boundaries/remove_reaction.rs](./backend/core/use-cases/src/boundaries/remove_reaction.rs)
+  > |
+  > [./backend/core/use-cases/src/interactors/remove_reaction.rs](./backend/core/use-cases/src/interactors/remove_reaction.rs)\
+  > [./backend/core/use-cases/src/boundaries/remove_comment.rs](./backend/core/use-cases/src/boundaries/remove_comment.rs)
+  > |
+  > [./backend/core/use-cases/src/interactors/remove_comment.rs](./backend/core/use-cases/src/interactors/remove_comment.rs)
+- **Xem Dashboard**: Xem tổng hợp sự kiện liên quan (mới công bố, có tin bài
+  mới), sự kiện thu hút (tăng thành viên/trao đổi/like nhanh).
+  > [./backend/core/use-cases/src/boundaries/view_event_recommendation.rs](./backend/core/use-cases/src/boundaries/view_event_recommendation.rs)
+  > |
+  > [./backend/core/use-cases/src/interactors/view_event_recommendation.rs](./backend/core/use-cases/src/interactors/view_event_recommendation.rs)
+
+---
+
+### Quản lý sự kiện
+
+- **Đăng ký/Đăng nhập**: Tạo tài khoản, đăng nhập bằng email/password.
+  > [./backend/core/use-cases/src/boundaries/sign_in.rs](./backend/core/use-cases/src/boundaries/sign_in.rs)
+  > |
+  > [./backend/core/use-cases/src/interactors/sign_in.rs](./backend/core/use-cases/src/interactors/sign_in.rs)\
+  > [./backend/core/use-cases/src/boundaries/sign_up.rs](./backend/core/use-cases/src/boundaries/sign_up.rs)
+  > |
+  > [./backend/core/use-cases/src/interactors/sign_up.rs](./backend/core/use-cases/src/interactors/sign_up.rs)
+- **Quản lý sự kiện**: Tạo, sửa, xóa sự kiện (tên, ngày, địa điểm, mô tả).
+  Validate input (Joi/Yup).
+  > [./backend/core/use-cases/src/boundaries/create_event.rs](./backend/core/use-cases/src/boundaries/create_event.rs)
+  > |
+  > [./backend/core/use-cases/src/interactors/create_event.rs](./backend/core/use-cases/src/interactors/create_event.rs)\
+  > [./backend/core/use-cases/src/boundaries/update_event.rs](./backend/core/use-cases/src/boundaries/update_event.rs)
+  > |
+  > [./backend/core/use-cases/src/interactors/update_event.rs](./backend/core/use-cases/src/interactors/update_event.rs)\
+  > [./backend/core/use-cases/src/boundaries/remove_event.rs](./backend/core/use-cases/src/boundaries/remove_event.rs)
+  > |
+  > [./backend/core/use-cases/src/interactors/remove_event.rs](./backend/core/use-cases/src/interactors/remove_event.rs)\
+- **Xác nhận đăng ký**: Duyệt/hủy đăng ký của tình nguyện viên.
+  > [./backend/core/use-cases/src/boundaries/moderate_event_registration.rs](./backend/core/use-cases/src/boundaries/moderate_event_registration.rs)
+  > |
+  > [./backend/core/use-cases/src/interactors/moderate_event_registration.rs](./backend/core/use-cases/src/interactors/moderate_event_registration.rs)
+- **Đánh dấu hoàn thành**: Cập nhật trạng thái hoàn thành cho tình nguyện viên
+  sau sự kiện.
+  > [./backend/core/use-cases/src/boundaries/moderate_event_registration.rs](./backend/core/use-cases/src/boundaries/moderate_event_registration.rs)
+  > |
+  > [./backend/core/use-cases/src/interactors/moderate_event_registration.rs](./backend/core/use-cases/src/interactors/moderate_event_registration.rs)
+- **Xem báo cáo**: Xem danh sách tình nguyện viên tham gia sự kiện.
+  > [./backend/core/use-cases/src/boundaries/view_event_volunteers.rs](./backend/core/use-cases/src/boundaries/view_event_volunteers.rs)
+  > |
+  > [./backend/core/use-cases/src/interactors/view_event_volunteers.rs](./backend/core/use-cases/src/interactors/view_event_volunteers.rs)
+- **Truy cập kênh trao đổi**: Post bài, comment, like trên kênh sự kiện (tương
+  tự wall Facebook), chỉ sau khi sự kiện được duyệt.
+  > [./backend/core/use-cases/src/boundaries/view_event_channel.rs](./backend/core/use-cases/src/boundaries/view_event_channel.rs)
+  > |
+  > [./backend/core/use-cases/src/interactors/view_event_channel.rs](./backend/core/use-cases/src/interactors/view_event_channel.rs)\
+  > [./backend/core/use-cases/src/boundaries/view_post.rs](./backend/core/use-cases/src/boundaries/view_post.rs)
+  > |
+  > [./backend/core/use-cases/src/interactors/view_post.rs](./backend/core/use-cases/src/interactors/view_post.rs)\
+  > [./backend/core/use-cases/src/boundaries/create_post.rs](./backend/core/use-cases/src/boundaries/create_post.rs)
+  > |
+  > [./backend/core/use-cases/src/interactors/create_post.rs](./backend/core/use-cases/src/interactors/create_post.rs)\
+  > [./backend/core/use-cases/src/boundaries/create_reaction.rs](./backend/core/use-cases/src/boundaries/create_reaction.rs)
+  > |
+  > [./backend/core/use-cases/src/interactors/create_reaction.rs](./backend/core/use-cases/src/interactors/create_reaction.rs)\
+  > [./backend/core/use-cases/src/boundaries/create_comment.rs](./backend/core/use-cases/src/boundaries/create_comment.rs)
+  > |
+  > [./backend/core/use-cases/src/interactors/create_comment.rs](./backend/core/use-cases/src/interactors/create_comment.rs)\
+  > [./backend/core/use-cases/src/boundaries/update_post.rs](./backend/core/use-cases/src/boundaries/update_post.rs)
+  > |
+  > [./backend/core/use-cases/src/interactors/update_post.rs](./backend/core/use-cases/src/interactors/update_post.rs)\
+  > [./backend/core/use-cases/src/boundaries/update_comment.rs](./backend/core/use-cases/src/boundaries/update_comment.rs)
+  > |
+  > [./backend/core/use-cases/src/interactors/update_comment.rs](./backend/core/use-cases/src/interactors/update_comment.rs)\
+  > [./backend/core/use-cases/src/boundaries/remove_post.rs](./backend/core/use-cases/src/boundaries/remove_post.rs)
+  > |
+  > [./backend/core/use-cases/src/interactors/remove_post.rs](./backend/core/use-cases/src/interactors/remove_post.rs)\
+  > [./backend/core/use-cases/src/boundaries/remove_reaction.rs](./backend/core/use-cases/src/boundaries/remove_reaction.rs)
+  > |
+  > [./backend/core/use-cases/src/interactors/remove_reaction.rs](./backend/core/use-cases/src/interactors/remove_reaction.rs)\
+  > [./backend/core/use-cases/src/boundaries/remove_comment.rs](./backend/core/use-cases/src/boundaries/remove_comment.rs)
+  > |
+  > [./backend/core/use-cases/src/interactors/remove_comment.rs](./backend/core/use-cases/src/interactors/remove_comment.rs)
+- **Xem Dashboard**: Xem tổng hợp sự kiện liên quan (mới công bố, có tin bài
+  mới), sự kiện thu hút (tăng thành viên/trao đổi/like nhanh).
+  > [./backend/core/use-cases/src/boundaries/view_event_recommendation.rs](./backend/core/use-cases/src/boundaries/view_event_recommendation.rs)
+  > |
+  > [./backend/core/use-cases/src/interactors/view_event_recommendation.rs](./backend/core/use-cases/src/interactors/view_event_recommendation.rs)
+
+---
+
+### Admin
+
+- **Đăng ký/Đăng nhập**: Tạo tài khoản, đăng nhập bằng email/password.
+  > [./backend/core/use-cases/src/boundaries/sign_in.rs](./backend/core/use-cases/src/boundaries/sign_in.rs)
+  > |
+  > [./backend/core/use-cases/src/interactors/sign_in.rs](./backend/core/use-cases/src/interactors/sign_in.rs)\
+  > [./backend/core/use-cases/src/boundaries/sign_up.rs](./backend/core/use-cases/src/boundaries/sign_up.rs)
+  > |
+  > [./backend/core/use-cases/src/interactors/sign_up.rs](./backend/core/use-cases/src/interactors/sign_up.rs)
+- **Quản lý sự kiện**: Duyệt/xóa sự kiện do quản lý sự kiện tạo.
+  > [./backend/core/use-cases/src/boundaries/moderate_event.rs](./backend/core/use-cases/src/boundaries/moderate_event.rs)
+  > |
+  > [./backend/core/use-cases/src/interactors/moderate_event.rs](./backend/core/use-cases/src/interactors/moderate_event.rs)
+- **Quản lý người dùng**: Xem, khóa/mở tài khoản tình nguyện viên/quản lý sự
+  kiện.
+  > [./backend/core/use-cases/src/boundaries/view_users.rs](./backend/core/use-cases/src/boundaries/view_users.rs)
+  > |
+  > [./backend/core/use-cases/src/interactors/view_users.rs](./backend/core/use-cases/src/interactors/view_users.rs)\
+  > [./backend/core/use-cases/src/boundaries/moderate_user.rs](./backend/core/use-cases/src/boundaries/moderate_user.rs)
+  > |
+  > [./backend/core/use-cases/src/interactors/moderate_user.rs](./backend/core/use-cases/src/interactors/moderate_user.rs)
+- **Xuất dữ liệu**: Export danh sách sự kiện/tình nguyện viên (CSV/JSON).
+  > [./backend/core/use-cases/src/boundaries/export_events.rs](./backend/core/use-cases/src/boundaries/export_events.rs)
+  > |
+  > [./backend/core/use-cases/src/interactors/export_events.rs](./backend/core/use-cases/src/interactors/export_events.rs)\
+  > [./backend/core/use-cases/src/boundaries/export_volunteers.rs](./backend/core/use-cases/src/boundaries/export_volunteers.rs)
+  > |
+  > [./backend/core/use-cases/src/interactors/export_volunteers.rs](./backend/core/use-cases/src/interactors/export_volunteers.rs)
+- **Xem Dashboard**: Xem tổng hợp sự kiện liên quan (mới công bố, có tin bài
+  mới), sự kiện thu hút (tăng thành viên/trao đổi/like nhanh).
+  > [./backend/core/use-cases/src/boundaries/view_event_recommendation.rs](./backend/core/use-cases/src/boundaries/view_event_recommendation.rs)
+  > |
+  > [./backend/core/use-cases/src/interactors/view_event_recommendation.rs](./backend/core/use-cases/src/interactors/view_event_recommendation.rs)

@@ -26,5 +26,5 @@
 </form>
 
 {#each form?.errors as error}
-  <p style="color: red;">{error}</p>
+  <p style="color: red;">{error.message}</p>
 {/each}

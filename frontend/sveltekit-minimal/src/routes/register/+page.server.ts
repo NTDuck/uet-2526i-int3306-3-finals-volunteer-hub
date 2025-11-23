@@ -7,33 +7,21 @@ import { getApp } from "$lib/server/index.ts";
 export const actions = {
   default: async ({ request }: RequestEvent) => {
     const app = await getApp();
+
     const formData = await request.formData();
 
+    const data = {
+      userRole: formData.get("user-role")?.toString() ?? "",
+      username: formData.get("username")?.toString() ?? "",
+      email: formData.get("email")?.toString() ?? "",
+      password: formData.get("password")?.toString() ?? "",
+      fullName: formData.get("full-name")?.toString() ?? "",
+    };
+
     try {
-      await app.signUp({
-        userRole: {
-          "volunteer": "volunteer",
-          "event-manager": "eventManager",
-          "administrator": "administrator",
-        }[formData.get("user-role") as string],
-        username: formData.get("username"),
-        email: formData.get("email"),
-        password: formData.get("password"),
-        firstName: formData.get("first-name"),
-        lastName: formData.get("last-name"),
-      });
+      await app.signUp(data);
     } catch (errors) {
-      return fail(400, {
-        errors: errors, // TODO: Beautify
-        data: {
-          userRole: formData.get("user-role") ?? "",
-          username: formData.get("username") ?? "",
-          email: formData.get("email") ?? "",
-          password: formData.get("password") ?? "",
-          firstName: formData.get("first-name") ?? "",
-          lastName: formData.get("last-name") ?? "",
-        },
-      });
+      return fail(400, { errors, data });
     }
 
     throw redirect(303, "/login");

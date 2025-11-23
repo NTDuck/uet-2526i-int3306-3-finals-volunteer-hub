@@ -12,3 +12,8 @@ concurrency:
 jobs:
   format-and-lint:
     uses: ./.github/workflows/sveltekit-minimal-format-and-lint.yml
+
+  # build:
+  #   needs:
+  #     - format-and-lint
+  #   uses: ./.github/workflows/sveltekit-minimal-build.yml

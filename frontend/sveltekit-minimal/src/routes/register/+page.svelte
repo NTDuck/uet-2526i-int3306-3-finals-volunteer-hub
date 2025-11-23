@@ -10,8 +10,7 @@
         username: string,
         email: string,
         password: string,
-        firstName: string,
-        lastName: string,
+        fullName: string,
       },
     },
   };
@@ -36,15 +35,12 @@
   <label for="password">password</label>
   <input type="password" name="password" value={form?.data.password ?? ""} required>
 
-  <label for="first-name">first-name</label>
-  <input type="text" name="first-name" value={form?.data.firstName ?? ""} required>
-
-  <label for="last-name">last-name</label>
-  <input type="text" name="last-name" value={form?.data.lastName ?? ""} required>
+  <label for="full-name">full-name</label>
+  <input type="text" name="full-name" value={form?.data.fullName ?? ""} required>
 
   <button type="submit">register</button>
 </form>
 
 {#each form?.errors as error}
-  <p style="color: red;">{error}</p>
+  <p style="color: red;">{error.message}</p>
 {/each}

@@ -4,6 +4,10 @@ use ::use_cases::gateways::*;
 use ::use_cases::interactors::*;
 use ::wasm_bindgen::prelude::*;
 
+/// A `Promise<<...>OkResponse>` returned by a non-static method is either
+/// fulfilled with `<...>OkResponse` or rejected with `<...>ErrResponse[]`. A
+/// `<...>ErrResponse` satisfies `{ error: <...>, message: <...>, data: { ... }
+/// }`.
 #[wasm_bindgen]
 #[derive(::bon::Builder)]
 pub struct Application {
@@ -16,16 +20,12 @@ pub struct Application {
 
 #[wasm_bindgen]
 impl Application {
-    #[wasm_bindgen]
-    pub async fn create() -> Promise<Self> {
-        Self::new()
-            .await
+    #[wasm_bindgen(js_name = withProfile)]
+    pub async fn with_profile(profile: Profile) -> Promise<Self> {
+        Gateways::try_from(profile)
+            .map(::core::convert::Into::<Self>::into)
             .inspect_err(|error| ::tracing::error!("{}", error)) // Saves hours of debugging
             .into_promise()
-    }
-
-    async fn new() -> ::aliases::result::Fallible<Self> {
-        Gateways::new().await.map(::core::convert::Into::into)
     }
 
     #[wasm_bindgen(js_name = signIn)]
@@ -73,73 +73,82 @@ struct Gateways {
     password_hasher: ::std::sync::Arc<dyn PasswordHasher + ::core::marker::Send + ::core::marker::Sync>,
 }
 
-impl Gateways {
-    async fn new() -> ::aliases::result::Fallible<Self> {
+impl ::core::convert::TryFrom<Profile> for Gateways {
+    type Error = ::axiom::result::Error;
+
+    fn try_from(_profile: Profile) -> ::core::result::Result<Self, Self::Error> {
         use ::hmac::Mac as _;
 
-        // let logger = ::tracing_appender::rolling::never("/logs/wasm-bindings/",
-        // ".log"); let (logger, _logger_guard) =
-        // ::tracing_appender::non_blocking(logger);
-
-        // ::tracing_subscriber::fmt()
-        //     .with_writer(logger)
-        //     .with_env_filter(::tracing_subscriber::EnvFilter::try_from_default_env()?
-        // )     .with_ansi(false)
-        //     .init();
-
+        ::console_error_panic_hook::set_once();
         ::tracing_wasm::try_set_as_global_default()?;
 
-        ::tracing::debug!("JWT_SECRET_KEY: {}", ::core::env!("JWT_SECRET_KEY"));
-        ::tracing::debug!("ARGON2_SECRET_KEY: {}", ::core::env!("ARGON2_SECRET_KEY"));
+        let gateways = Self::builder()
+            .user_repository(::std::sync::Arc::new(InMemoryUserRepository::builder().build()))
+            .uuid_generator(::std::sync::Arc::new(UuidV7Generator::builder().build()))
+            .auth_token_generator(::std::sync::Arc::new(
+                JsonWebTokenGenerator::builder()
+                    .key(::hmac::Hmac::<::sha2::Sha256>::new_from_slice(::core::env!("JWT_SECRET_KEY").as_bytes())?)
+                    .build(),
+            ))
+            .password_hasher(::std::sync::Arc::new(
+                Argon2PasswordHasher::builder()
+                    .context(::argon2::Argon2::new_with_secret(
+                        ::core::env!("ARGON2_SECRET_KEY").as_bytes(),
+                        ::argon2::Algorithm::Argon2id,
+                        ::argon2::Version::V0x13,
+                        ::argon2::Params::default(),
+                    )?)
+                    .build(),
+            ))
+            .build();
 
-        ::aliases::result::Fallible::Ok(
-            Self::builder()
-                .user_repository(::std::sync::Arc::new(InMemoryUserRepository::builder().build()))
-                .uuid_generator(::std::sync::Arc::new(UuidV7Generator::builder().build()))
-                .auth_token_generator(::std::sync::Arc::new(
-                    JsonWebTokenGenerator::builder()
-                        .key(::hmac::Hmac::<::sha2::Sha256>::new_from_slice(::core::env!("JWT_SECRET_KEY").as_bytes())?)
-                        .build(),
-                ))
-                .password_hasher(::std::sync::Arc::new(
-                    Argon2PasswordHasher::builder()
-                        .context(::argon2::Argon2::new_with_secret(
-                            ::core::env!("ARGON2_SECRET_KEY").as_bytes(),
-                            ::argon2::Algorithm::Argon2id,
-                            ::argon2::Version::V0x13,
-                            ::argon2::Params::default(),
-                        )?)
-                        .build(),
-                ))
-                .build(),
-        )
+        ::axiom::result::Fallible::Ok(gateways)
     }
 }
 
-pub type Promise<T = ()> = ::core::result::Result<T, ::wasm_bindgen::JsValue>;
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
+#[derive(::serde::Deserialize)]
+#[serde(rename_all = "kebab-case")]
+#[derive(::tsify::Tsify)]
+#[tsify(from_wasm_abi)]
+pub enum Profile {
+    Dev,
+    Prod,
+}
 
-trait FallibleExt<T = ()> {
+pub type Promise<T> = ::core::result::Result<T, ::wasm_bindgen::JsValue>;
+
+trait IntoPromise<T = ()> {
     fn into_promise(self) -> Promise<T>;
 }
 
-impl<T> FallibleExt<T> for ::aliases::result::Fallible<T> {
+impl<T> IntoPromise<T> for ::axiom::result::Fallible<T> {
     fn into_promise(self) -> Promise<T> {
-        self.map_err(|error| ::wasm_bindgen::JsValue::from_str(&error.to_string()))
+        use ::colored::Colorize as _;
+
+        self.inspect_err(|error| ::tracing::debug!("{label} {error}", label = "[unexpected-error]".red()))
+            .map_err(|error| ::wasm_bindgen::JsValue::from_str(&error.to_string()))
     }
 }
 
-impl<T, E> FallibleExt<T> for ::aliases::result::Fallible<::core::result::Result<T, ::std::vec::Vec<E>>>
+impl<T, E> IntoPromise<T> for ::axiom::result::Fallible<::core::result::Result<T, ::std::vec::Vec<E>>>
 where
-    E: ::core::error::Error,
+    E: ::serde::Serialize,
 {
     fn into_promise(self) -> Promise<T> {
-        self.map_err(|error| ::wasm_bindgen::JsValue::from_str(&error.to_string()))
+        use ::colored::Colorize as _;
+
+        self
+            .inspect_err(|error| ::tracing::debug!("{label} {error}", label = "[unexpected-error]".red()))
+            .map_err(|error| ::wasm_bindgen::JsValue::from_str(&error.to_string()))
             .and_then(|inner| {
                 inner
                     .map_err(|errors| {
                         errors
                             .into_iter()
-                            .map(|error| ::wasm_bindgen::JsValue::from_str(&error.to_string()))
+                            .map(|error| unsafe { <::wasm_bindgen::JsValue as ::gloo_utils::format::JsValueSerdeExt>::from_serde(&error)
+                                .inspect(|error| ::tracing::debug!("{label} {error:?}", label = "[expected-error]".red()))
+                                .unwrap_unchecked() })  // We kinda know what we're doing
                             .collect::<::std::vec::Vec<_>>()
                     })
                     .map_err(::core::convert::Into::into)
