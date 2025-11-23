@@ -63,10 +63,7 @@ pub struct ViewEventPostEventPostComment {
 #[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
 pub struct ViewEventPostVolunteer {
     pub id: ::axiom::string::String,
-
     pub username: ::axiom::string::String,
-    pub email: ::axiom::string::String,
-    pub full_name: ::axiom::string::String,
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
@@ -82,6 +79,9 @@ pub enum ViewEventPostErrResponse {
 	UserUnauthorized {
 		user_role: ViewEventPostUserRole,
 	},
+
+    #[error("Post not found")]
+    PostNotFound,
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::strum::Display)]

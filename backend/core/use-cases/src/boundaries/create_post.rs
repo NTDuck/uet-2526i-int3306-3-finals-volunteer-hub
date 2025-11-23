@@ -38,12 +38,15 @@ pub enum CreateEventPostErrResponse {
 		user_role: CreateEventPostUserRole,
 	},
 
-	#[error("Invalid post title `{post_title}`; {hint}", hint = ::domain::EventPostTitle::hint())]
+	#[error("Invalid post title `{post_title}`: {hint}", hint = ::domain::EventPostTitle::hint())]
 	PostTitleInvalid {
 		post_title: ::axiom::string::String,
 	},
 
-	#[error("Invalid post ")]
+	#[error("Invalid post content `{post_content}`: {hint}", hint = ::domain::EventPostContent::hint())]
+    PostContentInvalid {
+        post_content: ::axiom::string::String,
+    },
 
 	#[error("Post not found")]
 	PostNotFound,

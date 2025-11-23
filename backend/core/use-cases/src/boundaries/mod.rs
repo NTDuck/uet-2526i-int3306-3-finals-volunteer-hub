@@ -20,7 +20,6 @@ mod view_event_recommendation;
 mod view_event_volunteers;
 mod view_users;
 mod view_published_events;
-mod view_event;
 mod update_event_registration;
 
 use serde::ser::SerializeMap;
@@ -47,5 +46,4 @@ pub use self::view_event_recommendation::*;
 pub use self::view_event_volunteers::*;
 pub use self::view_users::*;
 pub use self::view_published_events::*;
-pub use self::view_event::*;
 pub use self::update_event_registration::*;
