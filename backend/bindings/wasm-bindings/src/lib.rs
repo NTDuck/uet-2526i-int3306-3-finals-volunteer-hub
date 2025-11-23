@@ -16,33 +16,29 @@ pub struct Application {
 
 #[wasm_bindgen]
 impl Application {
-    #[wasm_bindgen]
-    pub async fn create() -> Promise<Self> {
-        Self::new()
-            .await
+    #[wasm_bindgen(js_name = withProfile)]
+    pub async fn with_profile(profile: Profile) -> Promise<Self> {
+        Gateways::try_from(profile)
+            .map(::core::convert::Into::<Self>::into)
             .inspect_err(|error| ::tracing::error!("{}", error)) // Saves hours of debugging
             .into_promise()
     }
 
-    async fn new() -> ::axiom::result::Fallible<Self> {
-        Gateways::new().await.map(::core::convert::Into::into)
-    }
+    // #[wasm_bindgen(js_name = signIn)]
+    // pub async fn sign_in(&self, request: SignInRequest) -> Promise<SignInOkResponse> {
+    //     ::std::sync::Arc::clone(&self.sign_in_boundary)
+    //         .apply(request)
+    //         .await
+    //         .into_promise()
+    // }
 
-    #[wasm_bindgen(js_name = signIn)]
-    pub async fn sign_in(&self, request: SignInRequest) -> Promise<SignInOkResponse> {
-        ::std::sync::Arc::clone(&self.sign_in_boundary)
-            .apply(request)
-            .await
-            .into_promise()
-    }
-
-    #[wasm_bindgen(js_name = signUp)]
-    pub async fn sign_up(&self, request: SignUpRequest) -> Promise<SignUpOkResponse> {
-        ::std::sync::Arc::clone(&self.sign_up_boundary)
-            .apply(request)
-            .await
-            .into_promise()
-    }
+    // #[wasm_bindgen(js_name = signUp)]
+    // pub async fn sign_up(&self, request: SignUpRequest) -> Promise<SignUpOkResponse> {
+    //     ::std::sync::Arc::clone(&self.sign_up_boundary)
+    //         .apply(request)
+    //         .await
+    //         .into_promise()
+    // }
 }
 
 #[rustfmt::skip]
@@ -73,8 +69,10 @@ struct Gateways {
     password_hasher: ::std::sync::Arc<dyn PasswordHasher + ::core::marker::Send + ::core::marker::Sync>,
 }
 
-impl Gateways {
-    async fn new() -> ::axiom::result::Fallible<Self> {
+impl ::core::convert::TryFrom<Profile> for Gateways {
+    type Error = ::axiom::result::Error;
+
+    fn try_from(_profile: Profile) -> ::core::result::Result<Self, Self::Error> {
         use ::hmac::Mac as _;
 
         // let logger = ::tracing_appender::rolling::never("/logs/wasm-bindings/",
@@ -89,28 +87,38 @@ impl Gateways {
 
         ::tracing_wasm::try_set_as_global_default()?;
 
-        ::axiom::result::Fallible::Ok(
-            Self::builder()
-                .user_repository(::std::sync::Arc::new(InMemoryUserRepository::builder().build()))
-                .uuid_generator(::std::sync::Arc::new(UuidV7Generator::builder().build()))
-                .auth_token_generator(::std::sync::Arc::new(
-                    JsonWebTokenGenerator::builder()
-                        .key(::hmac::Hmac::<::sha2::Sha256>::new_from_slice(::core::env!("JWT_SECRET_KEY").as_bytes())?)
-                        .build(),
-                ))
-                .password_hasher(::std::sync::Arc::new(
-                    Argon2PasswordHasher::builder()
-                        .context(::argon2::Argon2::new_with_secret(
-                            ::core::env!("ARGON2_SECRET_KEY").as_bytes(),
-                            ::argon2::Algorithm::Argon2id,
-                            ::argon2::Version::V0x13,
-                            ::argon2::Params::default(),
-                        )?)
-                        .build(),
-                ))
-                .build(),
-        )
+        let gateways = Self::builder()
+            .user_repository(::std::sync::Arc::new(InMemoryUserRepository::builder().build()))
+            .uuid_generator(::std::sync::Arc::new(UuidV7Generator::builder().build()))
+            .auth_token_generator(::std::sync::Arc::new(
+                JsonWebTokenGenerator::builder()
+                    .key(::hmac::Hmac::<::sha2::Sha256>::new_from_slice(::core::env!("JWT_SECRET_KEY").as_bytes())?)
+                    .build(),
+            ))
+            .password_hasher(::std::sync::Arc::new(
+                Argon2PasswordHasher::builder()
+                    .context(::argon2::Argon2::new_with_secret(
+                        ::core::env!("ARGON2_SECRET_KEY").as_bytes(),
+                        ::argon2::Algorithm::Argon2id,
+                        ::argon2::Version::V0x13,
+                        ::argon2::Params::default(),
+                    )?)
+                    .build(),
+            ))
+            .build();
+
+        ::axiom::result::Fallible::Ok(gateways)
     }
+}
+
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
+#[derive(::serde::Deserialize)]
+#[serde(rename_all = "kebab-case")]
+#[derive(::tsify::Tsify)]
+#[tsify(from_wasm_abi)]
+pub enum Profile {
+    Dev,
+    Prod,
 }
 
 pub type Promise<T = ()> = ::core::result::Result<T, ::wasm_bindgen::JsValue>;
