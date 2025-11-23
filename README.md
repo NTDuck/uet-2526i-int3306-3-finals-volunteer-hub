@@ -83,7 +83,16 @@ $ deno task preview-sveltekit-minimal
   > [./backend/core/use-cases/src/interactors/create_reaction.rs](./backend/core/use-cases/src/interactors/create_reaction.rs)\
   > [./backend/core/use-cases/src/boundaries/create_comment.rs](./backend/core/use-cases/src/boundaries/create_comment.rs)
   > |
-  > [./backend/core/use-cases/src/interactors/create_comment.rs](./backend/core/use-cases/src/interactors/create_comment.rs)
+  > [./backend/core/use-cases/src/interactors/create_comment.rs](./backend/core/use-cases/src/interactors/create_comment.rs)\
+  > [./backend/core/use-cases/src/boundaries/remove_post.rs](./backend/core/use-cases/src/boundaries/remove_post.rs)
+  > |
+  > [./backend/core/use-cases/src/interactors/remove_post.rs](./backend/core/use-cases/src/interactors/remove_post.rs)\
+  > [./backend/core/use-cases/src/boundaries/remove_reaction.rs](./backend/core/use-cases/src/boundaries/remove_reaction.rs)
+  > |
+  > [./backend/core/use-cases/src/interactors/remove_reaction.rs](./backend/core/use-cases/src/interactors/remove_reaction.rs)\
+  > [./backend/core/use-cases/src/boundaries/remove_comment.rs](./backend/core/use-cases/src/boundaries/remove_comment.rs)
+  > |
+  > [./backend/core/use-cases/src/interactors/remove_comment.rs](./backend/core/use-cases/src/interactors/remove_comment.rs)
 - **Xem Dashboard**: Xem tổng hợp sự kiện liên quan (mới công bố, có tin bài
   mới), sự kiện thu hút (tăng thành viên/trao đổi/like nhanh).
   > [./backend/core/use-cases/src/boundaries/view_event_recommendation.rs](./backend/core/use-cases/src/boundaries/view_event_recommendation.rs)
@@ -141,7 +150,16 @@ $ deno task preview-sveltekit-minimal
   > [./backend/core/use-cases/src/interactors/create_reaction.rs](./backend/core/use-cases/src/interactors/create_reaction.rs)\
   > [./backend/core/use-cases/src/boundaries/create_comment.rs](./backend/core/use-cases/src/boundaries/create_comment.rs)
   > |
-  > [./backend/core/use-cases/src/interactors/create_comment.rs](./backend/core/use-cases/src/interactors/create_comment.rs)
+  > [./backend/core/use-cases/src/interactors/create_comment.rs](./backend/core/use-cases/src/interactors/create_comment.rs)\
+  > [./backend/core/use-cases/src/boundaries/remove_post.rs](./backend/core/use-cases/src/boundaries/remove_post.rs)
+  > |
+  > [./backend/core/use-cases/src/interactors/remove_post.rs](./backend/core/use-cases/src/interactors/remove_post.rs)\
+  > [./backend/core/use-cases/src/boundaries/remove_reaction.rs](./backend/core/use-cases/src/boundaries/remove_reaction.rs)
+  > |
+  > [./backend/core/use-cases/src/interactors/remove_reaction.rs](./backend/core/use-cases/src/interactors/remove_reaction.rs)\
+  > [./backend/core/use-cases/src/boundaries/remove_comment.rs](./backend/core/use-cases/src/boundaries/remove_comment.rs)
+  > |
+  > [./backend/core/use-cases/src/interactors/remove_comment.rs](./backend/core/use-cases/src/interactors/remove_comment.rs)
 - **Xem Dashboard**: Xem tổng hợp sự kiện liên quan (mới công bố, có tin bài
   mới), sự kiện thu hút (tăng thành viên/trao đổi/like nhanh).
   > [./backend/core/use-cases/src/boundaries/view_event_recommendation.rs](./backend/core/use-cases/src/boundaries/view_event_recommendation.rs)

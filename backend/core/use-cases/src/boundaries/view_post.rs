@@ -41,7 +41,7 @@ pub struct ViewEventPostOkResponse {
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
 pub struct ViewEventPostEventPostReaction {
-	pub volunteer: ViewEventPostVolunteer,
+	pub user: ViewEventPostUser,
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
@@ -51,7 +51,8 @@ pub struct ViewEventPostEventPostReaction {
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
 pub struct ViewEventPostEventPostComment {
-	pub volunteer: ViewEventPostVolunteer,
+    pub id: ::axiom::string::String,
+	pub user: ViewEventPostUser,
 	pub content: ::axiom::string::String,
 }
 
@@ -61,7 +62,7 @@ pub struct ViewEventPostEventPostComment {
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
-pub struct ViewEventPostVolunteer {
+pub struct ViewEventPostUser {
     pub id: ::axiom::string::String,
     pub username: ::axiom::string::String,
 }

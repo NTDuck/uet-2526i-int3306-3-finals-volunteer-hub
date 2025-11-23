@@ -21,8 +21,9 @@ mod view_event_volunteers;
 mod view_users;
 mod view_published_events;
 mod update_event_registration;
-
-use serde::ser::SerializeMap;
+mod remove_comment;
+mod remove_post;
+mod remove_reaction;
 
 pub use self::moderate_event_registration::*;
 pub use self::moderate_event::*;
@@ -47,3 +48,6 @@ pub use self::view_event_volunteers::*;
 pub use self::view_users::*;
 pub use self::view_published_events::*;
 pub use self::update_event_registration::*;
+pub use self::remove_comment::*;
+pub use self::remove_post::*;
+pub use self::remove_reaction::*;
