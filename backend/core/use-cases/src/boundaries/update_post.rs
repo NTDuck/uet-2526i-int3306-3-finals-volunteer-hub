@@ -1,8 +1,8 @@
 use ::async_trait::async_trait;
 
 #[async_trait]
-pub trait CreateEventPostBoundary {
-	async fn apply(self: ::std::sync::Arc<Self>, request: CreateEventPostRequest) -> ::axiom::result::Fallible<CreateEventPostResponse>;
+pub trait UpdateEventPostBoundary {
+	async fn apply(self: ::std::sync::Arc<Self>, request: UpdateEventPostRequest) -> ::axiom::result::Fallible<UpdateEventPostResponse>;
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
@@ -11,31 +11,33 @@ pub trait CreateEventPostBoundary {
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi))]
-pub struct CreateEventPostRequest {
+pub struct UpdateEventPostRequest {
 	pub token: ::axiom::string::String,
 
-	pub post_title: ::axiom::string::String,
-	pub post_content: ::axiom::string::String,
+    pub post_id: ::axiom::string::String,
+
+	pub post_title: ::core::option::Option<::axiom::string::String>,
+	pub post_content: ::core::option::Option<::axiom::string::String>,
 }
 
 #[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
-pub type CreateEventPostResponse = ::core::result::Result<CreateEventPostOkResponse, ::std::vec::Vec<CreateEventPostErrResponse>>;
+pub type UpdateEventPostResponse = ::core::result::Result<UpdateEventPostOkResponse, ::std::vec::Vec<UpdateEventPostErrResponse>>;
 
 #[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
-pub type CreateEventPostOkResponse = ();
+pub type UpdateEventPostOkResponse = ();
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone)]
 #[cfg_attr(feature = "serde", derive(::axiom::Erratum))]
 #[cfg_attr(feature = "serde", erratum(rename_all = "kebab-case", rename_all_fields = "camelCase"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
-pub enum CreateEventPostErrResponse {
+pub enum UpdateEventPostErrResponse {
 	#[error("Invalid or expired authentication token")]
 	AuthenticationTokenInvalid,
 
-	#[error("User with role `{user_role}` not authorized: must be `{first_expected_user_role}` or `{second_expected_user_role}`", first_expected_user_role = CreateEventPostUserRole::Volunteer, second_expected_user_role = CreateEventPostUserRole::EventManager)]
+	#[error("User with role `{user_role}` not authorized: must be `{first_expected_user_role}` or `{second_expected_user_role}`", first_expected_user_role = UpdateEventPostUserRole::Volunteer, second_expected_user_role = UpdateEventPostUserRole::EventManager)]
 	UserUnauthorized {
-		user_role: CreateEventPostUserRole,
+		user_role: UpdateEventPostUserRole,
 	},
 
 	#[error("Invalid post title `{post_title}`: {hint}", hint = ::domain::EventPostTitle::hint())]
@@ -47,6 +49,12 @@ pub enum CreateEventPostErrResponse {
     PostContentInvalid {
         post_content: ::axiom::string::String,
     },
+
+	#[error("Post not found")]
+	PostNotFound,
+
+    #[error("Post not owned by user")]
+    OwnershipMismatch,
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::strum::Display)]
@@ -54,13 +62,13 @@ pub enum CreateEventPostErrResponse {
 #[cfg_attr(feature = "serde", serde(rename_all = "kebab-case"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
-pub enum CreateEventPostUserRole {
+pub enum UpdateEventPostUserRole {
     Volunteer,
     EventManager,
     Administrator,
 }
 
-impl ::core::convert::From<::domain::UserRole> for CreateEventPostUserRole {
+impl ::core::convert::From<::domain::UserRole> for UpdateEventPostUserRole {
     fn from(value: ::domain::UserRole) -> Self {
         match value {
             ::domain::UserRole::Volunteer => Self::Volunteer,
@@ -70,12 +78,12 @@ impl ::core::convert::From<::domain::UserRole> for CreateEventPostUserRole {
     }
 }
 
-impl ::core::convert::From<CreateEventPostUserRole> for ::domain::UserRole {
-    fn from(value: CreateEventPostUserRole) -> Self {
+impl ::core::convert::From<UpdateEventPostUserRole> for ::domain::UserRole {
+    fn from(value: UpdateEventPostUserRole) -> Self {
         match value {
-            CreateEventPostUserRole::Volunteer => Self::Volunteer,
-            CreateEventPostUserRole::EventManager => Self::EventManager,
-            CreateEventPostUserRole::Administrator => Self::Administrator,
+            UpdateEventPostUserRole::Volunteer => Self::Volunteer,
+            UpdateEventPostUserRole::EventManager => Self::EventManager,
+            UpdateEventPostUserRole::Administrator => Self::Administrator,
         }
     }
 }
