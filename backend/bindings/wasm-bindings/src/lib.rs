@@ -24,21 +24,21 @@ impl Application {
             .into_promise()
     }
 
-    // #[wasm_bindgen(js_name = signIn)]
-    // pub async fn sign_in(&self, request: SignInRequest) -> Promise<SignInOkResponse> {
-    //     ::std::sync::Arc::clone(&self.sign_in_boundary)
-    //         .apply(request)
-    //         .await
-    //         .into_promise()
-    // }
+    #[wasm_bindgen(js_name = signIn)]
+    pub async fn sign_in(&self, request: SignInRequest) -> Promise<SignInOkResponse> {
+        ::std::sync::Arc::clone(&self.sign_in_boundary)
+            .apply(request)
+            .await
+            .into_promise()
+    }
 
-    // #[wasm_bindgen(js_name = signUp)]
-    // pub async fn sign_up(&self, request: SignUpRequest) -> Promise<SignUpOkResponse> {
-    //     ::std::sync::Arc::clone(&self.sign_up_boundary)
-    //         .apply(request)
-    //         .await
-    //         .into_promise()
-    // }
+    #[wasm_bindgen(js_name = signUp)]
+    pub async fn sign_up(&self, request: SignUpRequest) -> Promise<SignUpOkResponse> {
+        ::std::sync::Arc::clone(&self.sign_up_boundary)
+            .apply(request)
+            .await
+            .into_promise()
+    }
 }
 
 #[rustfmt::skip]
@@ -135,7 +135,7 @@ impl<T> IntoPromise<T> for ::axiom::result::Fallible<T> {
 
 impl<T, E> IntoPromise<T> for ::axiom::result::Fallible<::core::result::Result<T, ::std::vec::Vec<E>>>
 where
-    E: ::core::error::Error,
+    E: ::serde::Serialize,
 {
     fn into_promise(self) -> Promise<T> {
         self.map_err(|error| ::wasm_bindgen::JsValue::from_str(&error.to_string()))
@@ -144,7 +144,7 @@ where
                     .map_err(|errors| {
                         errors
                             .into_iter()
-                            .map(|error| ::wasm_bindgen::JsValue::from_str(&error.to_string()))
+                            .map(unsafe { |error| ::serde_wasm_bindgen::to_value(&error).unwrap_unchecked() })  // We kinda know what we're doing
                             .collect::<::std::vec::Vec<_>>()
                     })
                     .map_err(::core::convert::Into::into)
