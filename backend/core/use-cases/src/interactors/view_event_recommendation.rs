@@ -47,20 +47,18 @@ impl ViewEventRecommendationBoundary for ViewEventRecommendationInteractor {
 
             async move {
                 ::futures::future::ok::<_, ::axiom::result::Error>(
-                    crate::boundaries::ViewEventRecommendationEvent::builder()
+                    ViewEventRecommendationEvent::builder()
                         .id(uuid_codec.format(event.id).await?)
                         .status(*event.statuses.last())
                         .name(event.name)
                         .categories(event.categories.into_vec())
+                        .location(event.location)
                         .build(),
-                )
-                .await
+                ).await
             }
-        }))
-        .await?;
+        })).await?;
 
         let response = ViewEventRecommendationOkResponse::builder().events(events).build();
-
         ::axiom::result::Fallible::Ok(ViewEventRecommendationResponse::Ok(response))
     }
 }

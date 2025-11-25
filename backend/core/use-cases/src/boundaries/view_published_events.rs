@@ -37,7 +37,7 @@ pub struct ViewPublishedEventsFilter {
 impl ::core::convert::From<ViewPublishedEventsFilter> for crate::gateways::EventRepositoryViewFilter {
     fn from(value: ViewPublishedEventsFilter) -> Self {
         Self::builder()
-            .statuses(::std::vec![crate::gateways::EventRepositoryViewFilterEventStatus::Approved,])
+            .statuses(::std::vec![crate::gateways::EventRepositoryViewFilterEventStatus::Approved])
             .maybe_name(value.name)
             .maybe_description(value.description)
             .maybe_category(value.category)
@@ -73,6 +73,7 @@ pub struct ViewPublishedEventsEvent {
     pub status: ViewPublishedEventsEventStatus,
 
     pub name: ::axiom::string::String,
+    #[builder(with = |values: ::std::vec::Vec<impl ::core::convert::Into<::axiom::string::String>>| values.into_iter().map(::core::convert::Into::into).collect())]
     pub categories: ::std::vec::Vec<::axiom::string::String>,
     pub location: ::axiom::string::String,
 }
@@ -104,8 +105,14 @@ impl ::core::convert::From<::domain::EventStatus> for ViewPublishedEventsEventSt
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
 pub enum ViewPublishedEventsErrResponse {
-    #[error("Invalid or expired authentication token")]
+    #[error("Invalid authentication token")]
     AuthenticationTokenInvalid,
+
+    #[error("Authentication token expired")]
+    AuthenticationTokenExpired,
+
+    #[error("User not found")]
+    UserNotFound,
 
     #[error("User with role `{user_role}` not authorized: must be `{expected_user_role}`", expected_user_role = ViewPublishedEventsUserRole::Volunteer)]
     UserUnauthorized {

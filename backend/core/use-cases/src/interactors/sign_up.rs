@@ -39,7 +39,7 @@ impl SignUpBoundary for SignUpInteractor {
             ::core::option::Option::Some(full_name),
         ) = (username, email, password, full_name)
         else {
-            return ::axiom::result::Fallible::Ok(SignUpResponse::Err(errors));
+            return ::axiom::errs!(SignUp | errors);
         };
 
         let username_exists = ::std::sync::Arc::clone(&self.user_repository)
@@ -58,7 +58,7 @@ impl SignUpBoundary for SignUpInteractor {
         }
 
         if username_exists || email_exists {
-            return ::axiom::result::Fallible::Ok(SignUpResponse::Err(errors));
+            return ::axiom::errs!(SignUp | errors);
         }
 
         let user_id = loop {
@@ -69,7 +69,6 @@ impl SignUpBoundary for SignUpInteractor {
             }
         };
 
-        // Rust's type inference fails here
         let password: ::domain::PasswordDigest = ::std::sync::Arc::clone(&self.password_hasher).hash(password).await?;
 
         let user = ::domain::User::builder()
@@ -84,6 +83,6 @@ impl SignUpBoundary for SignUpInteractor {
 
         ::std::sync::Arc::clone(&self.user_repository).save(user).await?;
 
-        ::axiom::result::Fallible::Ok(SignUpResponse::Ok(()))
+        ::axiom::ok!(SignUp)
     }
 }

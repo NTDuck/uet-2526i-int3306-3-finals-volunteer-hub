@@ -56,9 +56,9 @@ pub struct ViewEventRecommendationEvent {
     pub status: ViewEventRecommendationEventStatus,
 
     pub name: ::axiom::string::String,
-
     #[builder(with = |values: ::std::vec::Vec<impl ::core::convert::Into<::axiom::string::String>>| values.into_iter().map(::core::convert::Into::into).collect())]
     pub categories: ::std::vec::Vec<::axiom::string::String>,
+    pub location: ::axiom::string::String,
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::strum::Display)]
