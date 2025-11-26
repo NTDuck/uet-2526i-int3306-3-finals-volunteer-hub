@@ -8,6 +8,7 @@ use ::wasm_bindgen::prelude::*;
 /// fulfilled with `<...>OkResponse` or rejected with `<...>ErrResponse[]`. A
 /// `<...>ErrResponse` satisfies `{ error: <...>, message: <...>, data: { ... }
 /// }`.
+/// 
 #[wasm_bindgen]
 #[derive(::bon::Builder)]
 pub struct Application {
@@ -24,7 +25,7 @@ impl Application {
     pub async fn with_profile(profile: Profile) -> Promise<Self> {
         Gateways::try_from(profile)
             .map(::core::convert::Into::<Self>::into)
-            .inspect_err(|error| ::tracing::error!("{}", error)) // Saves hours of debugging
+            .inspect_err(|error| ::tracing::error!("{error}")) // Saves hours of debugging
             .into_promise()
     }
 
@@ -102,6 +103,14 @@ impl ::core::convert::TryFrom<Profile> for Gateways {
             ))
             .build();
 
+        ::wasm_bindgen_futures::spawn_local(async {
+            use ::futures::StreamExt as _;
+
+            ::gloo::timers::future::IntervalStream::new(1000).for_each(|_| async move {
+                ::tracing::debug!("PING");
+            }).await;
+        });
+
         ::axiom::result::Fallible::Ok(gateways)
     }
 }
@@ -146,7 +155,7 @@ where
                     .map_err(|errors| {
                         errors
                             .into_iter()
-                            .map(|error| unsafe { <::wasm_bindgen::JsValue as ::gloo_utils::format::JsValueSerdeExt>::from_serde(&error)
+                            .map(|error| unsafe { <::wasm_bindgen::JsValue as ::gloo::utils::format::JsValueSerdeExt>::from_serde(&error)
                                 .inspect(|error| ::tracing::debug!("{label} {error:?}", label = "[expected-error]".red()))
                                 .unwrap_unchecked() })  // We kinda know what we're doing
                             .collect::<::std::vec::Vec<_>>()

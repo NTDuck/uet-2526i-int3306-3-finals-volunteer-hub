@@ -14,6 +14,7 @@ use-cases = { path = "../../core/use-cases", features = ["wasm-bindings"] }
 infrastructures = { path = "../../infrastructures" }
 
 bon = { workspace = true }
+futures = { workspace = true }
 
 argon2 = { version = "0.6.0-rc.1", features = ["std", "parallel", "zeroize"] }
 hmac = { version = "0.12.1" }
@@ -28,7 +29,7 @@ console_error_panic_hook = "0.1.7"
 wasm-bindgen = { version = "=0.2.102", features = ["strict-macro"] }  # jsr:@deno/wasmbuild@0.19.3
 wasm-bindgen-futures = "=0.4.52"  # jsr:@deno/wasmbuild@0.19.3
 serde-wasm-bindgen = "0.6.5"
-gloo-utils = { version = "0.2.0", features = ["serde"] }
+gloo = { version = "0.11.0", features = ["futures", "timers", "utils"] }
 serde = { workspace = true }
 tsify = { version = "0.5.5", features = ["js"], default-features = false }
 
