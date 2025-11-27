@@ -213,3 +213,7 @@ $ deno task preview-sveltekit-minimal
   > [./backend/core/use-cases/src/boundaries/view_event_recommendation.rs](./backend/core/use-cases/src/boundaries/view_event_recommendation.rs)
   > |
   > [./backend/core/use-cases/src/interactors/view_event_recommendation.rs](./backend/core/use-cases/src/interactors/view_event_recommendation.rs)
+
+## Implementational Remarks
+- Semaphore-based parallelism (Rust)
+- ...

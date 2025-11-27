@@ -67,6 +67,8 @@ impl ViewEventRecommendationBoundary for ViewEventRecommendationInteractor {
                         .into_some()
                 }
             })
+            // .map(::futures::future::ready)
+            // .buffer_unordered(16)
             .collect::<::std::vec::Vec<_>>().await;
 
         let response = ViewEventRecommendationOkResponse::builder().events(events).build();
