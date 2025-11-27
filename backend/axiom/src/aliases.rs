@@ -23,6 +23,18 @@ pub mod option {
         }
     }
 
+    pub trait IntoOptionExt {
+        fn into_some(self) -> ::core::option::Option<Self>
+        where
+            Self: ::core::marker::Sized;
+    }
+
+    impl<T: ::core::marker::Sized> IntoOptionExt for T {
+        fn into_some(self) -> ::core::option::Option<Self> {
+            ::core::option::Option::Some(self)
+        }
+    }
+
     #[async_trait]
     pub trait OptionOrElseAsyncExt<T> {
         async fn or_else_async<Fut, F>(self, f: F) -> ::core::option::Option<T>
@@ -79,6 +91,18 @@ pub mod result {
     pub type Error = ::anyhow::Error;
     pub type Fallible<T = ()> = ::core::result::Result<T, Error>;
 
+    pub trait IntoFallibleExt {
+        fn into_ok(self) -> crate::aliases::result::Fallible<Self>
+        where
+            Self: ::core::marker::Sized;
+    }
+
+    impl<T: ::core::marker::Sized> IntoFallibleExt for T {
+        fn into_ok(self) -> crate::aliases::result::Fallible<Self> {
+            crate::aliases::result::Fallible::Ok(self)
+        }
+    }
+
     /// Assumes: **(1)** `$ok` is of type `<$ident>OkResponse`; **(2)** `paste` is within scope.
     #[macro_export]
     macro_rules! ok {
@@ -113,18 +137,6 @@ pub mod result {
                 ::axiom::aliases::result::Fallible::Ok([<$ident Response>]::Err(::std::vec![[<$ident ErrResponse>]::$($err)*]))
             }
         };
-    }
-
-    pub trait AnyExt {
-        fn ok(self) -> crate::aliases::result::Fallible<Self>
-        where
-            Self: ::core::marker::Sized;
-    }
-
-    impl<T: ::core::marker::Sized> AnyExt for T {
-        fn ok(self) -> crate::aliases::result::Fallible<Self> {
-            crate::aliases::result::Fallible::Ok(self)
-        }
     }
 }
 

@@ -1,4 +1,5 @@
 use ::async_trait::async_trait;
+use ::futures::prelude::*;
 
 use crate::boundaries::*;
 use crate::gateways::*;
@@ -19,6 +20,7 @@ impl ViewEventRecommendationBoundary for ViewEventRecommendationInteractor {
         self: ::std::sync::Arc<Self>, request: ViewEventRecommendationRequest,
     ) -> ::axiom::result::Fallible<ViewEventRecommendationResponse> {
         use ::axiom::time::TimestampExt as _;
+        use ::axiom::option::IntoOptionExt as _;
 
         match ::std::sync::Arc::clone(&self.auth_token_generator).get_payload(request.token).await? {
             ::core::option::Option::None =>
@@ -50,21 +52,22 @@ impl ViewEventRecommendationBoundary for ViewEventRecommendationInteractor {
                     .await?,
         };
 
-        let events = ::futures::future::try_join_all(events.into_iter().map(|event| {
-            let uuid_codec = ::std::sync::Arc::clone(&self.uuid_codec);
+        let events = ::futures::stream::iter(events)
+            .filter_map(|event| {
+                let uuid_codec = ::std::sync::Arc::clone(&self.uuid_codec);
 
-            async move {
-                ::futures::future::ok::<_, ::axiom::result::Error>(
+                async move {
                     ViewEventRecommendationEvent::builder()
-                        .id(uuid_codec.format(event.id).await?)
+                        .id(uuid_codec.format(event.id).await.ok()?)
                         .status(*event.statuses.last())
                         .name(event.name)
                         .categories(event.categories.into_vec())
                         .location(event.location)
-                        .build(),
-                ).await
-            }
-        })).await?;
+                        .build()
+                        .into_some()
+                }
+            })
+            .collect::<::std::vec::Vec<_>>().await;
 
         let response = ViewEventRecommendationOkResponse::builder().events(events).build();
         ::axiom::ok!(ViewEventRecommendation @ response)

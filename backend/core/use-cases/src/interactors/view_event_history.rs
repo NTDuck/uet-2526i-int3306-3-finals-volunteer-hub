@@ -21,7 +21,7 @@ impl ViewEventHistoryBoundary for ViewEventHistoryInteractor {
         self: ::std::sync::Arc<Self>, request: ViewEventHistoryRequest,
     ) -> ::axiom::result::Fallible<ViewEventHistoryResponse> {
         use ::axiom::time::TimestampExt as _;
-        use ::axiom::result::AnyExt as _;
+        use ::axiom::option::IntoOptionExt as _;
 
         let user_id = match ::std::sync::Arc::clone(&self.auth_token_generator).get_payload(request.token).await? {
             ::core::option::Option::None =>
@@ -42,41 +42,34 @@ impl ViewEventHistoryBoundary for ViewEventHistoryInteractor {
                 return ::axiom::err!(ViewEventHistory @ UserUnauthorized { user_role: user_role.into() }),
         };
 
-        // Rust's type inference fails here
         let event_registrations = ::std::sync::Arc::clone(&self.event_registration_repository).view_by_user_id(user_id).await?;
 
         let events = ::futures::stream::iter(event_registrations)
-            .map(|event_registration| (event_registration.event_id, event_registration.statuses.last()))
-            .filter_map(|(event_id, event_registration_status)| async {
-                ::std::sync::Arc::clone(&self.event_repository).get_by_id(event_id).await.ok()?
-                    .map(|event| (event, event_registration_status))
-            })
-            .filter_map(|(event, event_registration_status)| async move {
-                ViewEventHistoryEvent::builder()
-                    .id(::std::sync::Arc::clone(&self.uuid_codec).format(event.id).await.ok()?)
-                    .status(*event_registration_status)
-                    .name(event.name)
-                    .categories(event.categories.into_vec())
-                    .location(event.location)
-                    .build()
-            })
-            .collect::<::std::vec::Vec<_>>().await?;
+            .map(|event_registration| (event_registration.event_id, *event_registration.statuses.last()))
+            .filter_map(|(event_id, event_registration_status)| {
+                let event_repository = ::std::sync::Arc::clone(&self.event_repository);
 
-        // let events = ::futures::future::try_join_all(events.into_iter().map(|event| {
-        //     let uuid_codec = ::std::sync::Arc::clone(&self.uuid_codec);
+                async move {
+                    event_repository.get_by_id(event_id).await.ok()?
+                        .map(|event| (event, event_registration_status))
+                }
+            })
+            .filter_map(|(event, event_registration_status)| {
+                let uuid_codec = ::std::sync::Arc::clone(&self.uuid_codec);
 
-        //     async move {
-        //         ::futures::future::ok::<_, ::axiom::result::Error>(
-        //             ViewEventHistoryEvent::builder()
-        //                 .id(uuid_codec.format(event.id).await?)
-        //                 .status(*event.statuses.last())
-        //                 .name(event.name)
-        //                 .categories(event.categories.into_vec())
-        //                 .location(event.location)
-        //                 .build(),
-        //         ).await
-        //     }
-        // })).await?;
+                async move {
+                    ViewEventHistoryEvent::builder()
+                        .id(uuid_codec.format(event.id).await.ok()?)
+                        .status(*event.statuses.last())
+                        .registration_status(event_registration_status)
+                        .name(event.name)
+                        .categories(event.categories.into_vec())
+                        .location(event.location)
+                        .build()
+                        .into_some()
+                }
+            })
+            .collect::<::std::vec::Vec<_>>().await;
 
         let response = ViewEventHistoryOkResponse::builder().events(events).build();
         ::axiom::result::Fallible::Ok(ViewEventHistoryResponse::Ok(response))
