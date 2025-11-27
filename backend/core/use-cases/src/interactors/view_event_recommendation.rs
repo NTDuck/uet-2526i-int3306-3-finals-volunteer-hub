@@ -6,6 +6,7 @@ use crate::gateways::*;
 #[derive(::bon::Builder)]
 pub struct ViewEventRecommendationInteractor {
     event_repository: ::std::sync::Arc<dyn EventRepository + ::core::marker::Send + ::core::marker::Sync>,
+    user_repository: ::std::sync::Arc<dyn UserRepository + ::core::marker::Send + ::core::marker::Sync>,
 
     uuid_codec: ::std::sync::Arc<dyn UuidCodec + ::core::marker::Send + ::core::marker::Sync>,
     auth_token_generator:
@@ -17,17 +18,24 @@ impl ViewEventRecommendationBoundary for ViewEventRecommendationInteractor {
     async fn apply(
         self: ::std::sync::Arc<Self>, request: ViewEventRecommendationRequest,
     ) -> ::axiom::result::Fallible<ViewEventRecommendationResponse> {
-        if !::std::sync::Arc::clone(&self.auth_token_generator)
-            .verify(request.token)
-            .await?
-        {
-            return ::axiom::result::Fallible::Ok(ViewEventRecommendationResponse::Err(::std::vec![
-                ViewEventRecommendationErrResponse::AuthenticationTokenInvalid,
-            ]));
-        }
+        use ::axiom::time::TimestampExt as _;
 
-        // Rust's type inference fails here
-        let events: ::std::vec::Vec<::domain::Event> = match request.r#type {
+        match ::std::sync::Arc::clone(&self.auth_token_generator).get_payload(request.token).await? {
+            ::core::option::Option::None =>
+                return ::axiom::err!(ViewEventRecommendation @ AuthenticationTokenInvalid),
+            ::core::option::Option::Some
+            (AuthenticationTokenPayload { user_id, expiry_timestamp, .. }) => {
+                if expiry_timestamp < ::axiom::time::Timestamp::now() {
+                    return ::axiom::err!(ViewEventRecommendation @ AuthenticationTokenExpired);
+                }
+
+                if !::std::sync::Arc::clone(&self.user_repository).contains_id(user_id).await? {
+                    return ::axiom::err!(ViewEventRecommendation @ UserNotFound);
+                }
+            },
+        };
+
+        let events = match request.r#type {
             crate::boundaries::ViewEventRecommendationRecommendationType::RecentlyPublished =>
                 ::std::sync::Arc::clone(&self.event_repository)
                     .view_recently_approved(request.limit)
@@ -59,6 +67,6 @@ impl ViewEventRecommendationBoundary for ViewEventRecommendationInteractor {
         })).await?;
 
         let response = ViewEventRecommendationOkResponse::builder().events(events).build();
-        ::axiom::result::Fallible::Ok(ViewEventRecommendationResponse::Ok(response))
+        ::axiom::ok!(ViewEventRecommendation @ response)
     }
 }

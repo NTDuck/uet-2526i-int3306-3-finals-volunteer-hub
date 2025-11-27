@@ -65,6 +65,7 @@ dependencies = [
  "async-trait",
  "axiom-derive",
  "chrono",
+ "futures",
  "once_cell",
  "regex",
 ]

@@ -60,9 +60,11 @@ pub trait EventRegistrationRepository {
 
     async fn get_by_id(self: ::std::sync::Arc<Self>, id: ::domain::Uuid) -> ::axiom::result::Fallible<::core::option::Option<::domain::EventRegistration>>;
 
-    async fn get_by_event_id_and_volunteer_id(
-        self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid, volunteer_id: ::domain::Uuid,
+    async fn get_by_event_and_user_id(
+        self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid, user_id: ::domain::Uuid,
     ) -> ::axiom::result::Fallible<::core::option::Option<::domain::EventRegistration>>;
+
+    async fn view_by_user_id(self: ::std::sync::Arc<Self>, user_id: ::domain::Uuid) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::EventRegistration>>;
 }
 
 #[async_trait]

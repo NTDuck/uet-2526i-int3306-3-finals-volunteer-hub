@@ -52,7 +52,7 @@ impl SubscribeToEventBoundary for SubscribeToEventInteractor {
             return ::axiom::err!(SubscribeToEvent @ EventNotFound);
         }
 
-        let event_registration = match ::std::sync::Arc::clone(&self.event_registration_repository).get_by_event_id_and_volunteer_id(event_id, user_id).await? {
+        let event_registration = match ::std::sync::Arc::clone(&self.event_registration_repository).get_by_event_and_user_id(event_id, user_id).await? {
             ::core::option::Option::Some(mut event_registration) => {
                 let event_registration_status = event_registration.statuses.last();
 

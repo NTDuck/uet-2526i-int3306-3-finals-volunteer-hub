@@ -114,11 +114,19 @@ pub mod result {
             }
         };
     }
-}
 
-/*
-return ::axiom::result::Fallible::Ok(ViewPublishedEventsResponse::Err(::std::vec![ViewPublishedEventsErrResponse::UserNotFound]));
-*/
+    pub trait AnyExt {
+        fn ok(self) -> crate::aliases::result::Fallible<Self>
+        where
+            Self: ::core::marker::Sized;
+    }
+
+    impl<T: ::core::marker::Sized> AnyExt for T {
+        fn ok(self) -> crate::aliases::result::Fallible<Self> {
+            crate::aliases::result::Fallible::Ok(self)
+        }
+    }
+}
 
 pub mod time {
     pub type Timestamp = ::chrono::NaiveDateTime;

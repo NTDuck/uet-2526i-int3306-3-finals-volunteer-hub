@@ -44,7 +44,9 @@ pub struct ViewEventHistoryEvent {
     pub registration_status: ViewEventHistoryEventRegistrationStatus,
 
     pub name: ::axiom::string::String,
+    #[builder(with = |values: ::std::vec::Vec<impl ::core::convert::Into<::axiom::string::String>>| values.into_iter().map(::core::convert::Into::into).collect())]
     pub categories: ::std::vec::Vec<::axiom::string::String>,
+    pub location: ::axiom::string::String,
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::strum::Display)]
@@ -99,8 +101,14 @@ impl ::core::convert::From<::domain::EventRegistrationStatus> for ViewEventHisto
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
 pub enum ViewEventHistoryErrResponse {
-    #[error("Invalid or expired authentication token")]
+    #[error("Invalid authentication token")]
     AuthenticationTokenInvalid,
+
+    #[error("Authentication token expired")]
+    AuthenticationTokenExpired,
+
+    #[error("User not found")]
+    UserNotFound,
 
     #[error("User with role `{user_role}` not authorized: must be `{expected_user_role}`", expected_user_role = ViewEventHistoryUserRole::Volunteer)]
     UserUnauthorized {

@@ -49,7 +49,7 @@ impl UnsubscribeFromEventBoundary for UnsubscribeFromEventInteractor {
 
         let ::core::option::Option::Some(mut event_registration) = 
             ::std::sync::Arc::clone(&self.event_registration_repository).get_by_id(event_or_registration_id).await?
-            .try_or_else_async(|| async { ::std::sync::Arc::clone(&self.event_registration_repository).get_by_event_id_and_volunteer_id(event_or_registration_id, user_id).await }).await?
+            .try_or_else_async(|| async { ::std::sync::Arc::clone(&self.event_registration_repository).get_by_event_and_user_id(event_or_registration_id, user_id).await }).await?
         else {
             return ::axiom::err!(UnsubscribeFromEvent @ EventRegistrationNotFound);
         };
