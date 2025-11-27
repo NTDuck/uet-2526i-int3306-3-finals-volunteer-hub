@@ -31,8 +31,14 @@ pub type UnsubscribeFromEventOkResponse = ();
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
 pub enum UnsubscribeFromEventErrResponse {
-    #[error("Invalid or expired authentication token")]
+    #[error("Invalid authentication token")]
     AuthenticationTokenInvalid,
+
+    #[error("Authentication token expired")]
+    AuthenticationTokenExpired,
+
+    #[error("User not found")]
+    UserNotFound,
 
     #[error("User with role `{user_role}` not authorized: must be `{expected_user_role}`", expected_user_role = UnsubscribeFromEventUserRole::Volunteer)]
     UserUnauthorized {
@@ -42,14 +48,13 @@ pub enum UnsubscribeFromEventErrResponse {
     #[error("User temporarily suspended")]
     UserSuspended,
 
-    #[error("Event not found")] // or not published yet
-    EventNotFound,
-
     #[error("Event registration not found")]
-    UserNotSubscribedToEvent,
+    EventRegistrationNotFound,
 
-    #[error("User already unsubscribed")]
-    UserAlreadyUnsubscribed,
+    #[error("Event registration with status `{event_registration_status}` not eligible: must be `{expected_event_registration_status}`", expected_event_registration_status = UnsubscribeFromEventEventRegistrationStatus::Pending)]
+    EventRegistrationNotEligible {
+        event_registration_status: UnsubscribeFromEventEventRegistrationStatus,
+    },
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::strum::Display)]
@@ -79,6 +84,31 @@ impl ::core::convert::From<UnsubscribeFromEventUserRole> for ::domain::UserRole 
             UnsubscribeFromEventUserRole::Volunteer => Self::Volunteer,
             UnsubscribeFromEventUserRole::EventManager => Self::EventManager,
             UnsubscribeFromEventUserRole::Administrator => Self::Administrator,
+        }
+    }
+}
+
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::strum::Display)]
+#[cfg_attr(feature = "serde", derive(::serde::Serialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "kebab-case"))]
+#[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
+#[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
+pub enum UnsubscribeFromEventEventRegistrationStatus {
+    Pending,
+    Withdrawn,
+    Accepted,
+    Declined,
+    Completed,
+}
+
+impl ::core::convert::From<::domain::EventRegistrationStatus> for UnsubscribeFromEventEventRegistrationStatus {
+    fn from(value: ::domain::EventRegistrationStatus) -> Self {
+        match value {
+            ::domain::EventRegistrationStatus::Pending { .. } => Self::Pending,
+            ::domain::EventRegistrationStatus::Withdrawn { .. } => Self::Withdrawn,
+            ::domain::EventRegistrationStatus::Accepted { .. } => Self::Accepted,
+            ::domain::EventRegistrationStatus::Declined { .. } => Self::Declined,
+            ::domain::EventRegistrationStatus::Completed { .. } => Self::Completed,
         }
     }
 }

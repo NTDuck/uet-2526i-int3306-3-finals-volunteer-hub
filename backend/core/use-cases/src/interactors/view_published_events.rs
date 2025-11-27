@@ -21,21 +21,19 @@ impl ViewPublishedEventsBoundary for ViewPublishedEventsInteractor {
 
         match ::std::sync::Arc::clone(&self.auth_token_generator).get_payload(request.token).await? {
             ::core::option::Option::None =>
-                return ::axiom::result::Fallible::Ok(ViewPublishedEventsResponse::Err(::std::vec![ViewPublishedEventsErrResponse::AuthenticationTokenInvalid])),
+                return ::axiom::err!(ViewPublishedEvents @ AuthenticationTokenInvalid),
             ::core::option::Option::Some
             (AuthenticationTokenPayload { user_id, user_role: ::domain::UserRole::Volunteer, expiry_timestamp }) => {
                 if expiry_timestamp < ::axiom::time::Timestamp::now() {
-                    return ::axiom::result::Fallible::Ok(ViewPublishedEventsResponse::Err(::std::vec![ViewPublishedEventsErrResponse::AuthenticationTokenExpired]));
+                    return ::axiom::err!(ViewPublishedEvents @ AuthenticationTokenExpired);
                 }
 
                 if !::std::sync::Arc::clone(&self.user_repository).contains_id(user_id).await? {
-                    return ::axiom::result::Fallible::Ok(ViewPublishedEventsResponse::Err(::std::vec![ViewPublishedEventsErrResponse::UserNotFound]));
+                    return ::axiom::err!(ViewPublishedEvents @ UserNotFound);
                 }
             },
             ::core::option::Option::Some(AuthenticationTokenPayload { user_role, .. }) =>
-                return ::axiom::result::Fallible::Ok(ViewPublishedEventsResponse::Err(::std::vec![
-                    ViewPublishedEventsErrResponse::UserUnauthorized { user_role: user_role.into() },
-                ])),
+                return ::axiom::err!(ViewPublishedEvents @ UserUnauthorized { user_role: user_role.into() }),
         }
 
         let events: ::std::vec::Vec<::domain::Event> = ::std::sync::Arc::clone(&self.event_repository).view(request.filter.into()).await?;
@@ -57,6 +55,6 @@ impl ViewPublishedEventsBoundary for ViewPublishedEventsInteractor {
         })).await?;
         
         let response = ViewPublishedEventsOkResponse::builder().events(events).build();
-        ::axiom::result::Fallible::Ok(ViewPublishedEventsResponse::Ok(response))
+        ::axiom::ok!(ViewPublishedEvents @ response)
     }
 }

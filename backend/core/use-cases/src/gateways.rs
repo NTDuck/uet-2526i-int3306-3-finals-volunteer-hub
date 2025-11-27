@@ -15,6 +15,12 @@ pub trait EventRepository {
     async fn view(
         self: ::std::sync::Arc<Self>, filter: EventRepositoryViewFilter,
     ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::Event>>;
+
+    async fn get_by_id(self: ::std::sync::Arc<Self>, id: ::domain::Uuid) -> ::axiom::result::Fallible<::core::option::Option<::domain::Event>>;
+
+    async fn contains_id(self: ::std::sync::Arc<Self>, id: ::domain::Uuid) -> ::axiom::result::Fallible<bool> {
+        ::axiom::result::Fallible::Ok(self.get_by_id(id).await?.is_some())
+    }
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
@@ -46,6 +52,17 @@ impl ::core::convert::From<::domain::EventStatus> for EventRepositoryViewFilterE
             ::domain::EventStatus::Rejected { .. } => Self::Rejected,
         }
     }
+}
+
+#[async_trait]
+pub trait EventRegistrationRepository {
+    async fn save(self: ::std::sync::Arc<Self>, registration: ::domain::EventRegistration) -> ::axiom::result::Fallible;
+
+    async fn get_by_id(self: ::std::sync::Arc<Self>, id: ::domain::Uuid) -> ::axiom::result::Fallible<::core::option::Option<::domain::EventRegistration>>;
+
+    async fn get_by_event_id_and_volunteer_id(
+        self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid, volunteer_id: ::domain::Uuid,
+    ) -> ::axiom::result::Fallible<::core::option::Option<::domain::EventRegistration>>;
 }
 
 #[async_trait]

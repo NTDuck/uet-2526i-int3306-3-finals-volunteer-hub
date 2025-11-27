@@ -20,7 +20,7 @@ impl SignInBoundary for SignInInteractor {
 
         let mut errors = ::std::vec::Vec::new();
 
-        let user: ::core::option::Option<::domain::User> = if let ::core::result::Result::Ok(username) =
+        let user = if let ::core::result::Result::Ok(username) =
             ::domain::Username::try_from(request.username_or_email.clone())
         {
             ::std::sync::Arc::clone(&self.user_repository)
@@ -52,7 +52,7 @@ impl SignInBoundary for SignInInteractor {
             .ok();
 
         let (::core::option::Option::Some(user), ::core::option::Option::Some(password)) = (user, password) else {
-            return ::axiom::errs!(SignIn | errors);
+            return ::axiom::errs!(SignIn @ errors);
         };
 
         let password_matches = ::std::sync::Arc::clone(&self.password_hasher)
@@ -61,21 +61,21 @@ impl SignInBoundary for SignInInteractor {
 
         if !password_matches {
             errors.push(SignInErrResponse::PasswordMismatch);
-            return ::axiom::errs!(SignIn | errors);
+            return ::axiom::errs!(SignIn @ errors);
         }
 
-        let auth_token_payload = crate::gateways::AuthenticationTokenPayload::builder()
+        let auth_token_payload = AuthenticationTokenPayload::builder()
             .user_id(user.id)
             .user_role(user.role)
             .expiry_timestamp(::axiom::time::Timestamp::now() + Self::AUTH_TOKEN_LIFETIME)
             .build();
 
-        let auth_token: ::axiom::string::String = ::std::sync::Arc::clone(&self.auth_token_generator)
+        let auth_token = ::std::sync::Arc::clone(&self.auth_token_generator)
             .generate(auth_token_payload)
             .await?;
 
         let response = SignInOkResponse::builder().token(auth_token).user_role(user.role).build();
-        ::axiom::ok!(SignIn | response)
+        ::axiom::ok!(SignIn @ response)
     }
 }
 

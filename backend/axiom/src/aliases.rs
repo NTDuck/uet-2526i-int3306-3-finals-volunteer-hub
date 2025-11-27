@@ -1,4 +1,6 @@
 pub mod option {
+    use ::async_trait::async_trait;
+
     pub trait OptionExt<T> {
         fn some(self) -> crate::aliases::result::Fallible<T>;
     }
@@ -20,6 +22,57 @@ pub mod option {
             }
         }
     }
+
+    #[async_trait]
+    pub trait OptionOrElseAsyncExt<T> {
+        async fn or_else_async<Fut, F>(self, f: F) -> ::core::option::Option<T>
+        where
+            F: ::core::ops::FnOnce() -> Fut + ::core::marker::Send,
+            Fut: ::core::future::Future<Output = ::core::option::Option<T>> + ::core::marker::Send;
+    }
+
+    #[async_trait]
+    impl<T> OptionOrElseAsyncExt<T> for ::core::option::Option<T>
+    where
+        T: ::core::marker::Send,
+    {
+        async fn or_else_async<Fut, F>(self, f: F) -> ::core::option::Option<T>
+        where
+            F: ::core::ops::FnOnce() -> Fut + ::core::marker::Send,
+            Fut: ::core::future::Future<Output = ::core::option::Option<T>> + ::core::marker::Send,
+        {
+            match self {
+                ::core::option::Option::Some(val) => ::core::option::Option::Some(val),
+                ::core::option::Option::None => f().await,
+            }
+        }
+    }
+
+    #[async_trait]
+    pub trait OptionTryOrElseAsyncExt<T, E> {
+        async fn try_or_else_async<Fut, F>(self, f: F) -> ::core::result::Result<::core::option::Option<T>, E>
+        where
+            F: ::core::ops::FnOnce() -> Fut + ::core::marker::Send,
+            Fut: ::core::future::Future<Output = Result<Option<T>, E>> + ::core::marker::Send;
+    }
+
+    #[async_trait]
+    impl<T, E> OptionTryOrElseAsyncExt<T, E> for ::core::option::Option<T>
+    where
+        T: ::core::marker::Send,
+        E: ::core::marker::Send,
+    {
+        async fn try_or_else_async<Fut, F>(self, f: F) -> ::core::result::Result<::core::option::Option<T>, E>
+        where
+            F: ::core::ops::FnOnce() -> Fut + ::core::marker::Send,
+            Fut: ::core::future::Future<Output = ::core::result::Result<::core::option::Option<T>, E>> + ::core::marker::Send,
+        {
+            match self {
+                ::core::option::Option::Some(val) => ::core::result::Result::Ok(::core::option::Option::Some(val)),
+                ::core::option::Option::None => f().await,
+            }
+        }
+    }
 }
 
 pub mod result {
@@ -29,13 +82,13 @@ pub mod result {
     /// Assumes: **(1)** `$ok` is of type `<$ident>OkResponse`; **(2)** `paste` is within scope.
     #[macro_export]
     macro_rules! ok {
-        ($ident:tt | $ok:expr) => {
+        ($ident:ident @ $($ok:tt)*) => {
             ::paste::paste! {
-                ::axiom::aliases::result::Fallible::Ok([<$ident Response>]::Ok($ok))
+                ::axiom::aliases::result::Fallible::Ok([<$ident Response>]::Ok($($ok)*))
             }
         };
 
-        ($ident:tt) => {
+        ($ident:ident) => {
             ::paste::paste! {
                 ::axiom::aliases::result::Fallible::Ok([<$ident Response>]::Ok(()))
             }
@@ -45,9 +98,9 @@ pub mod result {
     /// Assumes: **(1)** `$errs` is of type `::std::vec::Vec<<$ident>ErrResponse>`; **(2)** `paste` is within scope.
     #[macro_export]
     macro_rules! errs {
-        ($ident:tt | $errs:expr) => {
+        ($ident:ident @ $($errs:tt)*) => {
             ::paste::paste! {
-                ::axiom::aliases::result::Fallible::Ok([<$ident Response>]::Err($errs))
+                ::axiom::aliases::result::Fallible::Ok([<$ident Response>]::Err($($errs)*))
             }
         };
     }
@@ -55,15 +108,12 @@ pub mod result {
     /// Assumes: **(1)** `$err` is of type `<$ident>ErrResponse`; **(2)** `paste` is within scope.
     #[macro_export]
     macro_rules! err {
-        ($ident:tt | $err:expr) => {
+        ($ident:ident @ $($err:tt)*) => {
             ::paste::paste! {
-                ::axiom::aliases::result::Fallible::Ok([<$ident Response>]::Err(::std::vec![[<$ident ErrResponse>]::$err]))
+                ::axiom::aliases::result::Fallible::Ok([<$ident Response>]::Err(::std::vec![[<$ident ErrResponse>]::$($err)*]))
             }
         };
     }
-
-    pub use errs;
-    pub use err;
 }
 
 /*

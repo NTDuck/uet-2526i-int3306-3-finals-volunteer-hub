@@ -39,7 +39,7 @@ impl SignUpBoundary for SignUpInteractor {
             ::core::option::Option::Some(full_name),
         ) = (username, email, password, full_name)
         else {
-            return ::axiom::errs!(SignUp | errors);
+            return ::axiom::errs!(SignUp @ errors);
         };
 
         let username_exists = ::std::sync::Arc::clone(&self.user_repository)
@@ -58,7 +58,7 @@ impl SignUpBoundary for SignUpInteractor {
         }
 
         if username_exists || email_exists {
-            return ::axiom::errs!(SignUp | errors);
+            return ::axiom::errs!(SignUp @ errors);
         }
 
         let user_id = loop {
@@ -69,7 +69,7 @@ impl SignUpBoundary for SignUpInteractor {
             }
         };
 
-        let password: ::domain::PasswordDigest = ::std::sync::Arc::clone(&self.password_hasher).hash(password).await?;
+        let password = ::std::sync::Arc::clone(&self.password_hasher).hash(password).await?;
 
         let user = ::domain::User::builder()
             .id(user_id)

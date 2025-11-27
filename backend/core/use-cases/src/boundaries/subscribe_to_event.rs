@@ -31,8 +31,14 @@ pub type SubscribeToEventOkResponse = ();
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
 pub enum SubscribeToEventErrResponse {
-    #[error("Invalid or expired authentication token")]
+    #[error("Invalid authentication token")]
     AuthenticationTokenInvalid,
+
+    #[error("Authentication token expired")]
+    AuthenticationTokenExpired,
+
+    #[error("User not found")]
+    UserNotFound,
 
     #[error("User with role `{user_role}` not authorized: must be `{expected_user_role}`", expected_user_role = SubscribeToEventUserRole::Volunteer)]
     UserUnauthorized {
@@ -45,8 +51,10 @@ pub enum SubscribeToEventErrResponse {
     #[error("Event not found")] // or not published yet
     EventNotFound,
 
-    #[error("User already subscribed")]
-    UserAlreadySubscribed,
+    #[error("Event registration with status `{event_registration_status}` not eligible: must be `{expected_event_registration_status}`", expected_event_registration_status = SubscribeToEventEventRegistrationStatus::Withdrawn)]
+    EventRegistrationNotEligible {
+        event_registration_status: SubscribeToEventEventRegistrationStatus,
+    },
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::strum::Display)]
@@ -76,6 +84,31 @@ impl ::core::convert::From<SubscribeToEventUserRole> for ::domain::UserRole {
             SubscribeToEventUserRole::Volunteer => Self::Volunteer,
             SubscribeToEventUserRole::EventManager => Self::EventManager,
             SubscribeToEventUserRole::Administrator => Self::Administrator,
+        }
+    }
+}
+
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::strum::Display)]
+#[cfg_attr(feature = "serde", derive(::serde::Serialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "kebab-case"))]
+#[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
+#[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
+pub enum SubscribeToEventEventRegistrationStatus {
+    Pending,
+    Withdrawn,
+    Accepted,
+    Declined,
+    Completed,
+}
+
+impl ::core::convert::From<::domain::EventRegistrationStatus> for SubscribeToEventEventRegistrationStatus {
+    fn from(value: ::domain::EventRegistrationStatus) -> Self {
+        match value {
+            ::domain::EventRegistrationStatus::Pending { .. } => Self::Pending,
+            ::domain::EventRegistrationStatus::Withdrawn { .. } => Self::Withdrawn,
+            ::domain::EventRegistrationStatus::Accepted { .. } => Self::Accepted,
+            ::domain::EventRegistrationStatus::Declined { .. } => Self::Declined,
+            ::domain::EventRegistrationStatus::Completed { .. } => Self::Completed,
         }
     }
 }

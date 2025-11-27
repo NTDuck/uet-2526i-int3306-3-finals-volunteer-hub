@@ -49,6 +49,47 @@ pub struct EventCategory(::axiom::string::String);
 #[verifiable(regex = r#"^.{4,128}$"#, hint = "must be between 4 and 128 characters")]
 pub struct EventLocation(::axiom::string::String);
 
+
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
+#[builder(on(_, into))]
+pub struct EventRegistration {
+    pub id: Uuid,
+    pub event_id: Uuid,
+    pub volunteer_id: Uuid,
+
+    pub statuses: ::vec1::Vec1<EventRegistrationStatus>,
+}
+
+/// Possible lifecycles
+/// 1. `Pending` (volunteer subscribes to event) -> `Accepted` (event manager
+///    accepts registration) -> `Completed` (event manager updates registration
+///    status after event completion)
+/// 2. `Pending` (volunteer subscribes to event) -> `Declined` (event manager
+///    declines registration)
+/// 3. `Pending` (volunteer subscribes to event) -> `Withdrawn` (volunteer
+///    unsubscribes from event)
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
+pub enum EventRegistrationStatus {
+    Pending {
+        pending_at: ::axiom::time::Timestamp,
+    },
+    Withdrawn {
+        withdrawn_at: ::axiom::time::Timestamp,
+    },
+    Accepted {
+        accepted_by_manager_id: Uuid,
+        accepted_at: ::axiom::time::Timestamp,
+    },
+    Declined {
+        declined_by_manager_id: Uuid,
+        declined_at: ::axiom::time::Timestamp,
+    },
+    Completed {
+        completed_by_manager_id: Uuid,
+        completed_at: ::axiom::time::Timestamp,
+    },
+}
+
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
 #[builder(on(_, into))]
 pub struct EventPost {
@@ -173,46 +214,6 @@ pub type PasswordDigest = ::axiom::string::String;
     hint = "must be between 4 and 128 characters; letters, spaces, apostrophes (`'`), or hyphens (`-`) only"
 )]
 pub struct FullName(::axiom::string::String);
-
-#[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
-#[builder(on(_, into))]
-pub struct EventRegistration {
-    pub id: Uuid,
-    pub event_id: Uuid,
-    pub volunteer_id: Uuid,
-
-    pub statuses: ::vec1::Vec1<EventRegistrationStatus>,
-}
-
-/// Possible lifecycles
-/// 1. `Pending` (volunteer subscribes to event) -> `Accepted` (event manager
-///    accepts registration) -> `Completed` (event manager updates registration
-///    status after event completion)
-/// 2. `Pending` (volunteer subscribes to event) -> `Declined` (event manager
-///    declines registration)
-/// 3. `Pending` (volunteer subscribes to event) -> `Withdrawn` (volunteer
-///    unsubscribes from event)
-#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
-pub enum EventRegistrationStatus {
-    Pending {
-        pending_at: ::axiom::time::Timestamp,
-    },
-    Withdrawn {
-        withdrawn_at: ::axiom::time::Timestamp,
-    },
-    Accepted {
-        accepted_by_manager_id: Uuid,
-        accepted_at: ::axiom::time::Timestamp,
-    },
-    Declined {
-        declined_by_manager_id: Uuid,
-        declined_at: ::axiom::time::Timestamp,
-    },
-    Completed {
-        completed_by_manager_id: Uuid,
-        completed_at: ::axiom::time::Timestamp,
-    },
-}
 
 #[derive(
     ::core::fmt::Debug,
