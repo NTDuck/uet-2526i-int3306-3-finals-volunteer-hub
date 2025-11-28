@@ -3,6 +3,7 @@ use ::async_trait::async_trait;
 #[async_trait]
 pub trait EventRepository {
     async fn save(self: ::std::sync::Arc<Self>, event: ::domain::Event) -> ::axiom::result::Fallible;
+    async fn remove(self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid) -> ::axiom::result::Fallible;
 
     async fn view_recently_approved(
         self: ::std::sync::Arc<Self>, limit: usize,

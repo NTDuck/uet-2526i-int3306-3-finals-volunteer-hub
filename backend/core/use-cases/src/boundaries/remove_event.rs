@@ -2,7 +2,7 @@ use ::async_trait::async_trait;
 
 #[async_trait]
 pub trait RemoveEventBoundary {
-    async fn apply(&self, request: RemoveEventRequest) -> ::axiom::result::Fallible<RemoveEventResponse>;
+    async fn apply(self: ::std::sync::Arc<Self>, request: RemoveEventRequest) -> ::axiom::result::Fallible<RemoveEventResponse>;
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
@@ -29,10 +29,16 @@ pub type RemoveEventOkResponse = ();
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
 pub enum RemoveEventErrResponse {
-    #[error("Invalid or expired authentication token")]
+    #[error("Invalid authentication token")]
     AuthenticationTokenInvalid,
 
-    #[error("User with role `{user_role}` not authorized: must be `{expected_user_role}`", expected_user_role = RemoveEventUserRole::EventManager)]
+    #[error("Expired authentication token")]
+    AuthenticationTokenExpired,
+
+    #[error("User not found")]
+    UserNotFound,
+
+    #[error("User with role `{user_role}` not authorized: must be `{}`", RemoveEventUserRole::EventManager)]
     UserUnauthorized {
         user_role: RemoveEventUserRole,
     },
@@ -42,6 +48,11 @@ pub enum RemoveEventErrResponse {
 
     #[error("Event not found")]
     EventNotFound,
+
+    #[error("Event with status `{event_status}` not eligible: must be `{}` or `{}`", RemoveEventEventStatus::Created, RemoveEventEventStatus::Updated)]
+    EventStatusNotEligible {
+        event_status: RemoveEventEventStatus,
+    },
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::strum::Display)]
@@ -71,6 +82,29 @@ impl ::core::convert::From<RemoveEventUserRole> for ::domain::UserRole {
             RemoveEventUserRole::Volunteer => Self::Volunteer,
             RemoveEventUserRole::EventManager => Self::EventManager,
             RemoveEventUserRole::Administrator => Self::Administrator,
+        }
+    }
+}
+
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::strum::Display)]
+#[cfg_attr(feature = "serde", derive(::serde::Serialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "kebab-case"))]
+#[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
+#[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
+pub enum RemoveEventEventStatus {
+    Created,
+    Updated,
+    Approved,
+    Rejected,
+}
+
+impl ::core::convert::From<::domain::EventStatus> for RemoveEventEventStatus {
+    fn from(value: ::domain::EventStatus) -> Self {
+        match value {
+            ::domain::EventStatus::Created { .. } => Self::Created,
+            ::domain::EventStatus::Updated { .. } => Self::Updated,
+            ::domain::EventStatus::Approved { .. } => Self::Approved,
+            ::domain::EventStatus::Rejected { .. } => Self::Rejected,
         }
     }
 }

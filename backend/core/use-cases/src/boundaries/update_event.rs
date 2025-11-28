@@ -45,7 +45,7 @@ pub enum UpdateEventErrResponse {
     #[error("User not found")]
     UserNotFound,
 
-    #[error("User with role `{user_role}` not authorized: must be `{expected_user_role}`", expected_user_role = UpdateEventUserRole::EventManager)]
+    #[error("User with role `{user_role}` not authorized: must be `{}`", UpdateEventUserRole::EventManager)]
     UserUnauthorized {
         user_role: UpdateEventUserRole,
     },
@@ -79,7 +79,7 @@ pub enum UpdateEventErrResponse {
     #[error("Event with status `{event_status}` not eligible: must be `{}` or `{}`", UpdateEventEventStatus::Created, UpdateEventEventStatus::Updated)]
     EventStatusNotEligible {
         event_status: UpdateEventEventStatus,
-    }
+    },
 }
 
 fn format(values: &::std::vec::Vec<::axiom::string::String>) -> ::axiom::string::String {
