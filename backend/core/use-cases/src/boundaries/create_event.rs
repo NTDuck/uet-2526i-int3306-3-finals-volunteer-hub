@@ -43,7 +43,7 @@ pub enum CreateEventErrResponse {
     #[error("User not found")]
     UserNotFound,
 
-    #[error("User with role `{user_role}` not authorized: must be `{expected_user_role}`", expected_user_role = CreateEventUserRole::EventManager)]
+    #[error("User with role `{user_role}` not authorized: must be `{}`", CreateEventUserRole::EventManager)]
     UserUnauthorized {
         user_role: CreateEventUserRole,
     },

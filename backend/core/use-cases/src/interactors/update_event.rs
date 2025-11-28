@@ -89,16 +89,17 @@ impl UpdateEventBoundary for UpdateEventInteractor {
                 .transpose();
 
         let (
-            ::core::option::Option::Some(mut event),
             ::core::result::Result::Ok(event_name),
             ::core::result::Result::Ok(event_description),
             ::core::result::Result::Ok(event_categories),
             ::core::result::Result::Ok(event_location),
-        ) = (event, event_name, event_description, event_categories, event_location) else { return ::axiom::errs!(UpdateEvent @ errors) };
+        ) = (event_name, event_description, event_categories, event_location) else { return ::axiom::errs!(UpdateEvent @ errors) };
 
         if !errors.is_empty() {
             return ::axiom::errs!(UpdateEvent @ errors);
         }
+
+        let mut event = unsafe { event.unwrap_unchecked() };
 
         event.statuses.push(::domain::EventStatus::Updated { updated_by_manager_id: user_id, updated_at: ::axiom::time::Timestamp::now() });
         event_name.map(|event_name| event.name = event_name);
