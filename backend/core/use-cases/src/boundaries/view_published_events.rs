@@ -116,7 +116,7 @@ pub enum ViewPublishedEventsErrResponse {
     #[error("User not found")]
     UserNotFound,
 
-    #[error("User with role `{user_role}` not authorized: must be `{expected_user_role}`", expected_user_role = ViewPublishedEventsUserRole::Volunteer)]
+    #[error("User with role `{user_role}` not authorized: must be `{}`", ViewPublishedEventsUserRole::Volunteer)]
     UserUnauthorized {
         user_role: ViewPublishedEventsUserRole,
     },

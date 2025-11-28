@@ -72,10 +72,10 @@ pub enum CreateEventErrResponse {
     },
 }
 
-fn format(values: &::std::vec::Vec<::axiom::string::String>) -> ::axiom::string::String {
+fn format<T: ::core::fmt::Display>(values: &[T]) -> ::axiom::string::String {
     values
         .iter()
-        .map(|value| ::std::format!("`{}`", value))
+        .map(|value| ::std::format!("`{value}`"))
         .collect::<::std::vec::Vec<_>>()
         .join(", ")
         .into()

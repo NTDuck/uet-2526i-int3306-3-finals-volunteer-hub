@@ -71,7 +71,7 @@ impl ViewEventVolunteersBoundary for ViewEventVolunteersInteractor {
             })
             .collect::<::std::vec::Vec<_>>().await;
 
-            let response = ViewEventVolunteersOkResponse::builder().volunteers(volunteers).build();
-            ::axiom::ok!(ViewEventVolunteers @ response)
+        let response = ViewEventVolunteersOkResponse::builder().volunteers(volunteers).build();
+        ::axiom::ok!(ViewEventVolunteers @ response)
     }
 }

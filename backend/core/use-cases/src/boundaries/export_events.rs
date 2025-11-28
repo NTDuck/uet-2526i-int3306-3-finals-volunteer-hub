@@ -73,10 +73,16 @@ impl ::core::convert::From<::domain::EventStatus> for ExportEventsEventStatus {
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
 pub enum ExportEventsErrResponse {
-    #[error("Invalid or expired authentication token")]
+    #[error("Invalid authentication token")]
     AuthenticationTokenInvalid,
 
-    #[error("User with role `{user_role}` not authorized: must be `{expected_user_role}`", expected_user_role = ExportEventsUserRole::Administrator)]
+    #[error("Authentication token expired")]
+    AuthenticationTokenExpired,
+
+    #[error("User not found")]
+    UserNotFound,
+
+    #[error("User with role `{user_role}` not authorized: must be `{}`", ExportEventsUserRole::Administrator)]
     UserUnauthorized {
         user_role: ExportEventsUserRole,
     },

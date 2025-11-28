@@ -40,7 +40,7 @@ pub enum SubscribeToEventErrResponse {
     #[error("User not found")]
     UserNotFound,
 
-    #[error("User with role `{user_role}` not authorized: must be `{expected_user_role}`", expected_user_role = SubscribeToEventUserRole::Volunteer)]
+    #[error("User with role `{user_role}` not authorized: must be `{}`", SubscribeToEventUserRole::Volunteer)]
     UserUnauthorized {
         user_role: SubscribeToEventUserRole,
     },
@@ -51,7 +51,7 @@ pub enum SubscribeToEventErrResponse {
     #[error("Event not found")] // or not published yet
     EventNotFound,
 
-    #[error("Event registration with status `{event_registration_status}` not eligible: must be `{expected_event_registration_status}`", expected_event_registration_status = SubscribeToEventEventRegistrationStatus::Withdrawn)]
+    #[error("Event registration with status `{event_registration_status}` not eligible: must be `{}`", SubscribeToEventEventRegistrationStatus::Withdrawn)]
     EventRegistrationStatusNotEligible {
         event_registration_status: SubscribeToEventEventRegistrationStatus,
     },

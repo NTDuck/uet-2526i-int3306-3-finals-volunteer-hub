@@ -40,7 +40,7 @@ pub enum UnsubscribeFromEventErrResponse {
     #[error("User not found")]
     UserNotFound,
 
-    #[error("User with role `{user_role}` not authorized: must be `{expected_user_role}`", expected_user_role = UnsubscribeFromEventUserRole::Volunteer)]
+    #[error("User with role `{user_role}` not authorized: must be `{}`", UnsubscribeFromEventUserRole::Volunteer)]
     UserUnauthorized {
         user_role: UnsubscribeFromEventUserRole,
     },
@@ -51,7 +51,7 @@ pub enum UnsubscribeFromEventErrResponse {
     #[error("Event registration not found")]
     EventRegistrationNotFound,
 
-    #[error("Event registration with status `{event_registration_status}` not eligible: must be `{expected_event_registration_status}`", expected_event_registration_status = UnsubscribeFromEventEventRegistrationStatus::Pending)]
+    #[error("Event registration with status `{event_registration_status}` not eligible: must be `{}`", UnsubscribeFromEventEventRegistrationStatus::Pending)]
     EventRegistrationStatusNotEligible {
         event_registration_status: UnsubscribeFromEventEventRegistrationStatus,
     },

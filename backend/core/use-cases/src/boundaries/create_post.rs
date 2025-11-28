@@ -33,10 +33,16 @@ pub type CreateEventPostOkResponse = ();
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
 pub enum CreateEventPostErrResponse {
-    #[error("Invalid or expired authentication token")]
+    #[error("Invalid authentication token")]
     AuthenticationTokenInvalid,
 
-    #[error("User with role `{user_role}` not authorized: must be `{first_expected_user_role}` or `{second_expected_user_role}`", first_expected_user_role = CreateEventPostUserRole::Volunteer, second_expected_user_role = CreateEventPostUserRole::EventManager)]
+    #[error("Authentication token expired")]
+    AuthenticationTokenExpired,
+
+    #[error("User not found")]
+    UserNotFound,
+
+    #[error("User with role `{user_role}` not authorized: must be `{}` or `{}`", CreateEventPostUserRole::Volunteer, CreateEventPostUserRole::EventManager)]
     UserUnauthorized {
         user_role: CreateEventPostUserRole,
     },
