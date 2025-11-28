@@ -49,7 +49,7 @@ impl ViewPublishedEventsBoundary for ViewPublishedEventsInteractor {
                         .id(uuid_codec.format(event.id).await.ok()?)
                         .status(*event.statuses.last())
                         .name(event.name)
-                        .categories(event.categories.into_vec())
+                        .categories(event.categories)
                         .location(event.location)
                         .build()
                         .into_some()

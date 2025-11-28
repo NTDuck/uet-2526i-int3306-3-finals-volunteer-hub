@@ -7,7 +7,7 @@ pub struct Event {
 
     pub name: EventName,
     pub description: EventDescription,
-    pub categories: ::vec1::Vec1<EventCategory>,
+    pub categories: ::std::vec::Vec<EventCategory>,
     pub location: EventLocation,
 }
 
@@ -15,6 +15,10 @@ pub struct Event {
 pub enum EventStatus {
     Created {
         created_by_manager_id: Uuid,
+    },
+    Updated {
+        updated_by_manager_id: Uuid,
+        updated_at: ::axiom::time::Timestamp,
     },
     Approved {
         approved_by_administrator_id: Uuid,

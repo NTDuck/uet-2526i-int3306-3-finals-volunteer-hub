@@ -17,47 +17,40 @@ impl SignUpBoundary for SignUpInteractor {
         let mut errors = ::std::vec::Vec::new();
 
         let username = ::domain::Username::try_from(request.username)
-            .map_err(|error| errors.push(SignUpErrResponse::UsernameInvalid { username: error.into() }))
-            .ok();
+            .map_err(|error| errors.push(SignUpErrResponse::UsernameInvalid { username: error.into() }));
 
         let email = ::domain::Email::try_from(request.email)
-            .map_err(|error| errors.push(SignUpErrResponse::EmailInvalid { email: error.into() }))
-            .ok();
+            .map_err(|error| errors.push(SignUpErrResponse::EmailInvalid { email: error.into() }));
 
         let password = ::domain::Password::try_from(request.password)
-            .map_err(|_| errors.push(SignUpErrResponse::PasswordInvalid))
-            .ok();
+            .map_err(|_| errors.push(SignUpErrResponse::PasswordInvalid));
 
         let full_name = ::domain::FullName::try_from(request.full_name)
-            .map_err(|error| errors.push(SignUpErrResponse::FullNameInvalid { full_name: error.into() }))
-            .ok();
+            .map_err(|error| errors.push(SignUpErrResponse::FullNameInvalid { full_name: error.into() }));
 
         let (
-            ::core::option::Option::Some(username),
-            ::core::option::Option::Some(email),
-            ::core::option::Option::Some(password),
-            ::core::option::Option::Some(full_name),
+            ::core::result::Result::Ok(username),
+            ::core::result::Result::Ok(email),
+            ::core::result::Result::Ok(password),
+            ::core::result::Result::Ok(full_name),
         ) = (username, email, password, full_name)
         else {
             return ::axiom::errs!(SignUp @ errors);
         };
 
-        let username_exists = ::std::sync::Arc::clone(&self.user_repository)
+        if ::std::sync::Arc::clone(&self.user_repository)
             .contains_username(username.clone())
-            .await?;
-        let email_exists = ::std::sync::Arc::clone(&self.user_repository)
-            .contains_email(email.clone())
-            .await?;
-
-        if username_exists {
+            .await? {
             errors.push(SignUpErrResponse::UsernameAlreadyExists { username: username.to_string().into() });
         }
 
-        if email_exists {
+        if ::std::sync::Arc::clone(&self.user_repository)
+            .contains_email(email.clone())
+            .await? {
             errors.push(SignUpErrResponse::EmailAlreadyExists { email: email.to_string().into() });
         }
 
-        if username_exists || email_exists {
+        if !errors.is_empty() {
             return ::axiom::errs!(SignUp @ errors);
         }
 

@@ -87,6 +87,49 @@ pub mod option {
     }
 }
 
+pub mod iter {
+    pub trait IteratorTryCollectAllExt: ::core::iter::Iterator {
+        fn try_collect_all<B, C, F, T, E>(self, f: F) -> ::core::result::Result<::std::vec::Vec<T>, ::std::vec::Vec<E>>
+        where
+            Self: ::core::marker::Sized,
+            B: ::core::iter::FromIterator<T>,
+            C: ::core::iter::FromIterator<E>,
+            F: ::core::ops::Fn(Self::Item) -> ::core::result::Result<T, E>;
+    }
+
+    impl<I> IteratorTryCollectAllExt for I
+    where
+        I: ::core::iter::Iterator,
+    {
+        fn try_collect_all<B, C, F, T, E>(self, f: F) -> ::core::result::Result<::std::vec::Vec<T>, ::std::vec::Vec<E>>
+        where
+            Self: ::core::marker::Sized,
+            B: ::core::iter::FromIterator<T>,
+            C: ::core::iter::FromIterator<E>,
+            F: ::core::ops::Fn(Self::Item) -> ::core::result::Result<T, E>,
+        {
+            let (oks, errs) = self
+                .map(f)
+                .partition::<::std::vec::Vec<_>, _>(::core::result::Result::is_ok);
+
+            if errs.is_empty() {
+                let oks = oks.into_iter()
+                    .map(|ok| unsafe { ::core::result::Result::unwrap_unchecked(ok) })
+                    .collect();
+
+                ::core::result::Result::Ok(oks)
+
+            } else {
+                let errs = errs.into_iter()
+                    .map(|err| unsafe { ::core::result::Result::unwrap_err_unchecked(err) })
+                    .collect();
+                
+                ::core::result::Result::Err(errs)
+            }
+        }
+    }
+}
+
 pub mod result {
     pub type Error = ::anyhow::Error;
     pub type Fallible<T = ()> = ::core::result::Result<T, Error>;

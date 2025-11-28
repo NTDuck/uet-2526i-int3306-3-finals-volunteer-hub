@@ -24,8 +24,8 @@ pub struct ExportVolunteersRequest {
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
 pub enum ExportVolunteersExportFormat {
-    CSV,
-    JSON,
+    Csv,
+    Json,
 }
 
 #[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
@@ -51,6 +51,7 @@ pub struct ExportVolunteersOkResponse {
 #[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
 pub enum ExportVolunteersEventStatus {
     Created,
+    Updated,
     Approved,
     Rejected,
 }
@@ -59,6 +60,7 @@ impl ::core::convert::From<::domain::EventStatus> for ExportVolunteersEventStatu
     fn from(value: ::domain::EventStatus) -> Self {
         match value {
             ::domain::EventStatus::Created { .. } => Self::Created,
+            ::domain::EventStatus::Updated { .. } => Self::Updated,
             ::domain::EventStatus::Approved { .. } => Self::Approved,
             ::domain::EventStatus::Rejected { .. } => Self::Rejected,
         }

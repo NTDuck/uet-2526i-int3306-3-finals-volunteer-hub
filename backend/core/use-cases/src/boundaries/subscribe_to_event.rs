@@ -52,7 +52,7 @@ pub enum SubscribeToEventErrResponse {
     EventNotFound,
 
     #[error("Event registration with status `{event_registration_status}` not eligible: must be `{expected_event_registration_status}`", expected_event_registration_status = SubscribeToEventEventRegistrationStatus::Withdrawn)]
-    EventRegistrationNotEligible {
+    EventRegistrationStatusNotEligible {
         event_registration_status: SubscribeToEventEventRegistrationStatus,
     },
 }

@@ -52,7 +52,7 @@ pub enum UnsubscribeFromEventErrResponse {
     EventRegistrationNotFound,
 
     #[error("Event registration with status `{event_registration_status}` not eligible: must be `{expected_event_registration_status}`", expected_event_registration_status = UnsubscribeFromEventEventRegistrationStatus::Pending)]
-    EventRegistrationNotEligible {
+    EventRegistrationStatusNotEligible {
         event_registration_status: UnsubscribeFromEventEventRegistrationStatus,
     },
 }

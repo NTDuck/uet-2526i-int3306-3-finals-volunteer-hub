@@ -63,7 +63,7 @@ impl ViewEventHistoryBoundary for ViewEventHistoryInteractor {
                         .status(*event.statuses.last())
                         .registration_status(event_registration_status)
                         .name(event.name)
-                        .categories(event.categories.into_vec())
+                        .categories(event.categories)
                         .location(event.location)
                         .build()
                         .into_some()

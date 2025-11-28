@@ -85,6 +85,7 @@ pub struct ViewPublishedEventsEvent {
 #[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
 pub enum ViewPublishedEventsEventStatus {
     Created,
+    Updated,
     Approved,
     Rejected,
 }
@@ -93,6 +94,7 @@ impl ::core::convert::From<::domain::EventStatus> for ViewPublishedEventsEventSt
     fn from(value: ::domain::EventStatus) -> Self {
         match value {
             ::domain::EventStatus::Created { .. } => Self::Created,
+            ::domain::EventStatus::Updated { .. } => Self::Updated,
             ::domain::EventStatus::Approved { .. } => Self::Approved,
             ::domain::EventStatus::Rejected { .. } => Self::Rejected,
         }

@@ -2,6 +2,8 @@ use ::async_trait::async_trait;
 
 #[async_trait]
 pub trait EventRepository {
+    async fn save(self: ::std::sync::Arc<Self>, event: ::domain::Event) -> ::axiom::result::Fallible;
+
     async fn view_recently_approved(
         self: ::std::sync::Arc<Self>, limit: usize,
     ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::Event>>;
@@ -40,6 +42,7 @@ pub struct EventRepositoryViewFilter {
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
 pub enum EventRepositoryViewFilterEventStatus {
     Created,
+    Updated,
     Approved,
     Rejected,
 }
@@ -48,6 +51,7 @@ impl ::core::convert::From<::domain::EventStatus> for EventRepositoryViewFilterE
     fn from(value: ::domain::EventStatus) -> Self {
         match value {
             ::domain::EventStatus::Created { .. } => Self::Created,
+            ::domain::EventStatus::Updated { .. } => Self::Updated,
             ::domain::EventStatus::Approved { .. } => Self::Approved,
             ::domain::EventStatus::Rejected { .. } => Self::Rejected,
         }

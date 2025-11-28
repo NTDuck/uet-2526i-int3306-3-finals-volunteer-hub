@@ -217,3 +217,6 @@ $ deno task preview-sveltekit-minimal
 ## Implementational Remarks
 - Semaphore-based parallelism (Rust)
 - ...
+
+## TODO
+- Increase parallelism via e.g. `buffer_unordered(...)` for streams, `rayon`

@@ -57,7 +57,7 @@ impl SubscribeToEventBoundary for SubscribeToEventInteractor {
                 let event_registration_status = event_registration.statuses.last();
 
                 if !::core::matches!(event_registration_status, ::domain::EventRegistrationStatus::Withdrawn { .. }) {
-                    return ::axiom::err!(SubscribeToEvent @ EventRegistrationNotEligible { event_registration_status: (*event_registration_status).into() });
+                    return ::axiom::err!(SubscribeToEvent @ EventRegistrationStatusNotEligible { event_registration_status: (*event_registration_status).into() });
                 }
 
                 event_registration.statuses.push(::domain::EventRegistrationStatus::Pending { pending_at: ::axiom::time::Timestamp::now() });

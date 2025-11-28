@@ -57,7 +57,7 @@ impl UnsubscribeFromEventBoundary for UnsubscribeFromEventInteractor {
         let event_registration_status = event_registration.statuses.last();
 
         if !::core::matches!(event_registration_status, ::domain::EventRegistrationStatus::Pending { .. }) {
-            return ::axiom::err!(UnsubscribeFromEvent @ EventRegistrationNotEligible { event_registration_status: (*event_registration_status).into() });
+            return ::axiom::err!(UnsubscribeFromEvent @ EventRegistrationStatusNotEligible { event_registration_status: (*event_registration_status).into() });
         }
 
         event_registration.statuses.push(::domain::EventRegistrationStatus::Withdrawn { withdrawn_at: ::axiom::time::Timestamp::now() });

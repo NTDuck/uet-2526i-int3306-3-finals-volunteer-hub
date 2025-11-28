@@ -48,18 +48,15 @@ impl SignInBoundary for SignInInteractor {
         };
 
         let password = ::domain::Password::try_from(request.password.clone())
-            .map_err(|_| errors.push(SignInErrResponse::PasswordInvalid))
-            .ok();
+            .map_err(|_| errors.push(SignInErrResponse::PasswordInvalid));
 
-        let (::core::option::Option::Some(user), ::core::option::Option::Some(password)) = (user, password) else {
+        let (::core::option::Option::Some(user), ::core::result::Result::Ok(password)) = (user, password) else {
             return ::axiom::errs!(SignIn @ errors);
         };
 
-        let password_matches = ::std::sync::Arc::clone(&self.password_hasher)
+        if !::std::sync::Arc::clone(&self.password_hasher)
             .verify(password, user.password)
-            .await?;
-
-        if !password_matches {
+            .await? {
             errors.push(SignInErrResponse::PasswordMismatch);
             return ::axiom::errs!(SignIn @ errors);
         }

@@ -61,14 +61,12 @@ impl ViewEventRecommendationBoundary for ViewEventRecommendationInteractor {
                         .id(uuid_codec.format(event.id).await.ok()?)
                         .status(*event.statuses.last())
                         .name(event.name)
-                        .categories(event.categories.into_vec())
+                        .categories(event.categories)
                         .location(event.location)
                         .build()
                         .into_some()
                 }
             })
-            // .map(::futures::future::ready)
-            // .buffer_unordered(16)
             .collect::<::std::vec::Vec<_>>().await;
 
         let response = ViewEventRecommendationOkResponse::builder().events(events).build();
