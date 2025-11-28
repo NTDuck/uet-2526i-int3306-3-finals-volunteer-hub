@@ -69,6 +69,8 @@ pub trait EventRegistrationRepository {
         self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid, user_id: ::domain::Uuid,
     ) -> ::axiom::result::Fallible<::core::option::Option<::domain::EventRegistration>>;
 
+    async fn view_by_event_id(self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::EventRegistration>>;
+
     async fn view_by_user_id(self: ::std::sync::Arc<Self>, user_id: ::domain::Uuid) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::EventRegistration>>;
 }
 

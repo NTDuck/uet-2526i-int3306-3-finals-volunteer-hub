@@ -72,6 +72,6 @@ impl ViewEventHistoryBoundary for ViewEventHistoryInteractor {
             .collect::<::std::vec::Vec<_>>().await;
 
         let response = ViewEventHistoryOkResponse::builder().events(events).build();
-        ::axiom::result::Fallible::Ok(ViewEventHistoryResponse::Ok(response))
+        ::axiom::ok!(ViewEventHistory @ response)
     }
 }
