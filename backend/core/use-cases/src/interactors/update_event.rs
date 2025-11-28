@@ -53,10 +53,17 @@ impl UpdateEventBoundary for UpdateEventInteractor {
         let event = ::std::sync::Arc::clone(&self.event_repository).get_by_id(event_id).await?;
 
         match event {
+            ::core::option::Option::Some(::domain::Event { ref statuses, .. }) => {
+                let event_status = statuses.last();
+
+                if !::core::matches!(event_status, ::domain::EventStatus::Created { .. } | ::domain::EventStatus::Updated { .. }) {
+                    errors.push(UpdateEventErrResponse::EventStatusNotEligible { event_status: (*event_status).into() });
+                }
+            },
+
             ::core::option::Option::None => {
                 errors.push(UpdateEventErrResponse::EventNotFound);
             },
-            _ => {},
         }
 
         let event_name = request.event_name
@@ -88,6 +95,10 @@ impl UpdateEventBoundary for UpdateEventInteractor {
             ::core::result::Result::Ok(event_categories),
             ::core::result::Result::Ok(event_location),
         ) = (event, event_name, event_description, event_categories, event_location) else { return ::axiom::errs!(UpdateEvent @ errors) };
+
+        if !errors.is_empty() {
+            return ::axiom::errs!(UpdateEvent @ errors);
+        }
 
         event.statuses.push(::domain::EventStatus::Updated { updated_by_manager_id: user_id, updated_at: ::axiom::time::Timestamp::now() });
         event_name.map(|event_name| event.name = event_name);
