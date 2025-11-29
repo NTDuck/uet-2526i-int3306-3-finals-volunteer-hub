@@ -17,6 +17,10 @@ pub struct ViewUsersRequest {
     pub token: ::axiom::string::String,
 }
 
+pub struct ViewUsersViewFilter {
+    
+}
+
 #[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
 pub type ViewUsersResponse = ::core::result::Result<ViewUsersOkResponse, ::std::vec::Vec<ViewUsersErrResponse>>;
 

@@ -19,7 +19,7 @@ impl CreateEventBoundary for CreateEventInteractor {
         self: ::std::sync::Arc<Self>, request: CreateEventRequest,
     ) -> ::axiom::result::Fallible<CreateEventResponse> {
         use ::axiom::time::TimestampExt as _;
-        use ::axiom::iter::IteratorTryCollectAllExt as _;
+        use ::axiom::iter::IteratorExt as _;
 
         let user_id = match ::std::sync::Arc::clone(&self.auth_token_generator).get_payload(request.token).await? {
             ::core::option::Option::None =>

@@ -1,10 +1,25 @@
-use ::async_trait::async_trait;
+use ::axiom::prelude::*;
 
 #[async_trait]
 pub trait EventRepository {
     async fn save(self: ::std::sync::Arc<Self>, event: ::domain::Event) -> ::axiom::result::Fallible;
     async fn remove(self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid) -> ::axiom::result::Fallible;
 
+    async fn get_by_id(self: ::std::sync::Arc<Self>, id: ::domain::Uuid) -> ::axiom::result::Fallible<::core::option::Option<::domain::Event>>;
+
+    async fn contains_id(self: ::std::sync::Arc<Self>, id: ::domain::Uuid) -> ::axiom::result::Fallible<bool> {
+        ::axiom::result::Fallible::Ok(self.get_by_id(id).await?.is_some())
+    }
+
+    async fn search(
+        self: ::std::sync::Arc<Self>, filter: EventRepositorySearchFilter,
+    ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::Event>>;
+
+    async fn view(self: ::std::sync::Arc<Self>) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::Event>> {
+        self.search(::core::default::Default::default()).await?.into_ok()
+    }
+
+    // TODO: review, probably require other repositories
     async fn view_recently_approved(
         self: ::std::sync::Arc<Self>, limit: usize,
     ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::Event>>;
@@ -14,41 +29,26 @@ pub trait EventRepository {
     async fn view_trending(
         self: ::std::sync::Arc<Self>, limit: usize,
     ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::Event>>;
-
-    async fn view(
-        self: ::std::sync::Arc<Self>, filter: EventRepositoryViewFilter,
-    ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::Event>>;
-
-    async fn get_by_id(self: ::std::sync::Arc<Self>, id: ::domain::Uuid) -> ::axiom::result::Fallible<::core::option::Option<::domain::Event>>;
-
-    async fn contains_id(self: ::std::sync::Arc<Self>, id: ::domain::Uuid) -> ::axiom::result::Fallible<bool> {
-        ::axiom::result::Fallible::Ok(self.get_by_id(id).await?.is_some())
-    }
 }
 
-#[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::default::Default, ::bon::Builder)]
 #[builder(on(_, into))]
-pub struct EventRepositoryViewFilter {
-    #[builder(with = |value: ::std::vec::Vec<impl ::core::convert::Into<EventRepositoryViewFilterEventStatus>>| value.into_iter().map(::core::convert::Into::into).collect())]
-    pub statuses: ::std::vec::Vec<EventRepositoryViewFilterEventStatus>,
+pub struct EventRepositorySearchFilter {
+    pub query: ::core::option::Option<::axiom::string::String>,
 
-    pub name: ::core::option::Option<::axiom::string::String>,
-    pub description: ::core::option::Option<::axiom::string::String>,
-    pub category: ::core::option::Option<::axiom::string::String>,
-    pub location: ::core::option::Option<::axiom::string::String>,
-
+    pub statuses: ::core::option::Option<::std::vec::Vec<EventRepositorySearchFilterEventStatus>>,
     pub timestamps: ::core::ops::Range<::core::option::Option<::axiom::time::Timestamp>>,
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
-pub enum EventRepositoryViewFilterEventStatus {
+pub enum EventRepositorySearchFilterEventStatus {
     Created,
     Updated,
     Approved,
     Rejected,
 }
 
-impl ::core::convert::From<::domain::EventStatus> for EventRepositoryViewFilterEventStatus {
+impl ::core::convert::From<::domain::EventStatus> for EventRepositorySearchFilterEventStatus {
     fn from(value: ::domain::EventStatus) -> Self {
         match value {
             ::domain::EventStatus::Created { .. } => Self::Created,
@@ -101,6 +101,65 @@ pub trait UserRepository {
     async fn contains_email(self: ::std::sync::Arc<Self>, email: ::domain::Email) -> ::axiom::result::Fallible<bool> {
         ::axiom::result::Fallible::Ok(self.get_by_email(email).await?.is_some())
     }
+
+    async fn search(self: ::std::sync::Arc<Self>, filter: UserRepositorySearchFilter) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::User>>;
+
+    async fn view(self: ::std::sync::Arc<Self>) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::User>> {
+        self.search(::core::default::Default::default()).await?.into_ok()
+    }
+}
+
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::default::Default, ::bon::Builder)]
+#[builder(on(_, into))]
+pub struct UserRepositorySearchFilter {
+    pub query: ::core::option::Option<::axiom::string::String>,
+
+    pub roles: ::core::option::Option<::std::vec::Vec<UserRepositoryViewFilterUserRole>>,
+    pub statuses: ::core::option::Option<::std::vec::Vec<UserRepositoryViewFilterUserStatus>>,
+}
+
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
+pub enum UserRepositoryViewFilterUserStatus {
+    Created,
+    Suspended,
+    Unsuspended,
+}
+
+impl ::core::convert::From<::domain::UserStatus> for UserRepositoryViewFilterUserStatus {
+    fn from(value: ::domain::UserStatus) -> Self {
+        match value {
+            ::domain::UserStatus::Created => Self::Created,
+            ::domain::UserStatus::Suspended { .. } => Self::Suspended,
+            ::domain::UserStatus::Unsuspended { .. } => Self::Unsuspended,
+        }
+    }
+}
+
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
+pub enum UserRepositoryViewFilterUserRole {
+    Volunteer,
+    EventManager,
+    Administrator,
+}
+
+impl ::core::convert::From<::domain::UserRole> for UserRepositoryViewFilterUserRole {
+    fn from(value: ::domain::UserRole) -> Self {
+        match value {
+            ::domain::UserRole::Volunteer => Self::Volunteer,
+            ::domain::UserRole::EventManager => Self::EventManager,
+            ::domain::UserRole::Administrator => Self::Administrator,
+        }
+    }
+}
+
+impl ::core::convert::From<UserRepositoryViewFilterUserRole> for ::domain::UserRole {
+    fn from(value: UserRepositoryViewFilterUserRole) -> Self {
+        match value {
+            UserRepositoryViewFilterUserRole::Volunteer => ::domain::UserRole::Volunteer,
+            UserRepositoryViewFilterUserRole::EventManager => ::domain::UserRole::EventManager,
+            UserRepositoryViewFilterUserRole::Administrator => ::domain::UserRole::Administrator,
+        }
+    }
 }
 
 #[async_trait]
@@ -120,6 +179,16 @@ pub trait UuidCodec {
     async fn parse(
         self: ::std::sync::Arc<Self>, uuid: ::axiom::string::String,
     ) -> ::axiom::result::Fallible<::domain::Uuid>;
+}
+
+#[async_trait]
+pub trait TimestampCodec {
+    async fn format(
+        self: ::std::sync::Arc<Self>, timestamp: ::axiom::time::Timestamp,
+    ) -> ::axiom::result::Fallible<::axiom::string::String>;
+    async fn parse(
+        self: ::std::sync::Arc<Self>, timestamp: ::axiom::string::String,
+    ) -> ::axiom::result::Fallible<::axiom::time::Timestamp>;
 }
 
 #[async_trait]

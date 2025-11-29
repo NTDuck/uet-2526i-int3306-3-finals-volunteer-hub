@@ -214,9 +214,7 @@ $ deno task preview-sveltekit-minimal
   > |
   > [./backend/core/use-cases/src/interactors/view_event_recommendation.rs](./backend/core/use-cases/src/interactors/view_event_recommendation.rs)
 
-## Implementational Remarks
-- Semaphore-based parallelism (Rust)
-- ...
+- view events
 
 ## TODO
 - Increase parallelism via e.g. `buffer_unordered(...)` for streams, `rayon`
