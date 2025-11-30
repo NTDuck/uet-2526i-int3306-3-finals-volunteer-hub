@@ -1,4 +1,4 @@
-use ::async_trait::async_trait;
+use ::axiom::prelude::*;
 
 #[async_trait]
 pub trait ViewEventVolunteersBoundary {
@@ -47,6 +47,22 @@ pub struct ViewEventVolunteersVolunteer {
     pub username: ::axiom::string::String,
     pub email: ::axiom::string::String,
     pub full_name: ::axiom::string::String,
+}
+
+#[::bon::bon]
+impl ViewEventVolunteersVolunteer {
+    #[builder(finish_fn(name = try_build))]
+    pub async fn build_from(#[builder(start_fn)] volunteer: ::domain::User, #[builder(start_fn)] event_registration_status: ::domain::EventRegistrationStatus, #[builder(setters(name = with_uuid_codec))] uuid_codec: ::std::sync::Arc<dyn crate::gateways::UuidCodec + ::core::marker::Send + ::core::marker::Sync>) -> ::axiom::result::Fallible<Self> {
+        Self::builder()
+            .id(uuid_codec.format(volunteer.id).await?)
+            .status(*volunteer.statuses.last())
+            .registration_status(event_registration_status)
+            .username(volunteer.username)
+            .email(volunteer.email)
+            .full_name(volunteer.full_name)
+            .build()
+            .into_ok()
+    }
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::strum::Display)]

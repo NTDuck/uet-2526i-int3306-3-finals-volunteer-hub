@@ -1,4 +1,4 @@
-use ::async_trait::async_trait;
+use ::axiom::prelude::*;
 
 use crate::boundaries::*;
 use crate::gateways::*;
@@ -15,9 +15,6 @@ pub struct SignInInteractor {
 #[async_trait]
 impl SignInBoundary for SignInInteractor {
     async fn apply(self: ::std::sync::Arc<Self>, request: SignInRequest) -> ::axiom::result::Fallible<SignInResponse> {
-        use ::axiom::option::OptionExt as _;
-        use ::axiom::time::TimestampExt as _;
-
         let mut errors = ::std::vec::Vec::new();
 
         let user = if let ::core::result::Result::Ok(username) =

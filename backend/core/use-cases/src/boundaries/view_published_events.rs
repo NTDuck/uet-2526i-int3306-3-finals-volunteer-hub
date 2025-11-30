@@ -1,4 +1,4 @@
-use ::async_trait::async_trait;
+use ::axiom::prelude::*;
 
 #[async_trait]
 pub trait ViewPublishedEventsBoundary {
@@ -31,6 +31,28 @@ pub struct ViewPublishedEventsFilter {
     pub end_timestamp: ::core::option::Option<::axiom::string::String>,
 }
 
+#[::bon::bon]
+impl ViewPublishedEventsFilter {
+    #[builder(finish_fn(name = try_build))]
+    pub async fn build_into(self, #[builder(setters(name = with_timestamp_codec))] timestamp_codec: ::std::sync::Arc<dyn crate::gateways::TimestampCodec + ::core::marker::Send + ::core::marker::Sync>) -> ::axiom::result::Fallible<crate::gateways::EventRepositorySearchFilter> {
+        crate::gateways::EventRepositorySearchFilter::builder()
+            .maybe_query(self.query)
+            .statuses([crate::gateways::EventRepositorySearchFilterEventStatus::Approved])
+            .timestamps(::core::ops::Range {
+                start: self.start_timestamp.map_async(|timestamp| {
+                    let timestamp_codec = ::std::sync::Arc::clone(&timestamp_codec);
+                    async move { timestamp_codec.parse(timestamp).await }
+                }).await.transpose()?,
+                end: self.end_timestamp.map_async(|timestamp| {
+                    let timestamp_codec = ::std::sync::Arc::clone(&timestamp_codec);
+                    async move { timestamp_codec.parse(timestamp).await }
+                }).await.transpose()?,
+            })
+            .build()
+            .into_ok()
+    }
+}
+
 #[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
 pub type ViewPublishedEventsResponse =
     ::core::result::Result<ViewPublishedEventsOkResponse, ::std::vec::Vec<ViewPublishedEventsErrResponse>>;
@@ -60,6 +82,21 @@ pub struct ViewPublishedEventsEvent {
     #[builder(with = |values: ::std::vec::Vec<impl ::core::convert::Into<::axiom::string::String>>| values.into_iter().map(::core::convert::Into::into).collect())]
     pub categories: ::std::vec::Vec<::axiom::string::String>,
     pub location: ::axiom::string::String,
+}
+
+#[::bon::bon]
+impl ViewPublishedEventsEvent {
+    #[builder(finish_fn(name = try_build))]
+    pub async fn build_from(#[builder(start_fn)] event: ::domain::Event, #[builder(setters(name = with_uuid_codec))] uuid_codec: ::std::sync::Arc<dyn crate::gateways::UuidCodec + ::core::marker::Send + ::core::marker::Sync>) -> ::axiom::result::Fallible<Self> {
+        Self::builder()
+            .id(uuid_codec.format(event.id).await?)
+            .status(*event.statuses.last())
+            .name(event.name)
+            .categories(event.categories)
+            .location(event.location)
+            .build()
+            .into_ok()
+    }
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::strum::Display)]

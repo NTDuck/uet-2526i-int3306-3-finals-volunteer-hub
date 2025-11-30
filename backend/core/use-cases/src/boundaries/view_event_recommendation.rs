@@ -1,4 +1,4 @@
-use ::async_trait::async_trait;
+use ::axiom::prelude::*;
 
 #[async_trait]
 pub trait ViewEventRecommendationBoundary {
@@ -59,6 +59,21 @@ pub struct ViewEventRecommendationEvent {
     #[builder(with = |values: ::std::vec::Vec<impl ::core::convert::Into<::axiom::string::String>>| values.into_iter().map(::core::convert::Into::into).collect())]
     pub categories: ::std::vec::Vec<::axiom::string::String>,
     pub location: ::axiom::string::String,
+}
+
+#[::bon::bon]
+impl ViewEventRecommendationEvent {
+    #[builder(finish_fn(name = try_build))]
+    pub async fn build_from(#[builder(start_fn)] event: ::domain::Event, #[builder(setters(name = with_uuid_codec))] uuid_codec: ::std::sync::Arc<dyn crate::gateways::UuidCodec + ::core::marker::Send + ::core::marker::Sync>) -> ::axiom::result::Fallible<Self> {
+        Self::builder()
+            .id(uuid_codec.format(event.id).await?)
+            .status(*event.statuses.last())
+            .name(event.name)
+            .categories(event.categories)
+            .location(event.location)
+            .build()
+            .into_ok()
+    }
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::strum::Display)]

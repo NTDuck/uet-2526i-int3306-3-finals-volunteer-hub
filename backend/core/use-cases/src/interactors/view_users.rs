@@ -1,4 +1,4 @@
-use ::async_trait::async_trait;
+use ::axiom::prelude::*;
 use ::futures::prelude::*;
 
 use crate::boundaries::*;
@@ -17,9 +17,6 @@ impl ViewUsersBoundary for ViewUsersInteractor {
     async fn apply(
         self: ::std::sync::Arc<Self>, request: ViewUsersRequest,
     ) -> ::axiom::result::Fallible<ViewUsersResponse> {
-        use ::axiom::time::TimestampExt as _;
-        use ::axiom::option::IntoOptionExt as _;
-
         match ::std::sync::Arc::clone(&self.auth_token_generator).get_payload(request.token).await? {
             ::core::option::Option::None =>
                 return ::axiom::err!(ViewUsers @ AuthenticationTokenInvalid),
@@ -37,26 +34,27 @@ impl ViewUsersBoundary for ViewUsersInteractor {
                 return ::axiom::err!(ViewUsers @ UserUnauthorized { user_role: user_role.into() }),
         }
 
-        let events: ::std::vec::Vec<::domain::Event> = ::std::sync::Arc::clone(&self.event_repository).view(request.filter.into()).await?;
+        let users = match request.filter {
+            ::core::option::Option::None => ::std::sync::Arc::clone(&self.user_repository).view().await?,
+            ::core::option::Option::Some(filter) => {
+                ::std::sync::Arc::clone(&self.user_repository).search(filter.into()).await?
+            },
+        };
 
-        let events = ::futures::stream::iter(events)
-            .filter_map(|event| {
+        let users = ::futures::stream::iter(users)
+            .filter_map(|user| {
                 let uuid_codec = ::std::sync::Arc::clone(&self.uuid_codec);
 
                 async move {
-                    ViewUsersEvent::builder()
-                        .id(uuid_codec.format(event.id).await.ok()?)
-                        .status(*event.statuses.last())
-                        .name(event.name)
-                        .categories(event.categories)
-                        .location(event.location)
-                        .build()
-                        .into_some()
+                    ViewUsersUser::build_from(user)
+                        .with_uuid_codec(uuid_codec)
+                        .try_build().await
+                        .ok()
                 }
             })
             .collect::<::std::vec::Vec<_>>().await;
         
-        let response = ViewUsersOkResponse::builder().events(events).build();
+        let response = ViewUsersOkResponse::builder().users(users).build();
         ::axiom::ok!(ViewUsers @ response)
     }
 }

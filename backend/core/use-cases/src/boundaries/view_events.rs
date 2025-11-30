@@ -1,4 +1,4 @@
-use ::async_trait::async_trait;
+use ::axiom::prelude::*;
 
 #[async_trait]
 pub trait ViewEventsBoundary {
@@ -33,6 +33,28 @@ pub struct ViewEventsFilter {
     pub end_timestamp: ::core::option::Option<::axiom::string::String>,
 }
 
+#[::bon::bon]
+impl ViewEventsFilter {
+    #[builder(finish_fn(name = try_build))]
+    pub async fn build_into(self, #[builder(setters(name = with_timestamp_codec))] timestamp_codec: ::std::sync::Arc<dyn crate::gateways::TimestampCodec + ::core::marker::Send + ::core::marker::Sync>) -> ::axiom::result::Fallible<crate::gateways::EventRepositorySearchFilter> {
+        crate::gateways::EventRepositorySearchFilter::builder()
+            .maybe_query(self.query)
+            .maybe_statuses(self.statuses.map(|statuses| statuses.into_iter().map(::core::convert::Into::into).collect::<::std::vec::Vec<_>>()))
+            .timestamps(::core::ops::Range {
+                start: self.start_timestamp.map_async(|timestamp| {
+                    let timestamp_codec = ::std::sync::Arc::clone(&timestamp_codec);
+                    async move { timestamp_codec.parse(timestamp).await }
+                }).await.transpose()?,
+                end: self.end_timestamp.map_async(|timestamp| {
+                    let timestamp_codec = ::std::sync::Arc::clone(&timestamp_codec);
+                    async move { timestamp_codec.parse(timestamp).await }
+                }).await.transpose()?,
+            })
+            .build()
+            .into_ok()
+    }
+}
+
 #[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
 pub type ViewEventsResponse =
     ::core::result::Result<ViewEventsOkResponse, ::std::vec::Vec<ViewEventsErrResponse>>;
@@ -62,6 +84,21 @@ pub struct ViewEventsEvent {
     #[builder(with = |values: ::std::vec::Vec<impl ::core::convert::Into<::axiom::string::String>>| values.into_iter().map(::core::convert::Into::into).collect())]
     pub categories: ::std::vec::Vec<::axiom::string::String>,
     pub location: ::axiom::string::String,
+}
+
+#[::bon::bon]
+impl ViewEventsEvent {
+    #[builder(finish_fn(name = try_build))]
+    pub async fn build_from(#[builder(start_fn)] event: ::domain::Event, #[builder(setters(name = with_uuid_codec))] uuid_codec: ::std::sync::Arc<dyn crate::gateways::UuidCodec + ::core::marker::Send + ::core::marker::Sync>) -> ::axiom::result::Fallible<Self> {
+        Self::builder()
+            .id(uuid_codec.format(event.id).await?)
+            .status(*event.statuses.last())
+            .name(event.name)
+            .categories(event.categories)
+            .location(event.location)
+            .build()
+            .into_ok()
+    }
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::strum::Display)]
@@ -94,6 +131,17 @@ impl ::core::convert::From<ViewEventsEventStatus> for crate::gateways::EventRepo
             ViewEventsEventStatus::Updated => Self::Updated,
             ViewEventsEventStatus::Approved => Self::Approved,
             ViewEventsEventStatus::Rejected => Self::Rejected,
+        }
+    }
+}
+
+impl ::core::convert::From<crate::gateways::EventRepositorySearchFilterEventStatus> for ViewEventsEventStatus {
+    fn from(value: crate::gateways::EventRepositorySearchFilterEventStatus) -> Self {
+        match value {
+            crate::gateways::EventRepositorySearchFilterEventStatus::Created => Self::Created,
+            crate::gateways::EventRepositorySearchFilterEventStatus::Updated => Self::Updated,
+            crate::gateways::EventRepositorySearchFilterEventStatus::Approved => Self::Approved,
+            crate::gateways::EventRepositorySearchFilterEventStatus::Rejected => Self::Rejected,
         }
     }
 }

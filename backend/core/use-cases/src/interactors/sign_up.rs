@@ -1,4 +1,4 @@
-use ::async_trait::async_trait;
+use ::axiom::prelude::*;
 
 use crate::boundaries::*;
 use crate::gateways::*;

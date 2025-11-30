@@ -1,4 +1,4 @@
-use ::async_trait::async_trait;
+use ::axiom::prelude::*;
 
 use crate::boundaries::*;
 use crate::gateways::*;
@@ -19,8 +19,6 @@ impl SubscribeToEventBoundary for SubscribeToEventInteractor {
     async fn apply(
         self: ::std::sync::Arc<Self>, request: SubscribeToEventRequest,
     ) -> ::axiom::result::Fallible<SubscribeToEventResponse> {
-        use ::axiom::time::TimestampExt as _;
-
         let user_id = match ::std::sync::Arc::clone(&self.auth_token_generator).get_payload(request.token).await? {
             ::core::option::Option::None =>
                 return ::axiom::err!(SubscribeToEvent @ AuthenticationTokenInvalid),

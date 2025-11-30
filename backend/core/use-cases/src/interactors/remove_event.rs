@@ -1,4 +1,4 @@
-use ::async_trait::async_trait;
+use ::axiom::prelude::*;
 
 use crate::boundaries::*;
 use crate::gateways::*;
@@ -18,8 +18,6 @@ impl RemoveEventBoundary for RemoveEventInteractor {
     async fn apply(
         self: ::std::sync::Arc<Self>, request: RemoveEventRequest,
     ) -> ::axiom::result::Fallible<RemoveEventResponse> {
-        use ::axiom::time::TimestampExt as _;
-
         match ::std::sync::Arc::clone(&self.auth_token_generator).get_payload(request.token).await? {
             ::core::option::Option::None =>
                 return ::axiom::err!(RemoveEvent @ AuthenticationTokenInvalid),

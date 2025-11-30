@@ -10,6 +10,8 @@ pub mod prelude {
     pub use crate::iter::IteratorExt as _;
 
     pub use crate::result::IntoFallibleExt as _;
+
+    pub use crate::time::TimestampExt as _;
 }
 
 pub mod option {
@@ -49,6 +51,11 @@ pub mod option {
 
     #[::async_trait::async_trait]
     pub trait OptionAsyncExt<T> {
+        async fn map_async<Fut, F, U>(self, f: F) -> ::core::option::Option<U>
+        where
+            F: ::core::ops::FnOnce(T) -> Fut + ::core::marker::Send,
+            Fut: ::core::future::Future<Output = U> + ::core::marker::Send;
+
         async fn or_else_async<Fut, F>(self, f: F) -> ::core::option::Option<T>
         where
             F: ::core::ops::FnOnce() -> Fut + ::core::marker::Send,
@@ -66,6 +73,17 @@ pub mod option {
     where
         T: ::core::marker::Send,
     {
+        async fn map_async<Fut, F, U>(self, f: F) -> ::core::option::Option<U>
+        where
+            F: ::core::ops::FnOnce(T) -> Fut + ::core::marker::Send,
+            Fut: ::core::future::Future<Output = U> + ::core::marker::Send,
+        {
+            match self {
+                ::core::option::Option::Some(val) => ::core::option::Option::Some(f(val).await),
+                ::core::option::Option::None => ::core::option::Option::None,
+            }
+        }
+
         async fn or_else_async<Fut, F>(self, f: F) -> ::core::option::Option<T>
         where
             F: ::core::ops::FnOnce() -> Fut + ::core::marker::Send,
@@ -190,6 +208,16 @@ pub mod result {
 pub mod time {
     pub type Timestamp = ::chrono::DateTime<::chrono::Utc>;
     pub type Interval = ::chrono::Duration;
+
+    pub trait TimestampExt {
+        fn now() -> Self;
+    }
+
+    impl TimestampExt for crate::time::Timestamp {
+        fn now() -> Self {
+            ::chrono::Utc::now()
+        }
+    }
 }
 
 pub mod string {

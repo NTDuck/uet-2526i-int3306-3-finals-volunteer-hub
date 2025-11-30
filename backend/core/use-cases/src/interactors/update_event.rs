@@ -1,4 +1,4 @@
-use ::async_trait::async_trait;
+use ::axiom::prelude::*;
 
 use crate::boundaries::*;
 use crate::gateways::*;
@@ -18,9 +18,6 @@ impl UpdateEventBoundary for UpdateEventInteractor {
     async fn apply(
         self: ::std::sync::Arc<Self>, request: UpdateEventRequest,
     ) -> ::axiom::result::Fallible<UpdateEventResponse> {
-        use ::axiom::time::TimestampExt as _;
-        use ::axiom::iter::IteratorExt as _;
-
         let user_id = match ::std::sync::Arc::clone(&self.auth_token_generator).get_payload(request.token).await? {
             ::core::option::Option::None =>
                 return ::axiom::err!(UpdateEvent @ AuthenticationTokenInvalid),

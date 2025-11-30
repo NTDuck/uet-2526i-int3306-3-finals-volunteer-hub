@@ -1,4 +1,4 @@
-use ::async_trait::async_trait;
+use ::axiom::prelude::*;
 use ::futures::prelude::*;
 
 use crate::boundaries::*;
@@ -20,9 +20,6 @@ impl ViewEventHistoryBoundary for ViewEventHistoryInteractor {
     async fn apply(
         self: ::std::sync::Arc<Self>, request: ViewEventHistoryRequest,
     ) -> ::axiom::result::Fallible<ViewEventHistoryResponse> {
-        use ::axiom::time::TimestampExt as _;
-        use ::axiom::option::IntoOptionExt as _;
-
         let user_id = match ::std::sync::Arc::clone(&self.auth_token_generator).get_payload(request.token).await? {
             ::core::option::Option::None =>
                 return ::axiom::err!(ViewEventHistory @ AuthenticationTokenInvalid),
@@ -58,15 +55,10 @@ impl ViewEventHistoryBoundary for ViewEventHistoryInteractor {
                 let uuid_codec = ::std::sync::Arc::clone(&self.uuid_codec);
 
                 async move {
-                    ViewEventHistoryEvent::builder()
-                        .id(uuid_codec.format(event.id).await.ok()?)
-                        .status(*event.statuses.last())
-                        .registration_status(event_registration_status)
-                        .name(event.name)
-                        .categories(event.categories)
-                        .location(event.location)
-                        .build()
-                        .into_some()
+                    ViewEventHistoryEvent::build_from(event, event_registration_status)
+                        .with_uuid_codec(uuid_codec)
+                        .try_build().await
+                        .ok()
                 }
             })
             .collect::<::std::vec::Vec<_>>().await;

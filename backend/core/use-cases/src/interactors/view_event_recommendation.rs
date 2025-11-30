@@ -1,4 +1,4 @@
-use ::async_trait::async_trait;
+use ::axiom::prelude::*;
 use ::futures::prelude::*;
 
 use crate::boundaries::*;
@@ -19,9 +19,6 @@ impl ViewEventRecommendationBoundary for ViewEventRecommendationInteractor {
     async fn apply(
         self: ::std::sync::Arc<Self>, request: ViewEventRecommendationRequest,
     ) -> ::axiom::result::Fallible<ViewEventRecommendationResponse> {
-        use ::axiom::time::TimestampExt as _;
-        use ::axiom::option::IntoOptionExt as _;
-
         match ::std::sync::Arc::clone(&self.auth_token_generator).get_payload(request.token).await? {
             ::core::option::Option::None =>
                 return ::axiom::err!(ViewEventRecommendation @ AuthenticationTokenInvalid),
@@ -57,14 +54,10 @@ impl ViewEventRecommendationBoundary for ViewEventRecommendationInteractor {
                 let uuid_codec = ::std::sync::Arc::clone(&self.uuid_codec);
 
                 async move {
-                    ViewEventRecommendationEvent::builder()
-                        .id(uuid_codec.format(event.id).await.ok()?)
-                        .status(*event.statuses.last())
-                        .name(event.name)
-                        .categories(event.categories)
-                        .location(event.location)
-                        .build()
-                        .into_some()
+                    ViewEventRecommendationEvent::build_from(event)
+                        .with_uuid_codec(uuid_codec)
+                        .try_build().await
+                        .ok()
                 }
             })
             .collect::<::std::vec::Vec<_>>().await;

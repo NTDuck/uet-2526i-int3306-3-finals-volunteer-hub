@@ -1,4 +1,4 @@
-use ::async_trait::async_trait;
+use ::axiom::prelude::*;
 use ::futures::prelude::*;
 
 use crate::boundaries::*;
@@ -19,9 +19,6 @@ impl ViewEventVolunteersBoundary for ViewEventVolunteersInteractor {
     async fn apply(
         self: ::std::sync::Arc<Self>, request: ViewEventVolunteersRequest,
     ) -> ::axiom::result::Fallible<ViewEventVolunteersResponse> {
-        use ::axiom::time::TimestampExt as _;
-        use ::axiom::option::IntoOptionExt as _;
-
         match ::std::sync::Arc::clone(&self.auth_token_generator).get_payload(request.token).await? {
             ::core::option::Option::None =>
                 return ::axiom::err!(ViewEventVolunteers @ AuthenticationTokenInvalid),
@@ -58,15 +55,10 @@ impl ViewEventVolunteersBoundary for ViewEventVolunteersInteractor {
                 let uuid_codec = ::std::sync::Arc::clone(&self.uuid_codec);
 
                 async move {
-                    ViewEventVolunteersVolunteer::builder()
-                        .id(uuid_codec.format(volunteer.id).await.ok()?)
-                        .status(*volunteer.statuses.last())
-                        .registration_status(event_registration_status)
-                        .username(volunteer.username)
-                        .email(volunteer.email)
-                        .full_name(volunteer.full_name)
-                        .build()
-                        .into_some()
+                    ViewEventVolunteersVolunteer::build_from(volunteer, event_registration_status)
+                        .with_uuid_codec(uuid_codec)
+                        .try_build().await
+                        .ok()
                 }
             })
             .collect::<::std::vec::Vec<_>>().await;
