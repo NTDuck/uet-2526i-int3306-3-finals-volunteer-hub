@@ -17,7 +17,7 @@ impl UnsubscribeFromEventBoundary for UnsubscribeFromEventInteractor {
     async fn apply(
         self: ::std::sync::Arc<Self>, request: UnsubscribeFromEventRequest,
     ) -> ::axiom::result::Fallible<UnsubscribeFromEventResponse> {
-        let user_id = match ::std::sync::Arc::clone(&self.auth_token_generator).get_payload(request.token).await? {
+        let actor_id = match ::std::sync::Arc::clone(&self.auth_token_generator).get_payload(request.token).await? {
             ::core::option::Option::None =>
                 return ::axiom::err!(UnsubscribeFromEvent @ AuthenticationTokenInvalid),
             ::core::option::Option::Some
@@ -46,7 +46,7 @@ impl UnsubscribeFromEventBoundary for UnsubscribeFromEventInteractor {
 
         let ::core::option::Option::Some(mut event_registration) = 
             ::std::sync::Arc::clone(&self.event_registration_repository).get_by_id(event_or_registration_id).await?
-            .try_or_else_async(|| async { ::std::sync::Arc::clone(&self.event_registration_repository).get_by_event_and_user_id(event_or_registration_id, user_id).await }).await?
+            .try_or_else_async(|| async { ::std::sync::Arc::clone(&self.event_registration_repository).get_by_event_and_user_id(event_or_registration_id, actor_id).await }).await?
         else {
             return ::axiom::err!(UnsubscribeFromEvent @ EventRegistrationNotFound);
         };

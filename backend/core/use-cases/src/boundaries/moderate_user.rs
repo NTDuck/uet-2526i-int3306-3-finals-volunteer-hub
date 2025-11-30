@@ -17,7 +17,7 @@ pub struct ModerateUserRequest {
     pub token: ::axiom::string::String,
 
     pub user_id: ::axiom::string::String,
-    pub user_status: ModerateUserUserStatus,
+    pub user_status: ModerateUserNewUserStatus,
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
@@ -25,7 +25,7 @@ pub struct ModerateUserRequest {
 #[cfg_attr(feature = "serde", serde(rename_all = "kebab-case"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi))]
-pub enum ModerateUserUserStatus {
+pub enum ModerateUserNewUserStatus {
     Suspended,
     Unsuspended,
 }
@@ -56,6 +56,30 @@ pub enum ModerateUserErrResponse {
     UserUnauthorized {
         user_role: ModerateUserUserRole,
     },
+
+    #[error("User with role `{user_role}` not eligible: must be `{}`", format(.allowed_user_roles))]
+    UserRoleNotEligible {
+        user_role: ModerateUserUserRole,
+        allowed_user_roles: ::std::vec::Vec<ModerateUserUserRole>,
+    },
+
+    #[error("User with status `{user_status}` not eligible: must be `{}`", format(.allowed_user_statuses))]
+    UserStatusNotEligible {
+        user_status: ModerateUserUserStatus,
+        allowed_user_statuses: ::std::vec::Vec<ModerateUserUserStatus>,
+    },
+}
+
+fn format<T: ::core::fmt::Display>(values: &[T]) -> ::axiom::string::String {
+    match values {
+        [] => ::core::default::Default::default(),
+        [first] => ::std::format!("`{first}`").into(),
+        [first, last] => ::std::format!("`{first}` or `{last}`").into(),
+        [firsts @ .., last] => {
+            let firsts = firsts.iter().map(|value| ::std::format!("`{value}`")).collect::<::std::vec::Vec<_>>().join(", ");
+            ::std::format!("{firsts}, or `{last}`").into()
+        }
+    }
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::strum::Display)]
@@ -85,6 +109,27 @@ impl ::core::convert::From<ModerateUserUserRole> for ::domain::UserRole {
             ModerateUserUserRole::Volunteer => Self::Volunteer,
             ModerateUserUserRole::EventManager => Self::EventManager,
             ModerateUserUserRole::Administrator => Self::Administrator,
+        }
+    }
+}
+
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::strum::Display)]
+#[cfg_attr(feature = "serde", derive(::serde::Serialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "kebab-case"))]
+#[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
+#[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
+pub enum ModerateUserUserStatus {
+    Created,
+    Suspended,
+    Unsuspended,
+}
+
+impl ::core::convert::From<::domain::UserStatus> for ModerateUserUserStatus {
+    fn from(value: ::domain::UserStatus) -> Self {
+        match value {
+            ::domain::UserStatus::Created => Self::Created,
+            ::domain::UserStatus::Suspended { .. } => Self::Suspended,
+            ::domain::UserStatus::Unsuspended { .. } => Self::Unsuspended,
         }
     }
 }

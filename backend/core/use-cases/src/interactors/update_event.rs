@@ -18,7 +18,7 @@ impl UpdateEventBoundary for UpdateEventInteractor {
     async fn apply(
         self: ::std::sync::Arc<Self>, request: UpdateEventRequest,
     ) -> ::axiom::result::Fallible<UpdateEventResponse> {
-        let user_id = match ::std::sync::Arc::clone(&self.auth_token_generator).get_payload(request.token).await? {
+        let actor_id = match ::std::sync::Arc::clone(&self.auth_token_generator).get_payload(request.token).await? {
             ::core::option::Option::None =>
                 return ::axiom::err!(UpdateEvent @ AuthenticationTokenInvalid),
             ::core::option::Option::Some
@@ -98,7 +98,7 @@ impl UpdateEventBoundary for UpdateEventInteractor {
 
         let mut event = unsafe { event.unwrap_unchecked() };
 
-        event.statuses.push(::domain::EventStatus::Updated { updated_by_manager_id: user_id, updated_at: ::axiom::time::Timestamp::now() });
+        event.statuses.push(::domain::EventStatus::Updated { updated_by_manager_id: actor_id, updated_at: ::axiom::time::Timestamp::now() });
         event_name.map(|event_name| event.name = event_name);
         event_description.map(|event_description| event.description = event_description);
         event_categories.map(|event_categories| event.categories = event_categories);

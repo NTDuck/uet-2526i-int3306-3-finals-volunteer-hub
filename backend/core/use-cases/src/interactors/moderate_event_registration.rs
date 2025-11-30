@@ -18,7 +18,7 @@ impl ModerateEventRegistrationBoundary for ModerateEventRegistrationInteractor {
     async fn apply(
         self: ::std::sync::Arc<Self>, request: ModerateEventRegistrationRequest,
     ) -> ::axiom::result::Fallible<ModerateEventRegistrationResponse> {
-        let user_id = match ::std::sync::Arc::clone(&self.auth_token_generator).get_payload(request.token).await? {
+        let actor_id = match ::std::sync::Arc::clone(&self.auth_token_generator).get_payload(request.token).await? {
             ::core::option::Option::None =>
                 return ::axiom::err!(ModerateEventRegistration @ AuthenticationTokenInvalid),
             ::core::option::Option::Some
@@ -63,7 +63,7 @@ impl ModerateEventRegistrationBoundary for ModerateEventRegistrationInteractor {
                     });
                 }
 
-                event_registration.statuses.push(::domain::EventRegistrationStatus::Accepted { accepted_by_manager_id: user_id, accepted_at: ::axiom::time::Timestamp::now() });
+                event_registration.statuses.push(::domain::EventRegistrationStatus::Accepted { accepted_by_manager_id: actor_id, accepted_at: ::axiom::time::Timestamp::now() });
             },
 
             ModerateEventRegistrationNewEventRegistrationStatus::Declined => {
@@ -77,7 +77,7 @@ impl ModerateEventRegistrationBoundary for ModerateEventRegistrationInteractor {
                     });
                 }
 
-                event_registration.statuses.push(::domain::EventRegistrationStatus::Declined { declined_by_manager_id: user_id, declined_at: ::axiom::time::Timestamp::now() });
+                event_registration.statuses.push(::domain::EventRegistrationStatus::Declined { declined_by_manager_id: actor_id, declined_at: ::axiom::time::Timestamp::now() });
             },
 
             ModerateEventRegistrationNewEventRegistrationStatus::Completed => {
@@ -91,7 +91,7 @@ impl ModerateEventRegistrationBoundary for ModerateEventRegistrationInteractor {
                     });
                 }
 
-                event_registration.statuses.push(::domain::EventRegistrationStatus::Completed { completed_by_manager_id: user_id, completed_at: ::axiom::time::Timestamp::now() });
+                event_registration.statuses.push(::domain::EventRegistrationStatus::Completed { completed_by_manager_id: actor_id, completed_at: ::axiom::time::Timestamp::now() });
             },
         }
 

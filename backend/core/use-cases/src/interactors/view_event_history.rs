@@ -20,7 +20,7 @@ impl ViewEventHistoryBoundary for ViewEventHistoryInteractor {
     async fn apply(
         self: ::std::sync::Arc<Self>, request: ViewEventHistoryRequest,
     ) -> ::axiom::result::Fallible<ViewEventHistoryResponse> {
-        let user_id = match ::std::sync::Arc::clone(&self.auth_token_generator).get_payload(request.token).await? {
+        let actor_id = match ::std::sync::Arc::clone(&self.auth_token_generator).get_payload(request.token).await? {
             ::core::option::Option::None =>
                 return ::axiom::err!(ViewEventHistory @ AuthenticationTokenInvalid),
             ::core::option::Option::Some
@@ -39,7 +39,7 @@ impl ViewEventHistoryBoundary for ViewEventHistoryInteractor {
                 return ::axiom::err!(ViewEventHistory @ UserUnauthorized { user_role: user_role.into() }),
         };
 
-        let event_registrations = ::std::sync::Arc::clone(&self.event_registration_repository).view_by_user_id(user_id).await?;
+        let event_registrations = ::std::sync::Arc::clone(&self.event_registration_repository).view_by_user_id(actor_id).await?;
 
         let events = ::futures::stream::iter(event_registrations)
             .map(|event_registration| (event_registration.event_id, *event_registration.statuses.last()))

@@ -1,4 +1,5 @@
-use ::async_trait::async_trait;
+use ::axiom::prelude::*;
+
 use ::use_cases::gateways::*;
 
 #[derive(::bon::Builder)]
@@ -70,6 +71,14 @@ impl UserRepository for InMemoryUserRepository {
 
         ::axiom::result::Fallible::Ok(contains)
     }
+
+    async fn search(self: ::std::sync::Arc<Self>, _filter: UserRepositorySearchFilter) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::User>> {
+        todo!()
+    }
+
+    async fn view(self: ::std::sync::Arc<Self>) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::User>> {
+        todo!()
+    }
 }
 
 pub struct UuidV7Generator;
@@ -109,13 +118,11 @@ impl UuidExt for ::uuid::Uuid {
         match self.get_timestamp() {
             ::core::option::Option::Some(timestamp) => {
                 let (seconds, nanoseconds) = timestamp.to_unix();
-                let timestamp = ::chrono::DateTime::from_timestamp(seconds as i64, nanoseconds);
 
-                match timestamp {
-                    ::core::option::Option::Some(timestamp) => ::core::result::Result::Ok(timestamp.naive_utc()),
-                    ::core::option::Option::None => ::core::result::Result::Err(UuidIntoTimestampError::OutOfRange),
-                }
+                ::axiom::time::Timestamp::from_timestamp(seconds as i64, nanoseconds)
+                    .ok_or(UuidIntoTimestampError::OutOfRange)
             },
+
             ::core::option::Option::None =>
                 ::core::result::Result::Err(UuidIntoTimestampError::IncompatibleUuidVersion {
                     version: self.get_version_num(),

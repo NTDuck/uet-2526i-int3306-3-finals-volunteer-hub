@@ -18,7 +18,7 @@ impl CreateEventBoundary for CreateEventInteractor {
     async fn apply(
         self: ::std::sync::Arc<Self>, request: CreateEventRequest,
     ) -> ::axiom::result::Fallible<CreateEventResponse> {
-        let user_id = match ::std::sync::Arc::clone(&self.auth_token_generator).get_payload(request.token).await? {
+        let actor_id = match ::std::sync::Arc::clone(&self.auth_token_generator).get_payload(request.token).await? {
             ::core::option::Option::None =>
                 return ::axiom::err!(CreateEvent @ AuthenticationTokenInvalid),
             ::core::option::Option::Some
@@ -77,7 +77,7 @@ impl CreateEventBoundary for CreateEventInteractor {
 
         let event = ::domain::Event::builder()
             .id(event_id)
-            .statuses(::vec1::vec1!(::domain::EventStatus::Created { created_by_manager_id: user_id }))
+            .statuses(::vec1::vec1!(::domain::EventStatus::Created { created_by_manager_id: actor_id }))
             .name(event_name)
             .description(event_description)
             .categories(event_categories)

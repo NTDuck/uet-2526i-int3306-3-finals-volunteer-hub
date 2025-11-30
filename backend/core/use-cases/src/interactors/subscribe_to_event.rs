@@ -19,7 +19,7 @@ impl SubscribeToEventBoundary for SubscribeToEventInteractor {
     async fn apply(
         self: ::std::sync::Arc<Self>, request: SubscribeToEventRequest,
     ) -> ::axiom::result::Fallible<SubscribeToEventResponse> {
-        let user_id = match ::std::sync::Arc::clone(&self.auth_token_generator).get_payload(request.token).await? {
+        let actor_id = match ::std::sync::Arc::clone(&self.auth_token_generator).get_payload(request.token).await? {
             ::core::option::Option::None =>
                 return ::axiom::err!(SubscribeToEvent @ AuthenticationTokenInvalid),
             ::core::option::Option::Some
@@ -50,7 +50,7 @@ impl SubscribeToEventBoundary for SubscribeToEventInteractor {
             return ::axiom::err!(SubscribeToEvent @ EventNotFound);
         }
 
-        let event_registration = match ::std::sync::Arc::clone(&self.event_registration_repository).get_by_event_and_user_id(event_id, user_id).await? {
+        let event_registration = match ::std::sync::Arc::clone(&self.event_registration_repository).get_by_event_and_user_id(event_id, actor_id).await? {
             ::core::option::Option::Some(mut event_registration) => {
                 let event_registration_status = event_registration.statuses.last();
 
@@ -75,7 +75,7 @@ impl SubscribeToEventBoundary for SubscribeToEventInteractor {
                 ::domain::EventRegistration::builder()
                     .id(event_registration_id)
                     .event_id(event_id)
-                    .volunteer_id(user_id)
+                    .volunteer_id(actor_id)
                     .statuses(::vec1::vec1!(::domain::EventRegistrationStatus::Pending { pending_at: ::axiom::time::Timestamp::now() }))
                     .build()
             },

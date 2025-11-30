@@ -60,6 +60,12 @@ impl ::core::convert::From<::domain::EventStatus> for EventRepositorySearchFilte
 }
 
 #[async_trait]
+pub trait EventExporter {
+    async fn export_as_csv(self: ::std::sync::Arc<Self>) -> ::axiom::result::Fallible<::std::boxed::Box<[u8]>>;
+    async fn export_as_json(self: ::std::sync::Arc<Self>) -> ::axiom::result::Fallible<::std::boxed::Box<[u8]>>;
+}
+
+#[async_trait]
 pub trait EventRegistrationRepository {
     async fn save(self: ::std::sync::Arc<Self>, registration: ::domain::EventRegistration) -> ::axiom::result::Fallible;
 
@@ -107,6 +113,12 @@ pub trait UserRepository {
     async fn view(self: ::std::sync::Arc<Self>) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::User>> {
         self.search(::core::default::Default::default()).await?.into_ok()
     }
+}
+
+#[async_trait]
+pub trait UserExporter {
+    async fn export_volunteers_as_csv(self: ::std::sync::Arc<Self>) -> ::axiom::result::Fallible<::std::boxed::Box<[u8]>>;
+    async fn export_volunteers_as_json(self: ::std::sync::Arc<Self>) -> ::axiom::result::Fallible<::std::boxed::Box<[u8]>>;
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::default::Default, ::bon::Builder)]
