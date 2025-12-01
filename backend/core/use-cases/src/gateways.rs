@@ -82,7 +82,44 @@ pub trait EventRegistrationRepository {
 
 #[async_trait]
 pub trait EventPostRepository {
-    
+    async fn save(self: ::std::sync::Arc<Self>, post: ::domain::EventPost) -> ::axiom::result::Fallible;
+    async fn remove(self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid) -> ::axiom::result::Fallible;
+
+    async fn get_by_id(self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid) -> ::axiom::result::Fallible<::core::option::Option<::domain::EventPost>>;
+
+    async fn contains_id(self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid) -> ::axiom::result::Fallible<bool> {
+        self.get_by_id(post_id).await?.is_some().into_ok()
+    }
+
+    async fn view_by_event_id(self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::EventPost>>;
+}
+
+#[async_trait]
+pub trait EventPostReactionRepository {
+    async fn save(self: ::std::sync::Arc<Self>, reaction: ::domain::EventPostReaction) -> ::axiom::result::Fallible;
+    async fn remove(self: ::std::sync::Arc<Self>, reaction_id: ::domain::Uuid) -> ::axiom::result::Fallible;
+
+    async fn get_by_id(self: ::std::sync::Arc<Self>, reaction_id: ::domain::Uuid) -> ::axiom::result::Fallible<::core::option::Option<::domain::EventPostReaction>>;
+
+    async fn get_by_post_and_user_id(self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid, user_id: ::domain::Uuid) -> ::axiom::result::Fallible<::core::option::Option<::domain::EventPostReaction>>;
+
+    async fn contains_post_and_user_id(self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid, user_id: ::domain::Uuid) -> ::axiom::result::Fallible<bool> {
+        self.get_by_post_and_user_id(post_id, user_id).await?.is_some().into_ok()
+    }
+
+    async fn count_by_post_id(self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid) -> ::axiom::result::Fallible<u64>;
+}
+
+#[async_trait]
+pub trait EventPostCommentRepository {
+    async fn save(self: ::std::sync::Arc<Self>, comment: ::domain::EventPostComment) -> ::axiom::result::Fallible;
+    async fn remove(self: ::std::sync::Arc<Self>, comment_id: ::domain::Uuid) -> ::axiom::result::Fallible;
+
+    async fn get_by_id(self: ::std::sync::Arc<Self>, comment_id: ::domain::Uuid) -> ::axiom::result::Fallible<::core::option::Option<::domain::EventPostComment>>;
+
+    async fn view_by_post_and_user_id(self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid, user_id: ::domain::Uuid) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::EventPostComment>>;
+
+    async fn count_by_post_id(self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid) -> ::axiom::result::Fallible<u64>;
 }
 
 #[async_trait]
@@ -100,17 +137,17 @@ pub trait UserRepository {
     ) -> ::axiom::result::Fallible<::core::option::Option<::domain::User>>;
 
     async fn contains_id(self: ::std::sync::Arc<Self>, id: ::domain::Uuid) -> ::axiom::result::Fallible<bool> {
-        ::axiom::result::Fallible::Ok(self.get_by_id(id).await?.is_some())
+        self.get_by_id(id).await?.is_some().into_ok()
     }
 
     async fn contains_username(
         self: ::std::sync::Arc<Self>, username: ::domain::Username,
     ) -> ::axiom::result::Fallible<bool> {
-        ::axiom::result::Fallible::Ok(self.get_by_username(username).await?.is_some())
+        self.get_by_username(username).await?.is_some().into_ok()
     }
 
     async fn contains_email(self: ::std::sync::Arc<Self>, email: ::domain::Email) -> ::axiom::result::Fallible<bool> {
-        ::axiom::result::Fallible::Ok(self.get_by_email(email).await?.is_some())
+        self.get_by_email(email).await?.is_some().into_ok()
     }
 
     async fn search(self: ::std::sync::Arc<Self>, filter: UserRepositorySearchFilter) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::User>>;
@@ -184,7 +221,7 @@ pub trait UuidGenerator {
     async fn generate(self: ::std::sync::Arc<Self>) -> ::axiom::result::Fallible<::domain::Uuid>;
 
     async fn get_timestamp(
-        self: ::std::sync::Arc<Self>, uuid: &::domain::Uuid,
+        self: ::std::sync::Arc<Self>, uuid: ::domain::Uuid,
     ) -> ::axiom::result::Fallible<::axiom::time::Timestamp>;
 }
 
@@ -221,23 +258,23 @@ pub trait AuthenticationTokenGenerator {
     async fn get_user_id(
         self: ::std::sync::Arc<Self>, token: ::axiom::string::String,
     ) -> ::axiom::result::Fallible<::core::option::Option<::domain::Uuid>> {
-        ::axiom::result::Fallible::Ok(self.get_payload(token).await?.map(|payload| payload.user_id))
+        self.get_payload(token).await?.map(|payload| payload.user_id).into_ok()
     }
 
     async fn get_user_role(
         self: ::std::sync::Arc<Self>, token: ::axiom::string::String,
     ) -> ::axiom::result::Fallible<::core::option::Option<::domain::UserRole>> {
-        ::axiom::result::Fallible::Ok(self.get_payload(token).await?.map(|payload| payload.user_role))
+        self.get_payload(token).await?.map(|payload| payload.user_role).into_ok()
     }
 
     async fn get_expiry_timestamp(
         self: ::std::sync::Arc<Self>, token: ::axiom::string::String,
     ) -> ::axiom::result::Fallible<::core::option::Option<::axiom::time::Timestamp>> {
-        ::axiom::result::Fallible::Ok(self.get_payload(token).await?.map(|payload| payload.expiry_timestamp))
+        self.get_payload(token).await?.map(|payload| payload.expiry_timestamp).into_ok()
     }
 
     async fn verify(self: ::std::sync::Arc<Self>, token: ::axiom::string::String) -> ::axiom::result::Fallible<bool> {
-        ::axiom::result::Fallible::Ok(self.get_payload(token).await?.is_some())
+        self.get_payload(token).await?.is_some().into_ok()
     }
 }
 
@@ -360,6 +397,6 @@ pub trait PasswordHasher {
     async fn verify(
         self: ::std::sync::Arc<Self>, password: ::domain::Password, digest: ::domain::PasswordDigest,
     ) -> ::axiom::result::Fallible<bool> {
-        ::axiom::result::Fallible::Ok(self.hash(password).await? == digest)
+        (self.hash(password).await? == digest).into_ok()
     }
 }

@@ -218,3 +218,7 @@ $ deno task preview-sveltekit-minimal
 
 ## TODO
 - Increase parallelism via e.g. `buffer_unordered(...)` for streams, `rayon`
+- pattern matching (statuses.last()...) => [.., last]
+- iterator.into_stream() instead of ::futures::stream::iter()
+- author/actor instead of user
+- then instead of filter map

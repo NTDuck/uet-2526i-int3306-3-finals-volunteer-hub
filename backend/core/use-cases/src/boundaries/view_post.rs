@@ -30,11 +30,16 @@ pub type ViewEventPostResponse =
 #[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
 pub struct ViewEventPostOkResponse {
     pub id: ::axiom::string::String,
+    
+    pub created_at: ::axiom::string::String,
     pub title: ::axiom::string::String,
     pub content: ::axiom::string::String,
 
     pub reactions: ::std::vec::Vec<ViewEventPostEventPostReaction>,
     pub comments: ::std::vec::Vec<ViewEventPostEventPostComment>,
+
+    pub author: ViewEventPostUser,
+    pub is_reacted_by_actor: bool,
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
@@ -44,6 +49,7 @@ pub struct ViewEventPostOkResponse {
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
 pub struct ViewEventPostEventPostReaction {
+    pub created_at: ::axiom::string::String,
     pub user: ViewEventPostUser,
 }
 
@@ -55,6 +61,7 @@ pub struct ViewEventPostEventPostReaction {
 #[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
 pub struct ViewEventPostEventPostComment {
     pub id: ::axiom::string::String,
+    pub created_at: ::axiom::string::String,
     pub user: ViewEventPostUser,
     pub content: ::axiom::string::String,
 }

@@ -16,6 +16,8 @@ pub trait CreateEventPostBoundary {
 pub struct CreateEventPostRequest {
     pub token: ::axiom::string::String,
 
+    pub event_id: ::axiom::string::String,
+
     pub post_title: ::axiom::string::String,
     pub post_content: ::axiom::string::String,
 }
@@ -49,6 +51,9 @@ pub enum CreateEventPostErrResponse {
 
     #[error("User temporarily suspended")]
     UserSuspended,
+
+    #[error("Event channel not found")]
+    EventChannelNotFound,
 
     #[error("Invalid post title `{post_title}`: {hint}", hint = ::domain::EventPostTitle::hint())]
     PostTitleInvalid {

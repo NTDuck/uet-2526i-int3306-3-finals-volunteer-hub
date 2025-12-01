@@ -15,7 +15,7 @@ pub trait RemoveEventPostReactionBoundary {
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi))]
 pub struct RemoveEventPostReactionRequest {
     pub token: ::axiom::string::String,
-    pub post_id: ::axiom::string::String,
+    pub reaction_or_post_id: ::axiom::string::String,
 }
 
 #[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
@@ -53,6 +53,9 @@ pub enum RemoveEventPostReactionErrResponse {
 
     #[error("Reaction not found")]
     ReactionNotFound,
+
+    #[error("Reaction not owned by user")]
+    OwnershipMismatch,
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::strum::Display)]
