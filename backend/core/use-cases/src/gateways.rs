@@ -81,6 +81,11 @@ pub trait EventRegistrationRepository {
 }
 
 #[async_trait]
+pub trait EventPostRepository {
+    
+}
+
+#[async_trait]
 pub trait UserRepository {
     async fn save(self: ::std::sync::Arc<Self>, user: ::domain::User) -> ::axiom::result::Fallible;
 
