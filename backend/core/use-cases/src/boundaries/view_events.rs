@@ -15,6 +15,7 @@ pub trait ViewEventsBoundary {
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi))]
 pub struct ViewEventsRequest {
     pub token: ::axiom::string::String,
+
     pub filter: ::core::option::Option<ViewEventsFilter>,
 }
 
@@ -28,7 +29,6 @@ pub struct ViewEventsFilter {
     pub query: ::core::option::Option<::axiom::string::String>,
     
     pub statuses: ::core::option::Option<::std::vec::Vec<ViewEventsEventStatus>>,
-    
     pub start_timestamp: ::core::option::Option<::axiom::string::String>,
     pub end_timestamp: ::core::option::Option<::axiom::string::String>,
 }
@@ -146,7 +146,7 @@ impl ::core::convert::From<crate::gateways::EventRepositorySearchFilterEventStat
     }
 }
 
-#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
+#[derive(::core::fmt::Debug, ::core::clone::Clone)]
 #[cfg_attr(feature = "serde", derive(::axiom::Erratum))]
 #[cfg_attr(feature = "serde", erratum(rename_all = "kebab-case", rename_all_fields = "camelCase"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
@@ -161,9 +161,10 @@ pub enum ViewEventsErrResponse {
     #[error("User not found")]
     UserNotFound,
 
-    #[error("User with role `{user_role}` not authorized: must be `{}` or `{}`", ViewEventsUserRole::EventManager, ViewEventsUserRole::Administrator)]
+    #[error("User with role `{user_role}` not authorized: must be {}", super::utils::fmt::join_with_comma_ad_hoc(.allowed_user_roles))]
     UserUnauthorized {
         user_role: ViewEventsUserRole,
+        allowed_user_roles: ::std::vec::Vec<ViewEventsUserRole>,
     },
 }
 

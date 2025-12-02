@@ -40,7 +40,7 @@ impl UpdateEventPostCommentBoundary for UpdateEventPostCommentInteractor {
                 user_id
             },
             ::core::option::Option::Some(AuthenticationTokenPayload { user_role, .. }) =>
-                return ::axiom::err!(UpdateEventPostComment @ UserUnauthorized { user_role: user_role.into() }),
+                return ::axiom::err!(UpdateEventPostComment @ UserUnauthorized { user_role: user_role.into(), allowed_user_roles: ::std::vec![UpdateEventPostCommentUserRole::Volunteer, UpdateEventPostCommentUserRole::EventManager] }),
         };
 
         let mut errors = ::std::vec::Vec::new();
@@ -51,7 +51,7 @@ impl UpdateEventPostCommentBoundary for UpdateEventPostCommentInteractor {
 
         match comment {
             ::core::option::Option::Some(::domain::EventPostComment { author_id, .. }) => {
-                if user_id != actor_id {
+                if author_id != actor_id {
                     errors.push(UpdateEventPostCommentErrResponse::OwnershipMismatch);
                 }
             },

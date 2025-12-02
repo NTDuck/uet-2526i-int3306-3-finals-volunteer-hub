@@ -15,6 +15,7 @@ pub trait CreateEventPostReactionBoundary {
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi))]
 pub struct CreateEventPostReactionRequest {
     pub token: ::axiom::string::String,
+
     pub post_id: ::axiom::string::String,
 }
 
@@ -40,9 +41,10 @@ pub enum CreateEventPostReactionErrResponse {
     #[error("User not found")]
     UserNotFound,
 
-    #[error("User with role `{user_role}` not authorized: must be `{}` or `{}`", CreateEventPostReactionUserRole::Volunteer, CreateEventPostReactionUserRole::EventManager)]
+    #[error("User with role `{user_role}` not authorized: must be {}", super::utils::fmt::join_with_comma_ad_hoc(.allowed_user_roles))]
     UserUnauthorized {
         user_role: CreateEventPostReactionUserRole,
+        allowed_user_roles: ::std::vec::Vec<CreateEventPostReactionUserRole>,
     },
 
     #[error("User temporarily suspended")]

@@ -52,30 +52,19 @@ pub enum ModerateEventErrResponse {
     #[error("User not found")]
     UserNotFound,
 
-    #[error("User with role `{user_role}` not authorized: must be `{}`", ModerateEventUserRole::Administrator)]
+    #[error("User with role `{user_role}` not authorized: must be {}", super::utils::fmt::join_with_comma_ad_hoc(.allowed_user_roles))]
     UserUnauthorized {
         user_role: ModerateEventUserRole,
+        allowed_user_roles: ::std::vec::Vec<ModerateEventUserRole>,
     },
 
     #[error("Event not found")]
     EventNotFound,
 
-    #[error("Event registration with status `{event_status}` not eligible: must be `{}`", format(.allowed_event_statuses))]
+    #[error("Event registration with status `{event_status}` not eligible: must be {}", super::utils::fmt::join_with_comma_ad_hoc(.allowed_event_statuses))]
     EventStatusNotEligible {
         event_status: ModerateEventEventStatus,
         allowed_event_statuses: ::std::vec::Vec<ModerateEventEventStatus>,
-    }
-}
-
-fn format<T: ::core::fmt::Display>(values: &[T]) -> ::axiom::string::String {
-    match values {
-        [] => ::core::default::Default::default(),
-        [first] => ::std::format!("`{first}`").into(),
-        [first, last] => ::std::format!("`{first}` or `{last}`").into(),
-        [firsts @ .., last] => {
-            let firsts = firsts.iter().map(|value| ::std::format!("`{value}`")).collect::<::std::vec::Vec<_>>().join(", ");
-            ::std::format!("{firsts}, or `{last}`").into()
-        }
     }
 }
 

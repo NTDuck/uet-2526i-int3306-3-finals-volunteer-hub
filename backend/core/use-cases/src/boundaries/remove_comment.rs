@@ -15,6 +15,7 @@ pub trait RemoveEventPostCommentBoundary {
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi))]
 pub struct RemoveEventPostCommentRequest {
     pub token: ::axiom::string::String,
+
     pub comment_id: ::axiom::string::String,
 }
 
@@ -40,9 +41,10 @@ pub enum RemoveEventPostCommentErrResponse {
     #[error("User not found")]
     UserNotFound,
 
-    #[error("User with role `{user_role}` not authorized: must be `{}` or `{}`", RemoveEventPostCommentUserRole::Volunteer, RemoveEventPostCommentUserRole::EventManager)]
+    #[error("User with role `{user_role}` not authorized: must be {}", super::utils::fmt::join_with_comma_ad_hoc(.allowed_user_roles))]
     UserUnauthorized {
         user_role: RemoveEventPostCommentUserRole,
+        allowed_user_roles: ::std::vec::Vec<RemoveEventPostCommentUserRole>,
     },
 
     #[error("User temporarily suspended")]

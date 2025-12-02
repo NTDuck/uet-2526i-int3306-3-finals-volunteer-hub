@@ -53,9 +53,10 @@ pub enum ModerateEventRegistrationErrResponse {
     #[error("User not found")]
     UserNotFound,
 
-    #[error("User with role `{user_role}` not authorized: must be `{expected_user_role}`", expected_user_role = ModerateEventRegistrationUserRole::EventManager)]
+    #[error("User with role `{user_role}` not authorized: must be {}", super::utils::fmt::join_with_comma_ad_hoc(.allowed_user_roles))]
     UserUnauthorized {
         user_role: ModerateEventRegistrationUserRole,
+        allowed_user_roles: ::std::vec::Vec<ModerateEventRegistrationUserRole>,
     },
 
     #[error("User temporarily suspended")]
@@ -64,23 +65,11 @@ pub enum ModerateEventRegistrationErrResponse {
     #[error("Event registration not found")]
     EventRegistrationNotFound,
 
-    #[error("Event registration with status `{event_registration_status}` not eligible: must be `{}`", format(.allowed_event_registration_statuses))]
+    #[error("Event registration with status `{event_registration_status}` not eligible: must be {}", super::utils::fmt::join_with_comma_ad_hoc(.allowed_event_registration_statuses))]
     EventRegistrationStatusNotEligible {
         event_registration_status: ModerateEventRegistrationEventRegistrationStatus,
         allowed_event_registration_statuses: ::std::vec::Vec<ModerateEventRegistrationEventRegistrationStatus>,
     },
-}
-
-fn format<T: ::core::fmt::Display>(values: &[T]) -> ::axiom::string::String {
-    match values {
-        [] => ::core::default::Default::default(),
-        [first] => ::std::format!("`{first}`").into(),
-        [first, last] => ::std::format!("`{first}` or `{last}`").into(),
-        [firsts @ .., last] => {
-            let firsts = firsts.iter().map(|value| ::std::format!("`{value}`")).collect::<::std::vec::Vec<_>>().join(", ");
-            ::std::format!("{firsts}, or `{last}`").into()
-        }
-    }
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::strum::Display)]

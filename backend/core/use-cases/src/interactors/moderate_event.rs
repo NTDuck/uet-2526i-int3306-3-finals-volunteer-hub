@@ -6,6 +6,7 @@ use crate::gateways::*;
 #[derive(::bon::Builder)]
 pub struct ModerateEventInteractor {
     event_repository: ::std::sync::Arc<dyn EventRepository + ::core::marker::Send + ::core::marker::Sync>,
+    event_recommender: ::std::sync::Arc<dyn EventRecommender + ::core::marker::Send + ::core::marker::Sync>,
     user_repository: ::std::sync::Arc<dyn UserRepository + ::core::marker::Send + ::core::marker::Sync>,
 
     uuid_codec: ::std::sync::Arc<dyn UuidCodec + ::core::marker::Send + ::core::marker::Sync>,
@@ -33,7 +34,7 @@ impl ModerateEventBoundary for ModerateEventInteractor {
                 user_id
             },
             ::core::option::Option::Some(AuthenticationTokenPayload { user_role, .. }) =>
-                return ::axiom::err!(ModerateEvent @ UserUnauthorized { user_role: user_role.into() }),
+                return ::axiom::err!(ModerateEvent @ UserUnauthorized { user_role: user_role.into(), allowed_user_roles: ::std::vec![ModerateEventUserRole::Administrator] }),
         };
 
         let event_id = ::std::sync::Arc::clone(&self.uuid_codec).parse(request.event_id).await?;
@@ -57,6 +58,8 @@ impl ModerateEventBoundary for ModerateEventInteractor {
                 }
 
                 event.statuses.push(::domain::EventStatus::Approved { approved_by_administrator_id: actor_id, approved_at: ::axiom::time::Timestamp::now() });
+
+                ::std::sync::Arc::clone(&self.event_recommender).track_approved(event_id).await?;
             },
             ModerateEventNewEventStatus::Rejected => {
                 if !::core::matches!(event_status, ::domain::EventStatus::Created { .. } | ::domain::EventStatus::Updated { .. } | ::domain::EventStatus::Rejected { .. }) {
@@ -71,6 +74,8 @@ impl ModerateEventBoundary for ModerateEventInteractor {
                 }
 
                 event.statuses.push(::domain::EventStatus::Rejected { rejected_by_administrator_id: actor_id, rejected_at: ::axiom::time::Timestamp::now() });
+
+                ::std::sync::Arc::clone(&self.event_recommender).untrack_approved(event_id).await?;
             },
         }
 

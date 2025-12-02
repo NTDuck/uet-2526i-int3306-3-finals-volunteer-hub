@@ -5,6 +5,8 @@ use crate::gateways::*;
 
 #[derive(::bon::Builder)]
 pub struct RemoveEventPostReactionInteractor {
+    event_recommender: ::std::sync::Arc<dyn EventRecommender + ::core::marker::Send + ::core::marker::Sync>,
+    post_repository: ::std::sync::Arc<dyn EventPostRepository + ::core::marker::Send + ::core::marker::Sync>,
     reaction_repository: ::std::sync::Arc<dyn EventPostReactionRepository + ::core::marker::Send + ::core::marker::Sync>,
     user_repository: ::std::sync::Arc<dyn UserRepository + ::core::marker::Send + ::core::marker::Sync>,
 
@@ -40,7 +42,7 @@ impl RemoveEventPostReactionBoundary for RemoveEventPostReactionInteractor {
                 user_id
             },
             ::core::option::Option::Some(AuthenticationTokenPayload { user_role, .. }) =>
-                return ::axiom::err!(RemoveEventPostReaction @ UserUnauthorized { user_role: user_role.into() }),
+                return ::axiom::err!(RemoveEventPostReaction @ UserUnauthorized { user_role: user_role.into(), allowed_user_roles: ::std::vec![RemoveEventPostReactionUserRole::Volunteer, RemoveEventPostReactionUserRole::EventManager] }),
         };
 
         let reaction_or_post_id = ::std::sync::Arc::clone(&self.uuid_codec).parse(request.reaction_or_post_id).await?;
@@ -56,6 +58,10 @@ impl RemoveEventPostReactionBoundary for RemoveEventPostReactionInteractor {
         }
 
         ::std::sync::Arc::clone(&self.reaction_repository).remove(reaction.id).await?;
+
+        let ::domain::EventPost { event_id, .. } = unsafe { ::std::sync::Arc::clone(&self.post_repository).get_by_id(reaction.post_id).await?.unwrap_unchecked() };
+
+        ::std::sync::Arc::clone(&self.event_recommender).untrack_reacted(event_id, actor_id).await?;
 
         ::axiom::ok!(RemoveEventPostReaction)
     }

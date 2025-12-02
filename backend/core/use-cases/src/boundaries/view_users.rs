@@ -194,8 +194,9 @@ pub enum ViewUsersErrResponse {
     #[error("User not found")]
     UserNotFound,
 
-    #[error("User with role `{user_role}` not authorized: must be `{}`", ViewUsersUserRole::Administrator)]
+    #[error("User with role `{user_role}` not authorized: must be {}", super::utils::fmt::join_with_comma_ad_hoc(.allowed_user_roles))]
     UserUnauthorized {
         user_role: ViewUsersUserRole,
+        allowed_user_roles: ::std::vec::Vec<ViewUsersUserRole>,
     },
 }

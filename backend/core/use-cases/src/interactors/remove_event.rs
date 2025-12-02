@@ -38,7 +38,7 @@ impl RemoveEventBoundary for RemoveEventInteractor {
                 }
             },
             ::core::option::Option::Some(AuthenticationTokenPayload { user_role, .. }) =>
-                return ::axiom::err!(RemoveEvent @ UserUnauthorized { user_role: user_role.into() }),
+                return ::axiom::err!(RemoveEvent @ UserUnauthorized { user_role: user_role.into(), allowed_user_roles: ::std::vec![RemoveEventUserRole::EventManager] }),
         };
 
         let mut errors = ::std::vec::Vec::new();
@@ -52,7 +52,7 @@ impl RemoveEventBoundary for RemoveEventInteractor {
                 let event_status = statuses.last();
 
                 if !::core::matches!(event_status, ::domain::EventStatus::Created { .. } | ::domain::EventStatus::Updated { .. }) {
-                    errors.push(RemoveEventErrResponse::EventStatusNotEligible { event_status: (*event_status).into() });
+                    errors.push(RemoveEventErrResponse::EventStatusNotEligible { event_status: (*event_status).into(), allowed_event_statuses: ::std::vec![RemoveEventEventStatus::Created, RemoveEventEventStatus::Updated] });
                 }
             },
 

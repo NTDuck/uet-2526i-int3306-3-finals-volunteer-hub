@@ -5,6 +5,7 @@ use crate::gateways::*;
 
 #[derive(::bon::Builder)]
 pub struct RemoveEventPostInteractor {
+    event_recommender: ::std::sync::Arc<dyn EventRecommender + ::core::marker::Send + ::core::marker::Sync>,
     post_repository: ::std::sync::Arc<dyn EventPostRepository + ::core::marker::Send + ::core::marker::Sync>,
     user_repository: ::std::sync::Arc<dyn UserRepository + ::core::marker::Send + ::core::marker::Sync>,
 
@@ -40,14 +41,14 @@ impl RemoveEventPostBoundary for RemoveEventPostInteractor {
                 user_id
             },
             ::core::option::Option::Some(AuthenticationTokenPayload { user_role, .. }) =>
-                return ::axiom::err!(RemoveEventPost @ UserUnauthorized { user_role: user_role.into() }),
+                return ::axiom::err!(RemoveEventPost @ UserUnauthorized { user_role: user_role.into(), allowed_user_roles: ::std::vec![RemoveEventPostUserRole::Volunteer, RemoveEventPostUserRole::EventManager] }),
         };
 
         let post_id = ::std::sync::Arc::clone(&self.uuid_codec).parse(request.post_id).await?;
 
         match ::std::sync::Arc::clone(&self.post_repository).get_by_id(post_id).await? {
             ::core::option::Option::Some(::domain::EventPost { author_id, .. }) => {
-                if user_id != actor_id {
+                if author_id != actor_id {
                     return ::axiom::err!(RemoveEventPost @ OwnershipMismatch);
                 }
             },
@@ -55,6 +56,8 @@ impl RemoveEventPostBoundary for RemoveEventPostInteractor {
         };
 
         ::std::sync::Arc::clone(&self.post_repository).remove(post_id).await?;
+
+        ::std::sync::Arc::clone(&self.event_recommender).untrack_posted(post_id, actor_id).await?;
 
         ::axiom::ok!(RemoveEventPost)
     }

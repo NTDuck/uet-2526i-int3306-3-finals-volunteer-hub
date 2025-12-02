@@ -40,7 +40,7 @@ impl UpdateEventBoundary for UpdateEventInteractor {
                 user_id
             },
             ::core::option::Option::Some(AuthenticationTokenPayload { user_role, .. }) =>
-                return ::axiom::err!(UpdateEvent @ UserUnauthorized { user_role: user_role.into() }),
+                return ::axiom::err!(UpdateEvent @ UserUnauthorized { user_role: user_role.into(), allowed_user_roles: ::std::vec![UpdateEventUserRole::EventManager] }),
         };
 
         let mut errors = ::std::vec::Vec::new();
@@ -54,7 +54,7 @@ impl UpdateEventBoundary for UpdateEventInteractor {
                 let event_status = statuses.last();
 
                 if !::core::matches!(event_status, ::domain::EventStatus::Created { .. } | ::domain::EventStatus::Updated { .. }) {
-                    errors.push(UpdateEventErrResponse::EventStatusNotEligible { event_status: (*event_status).into() });
+                    errors.push(UpdateEventErrResponse::EventStatusNotEligible { event_status: (*event_status).into(), allowed_event_statuses: ::std::vec![UpdateEventEventStatus::Created, UpdateEventEventStatus::Updated] });
                 }
             },
 

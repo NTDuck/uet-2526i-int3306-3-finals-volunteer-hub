@@ -15,6 +15,7 @@ pub trait ViewEventPostBoundary {
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi))]
 pub struct ViewEventPostRequest {
     pub token: ::axiom::string::String,
+
     pub post_id: ::axiom::string::String,
 }
 
@@ -129,7 +130,7 @@ impl ViewEventPostUser {
     }
 }
 
-#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
+#[derive(::core::fmt::Debug, ::core::clone::Clone)]
 #[cfg_attr(feature = "serde", derive(::axiom::Erratum))]
 #[cfg_attr(feature = "serde", erratum(rename_all = "kebab-case", rename_all_fields = "camelCase"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
@@ -144,9 +145,10 @@ pub enum ViewEventPostErrResponse {
     #[error("User not found")]
     UserNotFound,
 
-    #[error("User with role `{user_role}` not authorized: must be `{}` or `{}`", ViewEventPostUserRole::Volunteer, ViewEventPostUserRole::EventManager)]
+    #[error("User with role `{user_role}` not authorized: must be {}", super::utils::fmt::join_with_comma_ad_hoc(.allowed_user_roles))]
     UserUnauthorized {
         user_role: ViewEventPostUserRole,
+        allowed_user_roles: ::std::vec::Vec<ViewEventPostUserRole>,
     },
 
     #[error("Post not found")]

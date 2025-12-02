@@ -15,6 +15,7 @@ pub trait SubscribeToEventBoundary {
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi))]
 pub struct SubscribeToEventRequest {
     pub token: ::axiom::string::String,
+
     pub event_id: ::axiom::string::String,
 }
 
@@ -25,7 +26,7 @@ pub type SubscribeToEventResponse =
 #[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
 pub type SubscribeToEventOkResponse = ();
 
-#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
+#[derive(::core::fmt::Debug, ::core::clone::Clone)]
 #[cfg_attr(feature = "serde", derive(::axiom::Erratum))]
 #[cfg_attr(feature = "serde", erratum(rename_all = "kebab-case", rename_all_fields = "camelCase"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
@@ -40,9 +41,10 @@ pub enum SubscribeToEventErrResponse {
     #[error("User not found")]
     UserNotFound,
 
-    #[error("User with role `{user_role}` not authorized: must be `{}`", SubscribeToEventUserRole::Volunteer)]
+    #[error("User with role `{user_role}` not authorized: must be {}", super::utils::fmt::join_with_comma_ad_hoc(.allowed_user_roles))]
     UserUnauthorized {
         user_role: SubscribeToEventUserRole,
+        allowed_user_roles: ::std::vec::Vec<SubscribeToEventUserRole>,
     },
 
     #[error("User temporarily suspended")]
@@ -51,9 +53,10 @@ pub enum SubscribeToEventErrResponse {
     #[error("Event not found")] // or not published yet
     EventNotFound,
 
-    #[error("Event registration with status `{event_registration_status}` not eligible: must be `{}`", SubscribeToEventEventRegistrationStatus::Withdrawn)]
+    #[error("Event registration with status `{event_registration_status}` not eligible: must be {}", super::utils::fmt::join_with_comma_ad_hoc(.allowed_event_registration_statuses))]
     EventRegistrationStatusNotEligible {
         event_registration_status: SubscribeToEventEventRegistrationStatus,
+        allowed_event_registration_statuses: ::std::vec::Vec<SubscribeToEventEventRegistrationStatus>,
     },
 }
 

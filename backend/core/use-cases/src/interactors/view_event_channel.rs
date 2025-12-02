@@ -40,7 +40,7 @@ impl ViewEventChannelBoundary for ViewEventChannelInteractor {
                 user_id
             },
             ::core::option::Option::Some(AuthenticationTokenPayload { user_role, .. }) =>
-                return ::axiom::err!(ViewEventChannel @ UserUnauthorized { user_role: user_role.into() }),
+                return ::axiom::err!(ViewEventChannel @ UserUnauthorized { user_role: user_role.into(), allowed_user_roles: ::std::vec![ViewEventChannelUserRole::Volunteer] }),
         };
 
         let event_id = ::std::sync::Arc::clone(&self.uuid_codec).parse(request.event_id).await?;

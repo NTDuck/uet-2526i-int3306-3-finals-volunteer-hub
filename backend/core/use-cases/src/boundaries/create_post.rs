@@ -44,9 +44,10 @@ pub enum CreateEventPostErrResponse {
     #[error("User not found")]
     UserNotFound,
 
-    #[error("User with role `{user_role}` not authorized: must be `{}` or `{}`", CreateEventPostUserRole::Volunteer, CreateEventPostUserRole::EventManager)]
+    #[error("User with role `{user_role}` not authorized: must be {}", super::utils::fmt::join_with_comma_ad_hoc(.allowed_user_roles))]
     UserUnauthorized {
         user_role: CreateEventPostUserRole,
+        allowed_user_roles: ::std::vec::Vec<CreateEventPostUserRole>,
     },
 
     #[error("User temporarily suspended")]

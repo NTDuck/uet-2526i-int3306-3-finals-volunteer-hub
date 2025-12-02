@@ -15,6 +15,7 @@ pub trait ViewEventChannelBoundary {
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi))]
 pub struct ViewEventChannelRequest {
     pub token: ::axiom::string::String,
+
     pub event_id: ::axiom::string::String,
 }
 
@@ -107,7 +108,7 @@ impl ViewEventChannelUser {
     }
 }
 
-#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
+#[derive(::core::fmt::Debug, ::core::clone::Clone)]
 #[cfg_attr(feature = "serde", derive(::axiom::Erratum))]
 #[cfg_attr(feature = "serde", erratum(rename_all = "kebab-case", rename_all_fields = "camelCase"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
@@ -122,9 +123,10 @@ pub enum ViewEventChannelErrResponse {
     #[error("User not found")]
     UserNotFound,
 
-    #[error("User with role `{user_role}` not authorized: must be `{}` or `{}`", ViewEventChannelUserRole::Volunteer, ViewEventChannelUserRole::EventManager)]
+    #[error("User with role `{user_role}` not authorized: must be {}", super::utils::fmt::join_with_comma_ad_hoc(.allowed_user_roles))]
     UserUnauthorized {
         user_role: ViewEventChannelUserRole,
+        allowed_user_roles: ::std::vec::Vec<ViewEventChannelUserRole>,
     },
 
     #[error("Event channel not found")]

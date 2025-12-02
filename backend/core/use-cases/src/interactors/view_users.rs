@@ -21,7 +21,7 @@ impl ViewUsersBoundary for ViewUsersInteractor {
             ::core::option::Option::None =>
                 return ::axiom::err!(ViewUsers @ AuthenticationTokenInvalid),
             ::core::option::Option::Some
-            (AuthenticationTokenPayload { user_id, user_role: ::domain::UserRole::Volunteer, expiry_timestamp }) => {
+            (AuthenticationTokenPayload { user_id, user_role: ::domain::UserRole::Administrator, expiry_timestamp }) => {
                 if expiry_timestamp < ::axiom::time::Timestamp::now() {
                     return ::axiom::err!(ViewUsers @ AuthenticationTokenExpired);
                 }
@@ -31,7 +31,7 @@ impl ViewUsersBoundary for ViewUsersInteractor {
                 }
             },
             ::core::option::Option::Some(AuthenticationTokenPayload { user_role, .. }) =>
-                return ::axiom::err!(ViewUsers @ UserUnauthorized { user_role: user_role.into() }),
+                return ::axiom::err!(ViewUsers @ UserUnauthorized { user_role: user_role.into(), allowed_user_roles: ::std::vec![ViewUsersUserRole::Administrator] }),
         }
 
         let users = match request.filter {

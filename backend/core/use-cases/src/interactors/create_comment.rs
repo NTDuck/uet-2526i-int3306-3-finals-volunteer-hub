@@ -5,6 +5,7 @@ use crate::gateways::*;
 
 #[derive(::bon::Builder)]
 pub struct CreateEventPostCommentInteractor {
+    event_recommender: ::std::sync::Arc<dyn EventRecommender + ::core::marker::Send + ::core::marker::Sync>,
     post_repository: ::std::sync::Arc<dyn EventPostRepository + ::core::marker::Send + ::core::marker::Sync>,
     comment_repository: ::std::sync::Arc<dyn EventPostCommentRepository + ::core::marker::Send + ::core::marker::Sync>,
     user_repository: ::std::sync::Arc<dyn UserRepository + ::core::marker::Send + ::core::marker::Sync>,
@@ -42,7 +43,7 @@ impl CreateEventPostCommentBoundary for CreateEventPostCommentInteractor {
                 user_id
             },
             ::core::option::Option::Some(AuthenticationTokenPayload { user_role, .. }) =>
-                return ::axiom::err!(CreateEventPostComment @ UserUnauthorized { user_role: user_role.into() }),
+                return ::axiom::err!(CreateEventPostComment @ UserUnauthorized { user_role: user_role.into(), allowed_user_roles: ::std::vec![CreateEventPostCommentUserRole::Volunteer, CreateEventPostCommentUserRole::EventManager, ], }),
         };
 
         let mut errors = ::std::vec::Vec::new();
@@ -52,8 +53,13 @@ impl CreateEventPostCommentBoundary for CreateEventPostCommentInteractor {
 
         let post_id = ::std::sync::Arc::clone(&self.uuid_codec).parse(request.post_id).await?;
 
-        if !::std::sync::Arc::clone(&self.post_repository).contains_id(post_id).await? {
-            errors.push(CreateEventPostCommentErrResponse::PostNotFound);
+        let post = ::std::sync::Arc::clone(&self.post_repository).get_by_id(post_id).await?;
+
+        match post {
+            ::core::option::Option::None => {
+                errors.push(CreateEventPostCommentErrResponse::PostNotFound);
+            },
+            _ => {},
         }
 
         let ::core::result::Result::Ok(comment_content) = comment_content else { return ::axiom::errs!(CreateEventPostComment @ errors) };
@@ -78,6 +84,10 @@ impl CreateEventPostCommentBoundary for CreateEventPostCommentInteractor {
             .build();
 
         ::std::sync::Arc::clone(&self.comment_repository).save(comment).await?;
+
+        let event_id = unsafe { post.unwrap_unchecked() }.event_id;
+
+        ::std::sync::Arc::clone(&self.event_recommender).track_commented(event_id, actor_id).await?;
 
         ::axiom::ok!(CreateEventPostComment)
     }

@@ -5,6 +5,7 @@ use crate::gateways::*;
 
 #[derive(::bon::Builder)]
 pub struct CreateEventPostReactionInteractor {
+    event_recommender: ::std::sync::Arc<dyn EventRecommender + ::core::marker::Send + ::core::marker::Sync>,
     post_repository: ::std::sync::Arc<dyn EventPostRepository + ::core::marker::Send + ::core::marker::Sync>,
     reaction_repository: ::std::sync::Arc<dyn EventPostReactionRepository + ::core::marker::Send + ::core::marker::Sync>,
     user_repository: ::std::sync::Arc<dyn UserRepository + ::core::marker::Send + ::core::marker::Sync>,
@@ -42,14 +43,14 @@ impl CreateEventPostReactionBoundary for CreateEventPostReactionInteractor {
                 user_id
             },
             ::core::option::Option::Some(AuthenticationTokenPayload { user_role, .. }) =>
-                return ::axiom::err!(CreateEventPostReaction @ UserUnauthorized { user_role: user_role.into() }),
+                return ::axiom::err!(CreateEventPostReaction @ UserUnauthorized { user_role: user_role.into(), allowed_user_roles: ::std::vec![CreateEventPostReactionUserRole::Volunteer, CreateEventPostReactionUserRole::EventManager] }),
         };
 
         let post_id = ::std::sync::Arc::clone(&self.uuid_codec).parse(request.post_id).await?;
 
-        if !::std::sync::Arc::clone(&self.post_repository).contains_id(post_id).await? {
+        let ::core::option::Option::Some(::domain::EventPost { event_id, .. }) = ::std::sync::Arc::clone(&self.post_repository).get_by_id(post_id).await? else {
             return ::axiom::err!(CreateEventPostReaction @ PostNotFound);
-        }
+        };
 
         let reaction_id = loop {
             let uuid = ::std::sync::Arc::clone(&self.uuid_generator).generate().await?;
@@ -66,6 +67,8 @@ impl CreateEventPostReactionBoundary for CreateEventPostReactionInteractor {
             .build();
 
         ::std::sync::Arc::clone(&self.reaction_repository).save(reaction).await?;
+
+        ::std::sync::Arc::clone(&self.event_recommender).track_reacted(event_id, actor_id).await?;
 
         ::axiom::ok!(CreateEventPostReaction)
     }

@@ -18,17 +18,6 @@ pub trait EventRepository {
     async fn view(self: ::std::sync::Arc<Self>) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::Event>> {
         self.search(::core::default::Default::default()).await?.into_ok()
     }
-
-    // TODO: review, probably require other repositories
-    async fn view_recently_approved(
-        self: ::std::sync::Arc<Self>, limit: usize,
-    ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::Event>>;
-    async fn view_recently_posted(
-        self: ::std::sync::Arc<Self>, limit: usize,
-    ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::Event>>;
-    async fn view_trending(
-        self: ::std::sync::Arc<Self>, limit: usize,
-    ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::Event>>;
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::default::Default, ::bon::Builder)]
@@ -57,6 +46,38 @@ impl ::core::convert::From<::domain::EventStatus> for EventRepositorySearchFilte
             ::domain::EventStatus::Rejected { .. } => Self::Rejected,
         }
     }
+}
+
+#[async_trait]
+pub trait EventRecommender {
+    async fn track_approved(self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid) -> ::axiom::result::Fallible;
+    async fn untrack_approved(self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid) -> ::axiom::result::Fallible;
+
+    async fn track_posted(self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid, user_id: ::domain::Uuid) -> ::axiom::result::Fallible;
+    async fn untrack_posted(self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid, user_id: ::domain::Uuid) -> ::axiom::result::Fallible;
+
+    async fn track_subscribed(self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid, user_id: ::domain::Uuid) -> ::axiom::result::Fallible;
+    async fn track_reacted(self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid, user_id: ::domain::Uuid) -> ::axiom::result::Fallible;
+    async fn track_commented(self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid, user_id: ::domain::Uuid) -> ::axiom::result::Fallible;
+    async fn untrack_subscribed(self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid, user_id: ::domain::Uuid) -> ::axiom::result::Fallible;
+    async fn untrack_reacted(self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid, user_id: ::domain::Uuid) -> ::axiom::result::Fallible;
+    async fn untrack_commented(self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid, user_id: ::domain::Uuid) -> ::axiom::result::Fallible;
+
+    async fn view_recently_approved(
+        self: ::std::sync::Arc<Self>,
+    ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::Event>>;
+
+    async fn view_recently_posted(
+        self: ::std::sync::Arc<Self>,
+    ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::Event>>;
+
+    async fn view_trending(
+        self: ::std::sync::Arc<Self>,
+    ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::Event>>;
+
+    async fn view_personalized(
+        self: ::std::sync::Arc<Self>, user_id: ::domain::Uuid,
+    ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::Event>>;
 }
 
 #[async_trait]
@@ -165,12 +186,6 @@ pub trait UserRepository {
     }
 }
 
-#[async_trait]
-pub trait UserExporter {
-    async fn export_volunteers_as_csv(self: ::std::sync::Arc<Self>) -> ::axiom::result::Fallible<::std::boxed::Box<[u8]>>;
-    async fn export_volunteers_as_json(self: ::std::sync::Arc<Self>) -> ::axiom::result::Fallible<::std::boxed::Box<[u8]>>;
-}
-
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::default::Default, ::bon::Builder)]
 #[builder(on(_, into))]
 pub struct UserRepositorySearchFilter {
@@ -222,6 +237,12 @@ impl ::core::convert::From<UserRepositoryViewFilterUserRole> for ::domain::UserR
             UserRepositoryViewFilterUserRole::Administrator => ::domain::UserRole::Administrator,
         }
     }
+}
+
+#[async_trait]
+pub trait UserExporter {
+    async fn export_volunteers_as_csv(self: ::std::sync::Arc<Self>) -> ::axiom::result::Fallible<::std::boxed::Box<[u8]>>;
+    async fn export_volunteers_as_json(self: ::std::sync::Arc<Self>) -> ::axiom::result::Fallible<::std::boxed::Box<[u8]>>;
 }
 
 #[async_trait]
@@ -407,4 +428,9 @@ pub trait PasswordHasher {
     ) -> ::axiom::result::Fallible<bool> {
         (self.hash(password).await? == digest).into_ok()
     }
+}
+
+#[async_trait]
+pub trait Notifier {
+
 }

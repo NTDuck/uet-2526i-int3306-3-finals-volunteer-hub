@@ -27,7 +27,7 @@ impl ViewEventPostBoundary for ViewEventPostInteractor {
             ::core::option::Option::None =>
                 return ::axiom::err!(ViewEventPost @ AuthenticationTokenInvalid),
             ::core::option::Option::Some
-            (AuthenticationTokenPayload { user_id, user_role: ::domain::UserRole::Volunteer, expiry_timestamp }) => {
+            (AuthenticationTokenPayload { user_id, user_role: ::domain::UserRole::Volunteer | ::domain::UserRole::EventManager, expiry_timestamp }) => {
                 if expiry_timestamp < ::axiom::time::Timestamp::now() {
                     return ::axiom::err!(ViewEventPost @ AuthenticationTokenExpired);
                 }
@@ -39,7 +39,7 @@ impl ViewEventPostBoundary for ViewEventPostInteractor {
                 user_id
             },
             ::core::option::Option::Some(AuthenticationTokenPayload { user_role, .. }) =>
-                return ::axiom::err!(ViewEventPost @ UserUnauthorized { user_role: user_role.into() }),
+                return ::axiom::err!(ViewEventPost @ UserUnauthorized { user_role: user_role.into(), allowed_user_roles: ::std::vec![ViewEventPostUserRole::Volunteer, ViewEventPostUserRole::EventManager] }),
         };
 
         let post_id = ::std::sync::Arc::clone(&self.uuid_codec).parse(request.post_id).await?;

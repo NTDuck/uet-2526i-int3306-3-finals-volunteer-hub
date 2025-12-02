@@ -17,6 +17,7 @@ pub struct CreateEventPostCommentRequest {
     pub token: ::axiom::string::String,
 
     pub post_id: ::axiom::string::String,
+    
     pub comment_content: ::axiom::string::String,
 }
 
@@ -42,9 +43,10 @@ pub enum CreateEventPostCommentErrResponse {
     #[error("User not found")]
     UserNotFound,
 
-    #[error("User with role `{user_role}` not authorized: must be `{}` or `{}`", CreateEventPostCommentUserRole::Volunteer,  CreateEventPostCommentUserRole::EventManager)]
+    #[error("User with role `{user_role}` not authorized: must be {}", super::utils::fmt::join_with_comma_ad_hoc(.allowed_user_roles))]
     UserUnauthorized {
         user_role: CreateEventPostCommentUserRole,
+        allowed_user_roles: ::std::vec::Vec<CreateEventPostCommentUserRole>,
     },
 
     #[error("User temporarily suspended")]

@@ -32,7 +32,7 @@ impl ModerateUserBoundary for ModerateUserInteractor {
                 user_id
             },
             ::core::option::Option::Some(AuthenticationTokenPayload { user_role, .. }) =>
-                return ::axiom::err!(ModerateUser @ UserUnauthorized { user_role: user_role.into() }),
+                return ::axiom::err!(ModerateUser @ UserUnauthorized { user_role: user_role.into(), allowed_user_roles: ::std::vec![ModerateUserUserRole::Administrator] }),
         };
 
         let user_id = ::std::sync::Arc::clone(&self.uuid_codec).parse(request.user_id).await?;

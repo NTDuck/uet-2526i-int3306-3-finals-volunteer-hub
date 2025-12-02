@@ -50,36 +50,25 @@ pub enum ModerateUserErrResponse {
     AuthenticationTokenExpired,
 
     #[error("User not found")]
-    UserNotFound,
+    UserNotFound, // Well this will surely be confusing ...
 
-    #[error("User with role `{user_role}` not authorized: must be `{}`", ModerateUserUserRole::Administrator)]
+    #[error("User with role `{user_role}` not authorized: must be {}", super::utils::fmt::join_with_comma_ad_hoc(.allowed_user_roles))]
     UserUnauthorized {
         user_role: ModerateUserUserRole,
+        allowed_user_roles: ::std::vec::Vec<ModerateUserUserRole>,
     },
 
-    #[error("User with role `{user_role}` not eligible: must be `{}`", format(.allowed_user_roles))]
+    #[error("User with role `{user_role}` not eligible: must be {}", super::utils::fmt::join_with_comma_ad_hoc(.allowed_user_roles))]
     UserRoleNotEligible {
         user_role: ModerateUserUserRole,
         allowed_user_roles: ::std::vec::Vec<ModerateUserUserRole>,
     },
 
-    #[error("User with status `{user_status}` not eligible: must be `{}`", format(.allowed_user_statuses))]
+    #[error("User with status `{user_status}` not eligible: must be {}", super::utils::fmt::join_with_comma_ad_hoc(.allowed_user_statuses))]
     UserStatusNotEligible {
         user_status: ModerateUserUserStatus,
         allowed_user_statuses: ::std::vec::Vec<ModerateUserUserStatus>,
     },
-}
-
-fn format<T: ::core::fmt::Display>(values: &[T]) -> ::axiom::string::String {
-    match values {
-        [] => ::core::default::Default::default(),
-        [first] => ::std::format!("`{first}`").into(),
-        [first, last] => ::std::format!("`{first}` or `{last}`").into(),
-        [firsts @ .., last] => {
-            let firsts = firsts.iter().map(|value| ::std::format!("`{value}`")).collect::<::std::vec::Vec<_>>().join(", ");
-            ::std::format!("{firsts}, or `{last}`").into()
-        }
-    }
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::strum::Display)]

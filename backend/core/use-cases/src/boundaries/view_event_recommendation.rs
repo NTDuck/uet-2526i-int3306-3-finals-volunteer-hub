@@ -15,8 +15,8 @@ pub trait ViewEventRecommendationBoundary {
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi))]
 pub struct ViewEventRecommendationRequest {
     pub token: ::axiom::string::String,
+
     pub r#type: ViewEventRecommendationRecommendationType,
-    pub limit: usize,
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
@@ -28,6 +28,7 @@ pub enum ViewEventRecommendationRecommendationType {
     RecentlyPublished,
     RecentlyPosted,
     Trending,
+    Personalized,
 }
 
 #[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]

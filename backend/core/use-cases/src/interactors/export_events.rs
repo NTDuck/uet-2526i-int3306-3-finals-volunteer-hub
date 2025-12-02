@@ -30,7 +30,7 @@ impl ExportEventsBoundary for ExportEventsInteractor {
                 }
             },
             ::core::option::Option::Some(AuthenticationTokenPayload { user_role, .. }) =>
-                return ::axiom::err!(ExportEvents @ UserUnauthorized { user_role: user_role.into() }),
+                return ::axiom::err!(ExportEvents @ UserUnauthorized { user_role: user_role.into(), allowed_user_roles: ::std::vec![ExportEventsUserRole::Administrator] }),
         };
 
         let bytes = match request.format {

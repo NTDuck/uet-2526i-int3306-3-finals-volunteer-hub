@@ -5,6 +5,7 @@ use crate::gateways::*;
 
 #[derive(::bon::Builder)]
 pub struct UnsubscribeFromEventInteractor {
+    event_recommender: ::std::sync::Arc<dyn EventRecommender + ::core::marker::Send + ::core::marker::Sync>,
     event_registration_repository: ::std::sync::Arc<dyn EventRegistrationRepository + ::core::marker::Send + ::core::marker::Sync>,
     user_repository: ::std::sync::Arc<dyn UserRepository + ::core::marker::Send + ::core::marker::Sync>,
 
@@ -39,7 +40,7 @@ impl UnsubscribeFromEventBoundary for UnsubscribeFromEventInteractor {
                 user_id
             },
             ::core::option::Option::Some(AuthenticationTokenPayload { user_role, .. }) =>
-                return ::axiom::err!(UnsubscribeFromEvent @ UserUnauthorized { user_role: user_role.into() }),
+                return ::axiom::err!(UnsubscribeFromEvent @ UserUnauthorized { user_role: user_role.into(), allowed_user_roles: ::std::vec![UnsubscribeFromEventUserRole::Volunteer] }),
         };
 
         let event_or_registration_id = ::std::sync::Arc::clone(&self.uuid_codec).parse(request.event_or_registration_id).await?;
@@ -54,12 +55,16 @@ impl UnsubscribeFromEventBoundary for UnsubscribeFromEventInteractor {
         let event_registration_status = event_registration.statuses.last();
 
         if !::core::matches!(event_registration_status, ::domain::EventRegistrationStatus::Pending { .. }) {
-            return ::axiom::err!(UnsubscribeFromEvent @ EventRegistrationStatusNotEligible { event_registration_status: (*event_registration_status).into() });
+            return ::axiom::err!(UnsubscribeFromEvent @ EventRegistrationStatusNotEligible { event_registration_status: (*event_registration_status).into(), allowed_event_registration_statuses: ::std::vec![UnsubscribeFromEventEventRegistrationStatus::Pending] });
         }
 
         event_registration.statuses.push(::domain::EventRegistrationStatus::Withdrawn { withdrawn_at: ::axiom::time::Timestamp::now() });
 
+        let event_id = event_registration.event_id;
+
         ::std::sync::Arc::clone(&self.event_registration_repository).save(event_registration).await?;
+        
+        ::std::sync::Arc::clone(&self.event_recommender).untrack_subscribed(event_id, actor_id).await?;
 
         ::axiom::ok!(UnsubscribeFromEvent)
     }

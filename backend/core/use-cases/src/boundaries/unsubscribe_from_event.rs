@@ -15,6 +15,7 @@ pub trait UnsubscribeFromEventBoundary {
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi))]
 pub struct UnsubscribeFromEventRequest {
     pub token: ::axiom::string::String,
+
     pub event_or_registration_id: ::axiom::string::String,
 }
 
@@ -25,7 +26,7 @@ pub type UnsubscribeFromEventResponse =
 #[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
 pub type UnsubscribeFromEventOkResponse = ();
 
-#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
+#[derive(::core::fmt::Debug, ::core::clone::Clone)]
 #[cfg_attr(feature = "serde", derive(::axiom::Erratum))]
 #[cfg_attr(feature = "serde", erratum(rename_all = "kebab-case", rename_all_fields = "camelCase"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
@@ -40,9 +41,10 @@ pub enum UnsubscribeFromEventErrResponse {
     #[error("User not found")]
     UserNotFound,
 
-    #[error("User with role `{user_role}` not authorized: must be `{}`", UnsubscribeFromEventUserRole::Volunteer)]
+    #[error("User with role `{user_role}` not authorized: must be {}", super::utils::fmt::join_with_comma_ad_hoc(.allowed_user_roles))]
     UserUnauthorized {
         user_role: UnsubscribeFromEventUserRole,
+        allowed_user_roles: ::std::vec::Vec<UnsubscribeFromEventUserRole>,
     },
 
     #[error("User temporarily suspended")]
@@ -51,9 +53,10 @@ pub enum UnsubscribeFromEventErrResponse {
     #[error("Event registration not found")]
     EventRegistrationNotFound,
 
-    #[error("Event registration with status `{event_registration_status}` not eligible: must be `{}`", UnsubscribeFromEventEventRegistrationStatus::Pending)]
+    #[error("Event registration with status `{event_registration_status}` not eligible: must be {}", super::utils::fmt::join_with_comma_ad_hoc(.allowed_event_registration_statuses))]
     EventRegistrationStatusNotEligible {
         event_registration_status: UnsubscribeFromEventEventRegistrationStatus,
+        allowed_event_registration_statuses: ::std::vec::Vec<UnsubscribeFromEventEventRegistrationStatus>,
     },
 }
 

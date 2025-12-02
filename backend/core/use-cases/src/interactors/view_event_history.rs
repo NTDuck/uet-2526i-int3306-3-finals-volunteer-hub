@@ -36,7 +36,7 @@ impl ViewEventHistoryBoundary for ViewEventHistoryInteractor {
                 user_id
             },
             ::core::option::Option::Some(AuthenticationTokenPayload { user_role, .. }) =>
-                return ::axiom::err!(ViewEventHistory @ UserUnauthorized { user_role: user_role.into() }),
+                return ::axiom::err!(ViewEventHistory @ UserUnauthorized { user_role: user_role.into(), allowed_user_roles: ::std::vec![ViewEventHistoryUserRole::Volunteer] }),
         };
 
         let event_registrations = ::std::sync::Arc::clone(&self.event_registration_repository).view_by_user_id(actor_id).await?;

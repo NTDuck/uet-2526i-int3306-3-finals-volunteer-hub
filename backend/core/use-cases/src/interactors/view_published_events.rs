@@ -33,7 +33,7 @@ impl ViewPublishedEventsBoundary for ViewPublishedEventsInteractor {
                 }
             },
             ::core::option::Option::Some(AuthenticationTokenPayload { user_role, .. }) =>
-                return ::axiom::err!(ViewPublishedEvents @ UserUnauthorized { user_role: user_role.into() }),
+                return ::axiom::err!(ViewPublishedEvents @ UserUnauthorized { user_role: user_role.into(), allowed_user_roles: ::std::vec![ViewPublishedEventsUserRole::Volunteer] }),
         }
 
         let events = match request.filter {

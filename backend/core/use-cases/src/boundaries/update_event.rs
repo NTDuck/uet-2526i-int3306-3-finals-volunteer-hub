@@ -45,9 +45,10 @@ pub enum UpdateEventErrResponse {
     #[error("User not found")]
     UserNotFound,
 
-    #[error("User with role `{user_role}` not authorized: must be `{}`", UpdateEventUserRole::EventManager)]
+    #[error("User with role `{user_role}` not authorized: must be {}", super::utils::fmt::join_with_comma_ad_hoc(.allowed_user_roles))]
     UserUnauthorized {
         user_role: UpdateEventUserRole,
+        allowed_user_roles: ::std::vec::Vec<UpdateEventUserRole>,
     },
 
     #[error("User temporarily suspended")]
@@ -63,7 +64,7 @@ pub enum UpdateEventErrResponse {
         event_description: ::axiom::string::String,
     },
 
-    #[error("Invalid event categories `{}`: {hint}", format(.event_categories), hint = ::domain::EventCategory::hint())]
+    #[error("Invalid event categories `{}`: {hint}", super::utils::fmt::join_with_comma(.event_categories), hint = ::domain::EventCategory::hint())]
     EventCategoriesInvalid {
         event_categories: ::std::vec::Vec<::axiom::string::String>,
     },
@@ -76,19 +77,11 @@ pub enum UpdateEventErrResponse {
     #[error("Event not found")]
     EventNotFound,
 
-    #[error("Event with status `{event_status}` not eligible: must be `{}` or `{}`", UpdateEventEventStatus::Created, UpdateEventEventStatus::Updated)]
+    #[error("Event with status `{event_status}` not eligible: must be {}", super::utils::fmt::join_with_comma_ad_hoc(.allowed_event_statuses))]
     EventStatusNotEligible {
         event_status: UpdateEventEventStatus,
+        allowed_event_statuses: ::std::vec::Vec<UpdateEventEventStatus>,
     },
-}
-
-fn format<T: ::core::fmt::Display>(values: &[T]) -> ::axiom::string::String {
-    values
-        .iter()
-        .map(|value| ::std::format!("`{value}`"))
-        .collect::<::std::vec::Vec<_>>()
-        .join(", ")
-        .into()
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::strum::Display)]

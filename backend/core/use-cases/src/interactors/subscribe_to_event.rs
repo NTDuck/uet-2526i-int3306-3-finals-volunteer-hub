@@ -6,6 +6,7 @@ use crate::gateways::*;
 #[derive(::bon::Builder)]
 pub struct SubscribeToEventInteractor {
     event_repository: ::std::sync::Arc<dyn EventRepository + ::core::marker::Send + ::core::marker::Sync>,
+    event_recommender: ::std::sync::Arc<dyn EventRecommender + ::core::marker::Send + ::core::marker::Sync>,
     event_registration_repository: ::std::sync::Arc<dyn EventRegistrationRepository + ::core::marker::Send + ::core::marker::Sync>,
     user_repository: ::std::sync::Arc<dyn UserRepository + ::core::marker::Send + ::core::marker::Sync>,
 
@@ -41,7 +42,7 @@ impl SubscribeToEventBoundary for SubscribeToEventInteractor {
                 user_id
             },
             ::core::option::Option::Some(AuthenticationTokenPayload { user_role, .. }) =>
-                return ::axiom::err!(SubscribeToEvent @ UserUnauthorized { user_role: user_role.into() }),
+                return ::axiom::err!(SubscribeToEvent @ UserUnauthorized { user_role: user_role.into(), allowed_user_roles: ::std::vec![SubscribeToEventUserRole::Volunteer] }),
         };
 
         let event_id = ::std::sync::Arc::clone(&self.uuid_codec).parse(request.event_id).await?;
@@ -55,7 +56,7 @@ impl SubscribeToEventBoundary for SubscribeToEventInteractor {
                 let event_registration_status = event_registration.statuses.last();
 
                 if !::core::matches!(event_registration_status, ::domain::EventRegistrationStatus::Withdrawn { .. }) {
-                    return ::axiom::err!(SubscribeToEvent @ EventRegistrationStatusNotEligible { event_registration_status: (*event_registration_status).into() });
+                    return ::axiom::err!(SubscribeToEvent @ EventRegistrationStatusNotEligible { event_registration_status: (*event_registration_status).into(), allowed_event_registration_statuses: ::std::vec![SubscribeToEventEventRegistrationStatus::Withdrawn] });
                 }
 
                 event_registration.statuses.push(::domain::EventRegistrationStatus::Pending { pending_at: ::axiom::time::Timestamp::now() });
@@ -83,6 +84,8 @@ impl SubscribeToEventBoundary for SubscribeToEventInteractor {
 
         ::std::sync::Arc::clone(&self.event_registration_repository).save(event_registration).await?;
 
+        ::std::sync::Arc::clone(&self.event_recommender).track_subscribed(event_id, actor_id).await?;
+        
         ::axiom::ok!(SubscribeToEvent)
     }
 }

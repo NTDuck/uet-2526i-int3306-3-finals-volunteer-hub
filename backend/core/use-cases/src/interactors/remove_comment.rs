@@ -5,6 +5,8 @@ use crate::gateways::*;
 
 #[derive(::bon::Builder)]
 pub struct RemoveEventPostCommentInteractor {
+    event_recommender: ::std::sync::Arc<dyn EventRecommender + ::core::marker::Send + ::core::marker::Sync>,
+    post_repository: ::std::sync::Arc<dyn EventPostRepository + ::core::marker::Send + ::core::marker::Sync>,
     comment_repository: ::std::sync::Arc<dyn EventPostCommentRepository + ::core::marker::Send + ::core::marker::Sync>,
     user_repository: ::std::sync::Arc<dyn UserRepository + ::core::marker::Send + ::core::marker::Sync>,
 
@@ -40,21 +42,24 @@ impl RemoveEventPostCommentBoundary for RemoveEventPostCommentInteractor {
                 user_id
             },
             ::core::option::Option::Some(AuthenticationTokenPayload { user_role, .. }) =>
-                return ::axiom::err!(RemoveEventPostComment @ UserUnauthorized { user_role: user_role.into() }),
+                return ::axiom::err!(RemoveEventPostComment @ UserUnauthorized { user_role: user_role.into(), allowed_user_roles: ::std::vec![RemoveEventPostCommentUserRole::Volunteer, RemoveEventPostCommentUserRole::EventManager] }),
         };
 
         let comment_id = ::std::sync::Arc::clone(&self.uuid_codec).parse(request.comment_id).await?;
-
-        match ::std::sync::Arc::clone(&self.comment_repository).get_by_id(comment_id).await? {
-            ::core::option::Option::Some(::domain::EventPostComment { author_id, .. }) => {
-                if author_id != actor_id {
-                    return ::axiom::err!(RemoveEventPostComment @ OwnershipMismatch);
-                }
-            },
-            ::core::option::Option::None => return ::axiom::err!(RemoveEventPostComment @ CommentNotFound),
+        
+        let ::core::option::Option::Some(comment) = ::std::sync::Arc::clone(&self.comment_repository).get_by_id(comment_id).await? else {
+            return ::axiom::err!(RemoveEventPostComment @ CommentNotFound);
         };
 
+        if comment.author_id != actor_id {
+            return ::axiom::err!(RemoveEventPostComment @ OwnershipMismatch);
+        }
+
         ::std::sync::Arc::clone(&self.comment_repository).remove(comment_id).await?;
+
+        let ::domain::EventPost { event_id, .. } = unsafe { ::std::sync::Arc::clone(&self.post_repository).get_by_id(comment.post_id).await?.unwrap_unchecked() };
+
+        ::std::sync::Arc::clone(&self.event_recommender).untrack_reacted(event_id, actor_id).await?;
 
         ::axiom::ok!(RemoveEventPostComment)
     }

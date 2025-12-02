@@ -6,6 +6,7 @@ use crate::gateways::*;
 #[derive(::bon::Builder)]
 pub struct CreateEventPostInteractor {
     event_repository: ::std::sync::Arc<dyn EventRepository + ::core::marker::Send + ::core::marker::Sync>,
+    event_recommender: ::std::sync::Arc<dyn EventRecommender + ::core::marker::Send + ::core::marker::Sync>,
     post_repository: ::std::sync::Arc<dyn EventPostRepository + ::core::marker::Send + ::core::marker::Sync>,
     user_repository: ::std::sync::Arc<dyn UserRepository + ::core::marker::Send + ::core::marker::Sync>,
 
@@ -42,7 +43,7 @@ impl CreateEventPostBoundary for CreateEventPostInteractor {
                 user_id
             },
             ::core::option::Option::Some(AuthenticationTokenPayload { user_role, .. }) =>
-                return ::axiom::err!(CreateEventPost @ UserUnauthorized { user_role: user_role.into() }),
+                return ::axiom::err!(CreateEventPost @ UserUnauthorized { user_role: user_role.into(), allowed_user_roles: ::std::vec![CreateEventPostUserRole::Volunteer, CreateEventPostUserRole::EventManager] }),
         };
 
         let mut errors = ::std::vec::Vec::new();
@@ -92,6 +93,8 @@ impl CreateEventPostBoundary for CreateEventPostInteractor {
             .build();
 
         ::std::sync::Arc::clone(&self.post_repository).save(post).await?;
+
+        ::std::sync::Arc::clone(&self.event_recommender).track_posted(event_id, actor_id).await?;
 
         ::axiom::ok!(CreateEventPost)
     }

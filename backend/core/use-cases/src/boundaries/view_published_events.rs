@@ -122,7 +122,7 @@ impl ::core::convert::From<::domain::EventStatus> for ViewPublishedEventsEventSt
     }
 }
 
-#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
+#[derive(::core::fmt::Debug, ::core::clone::Clone)]
 #[cfg_attr(feature = "serde", derive(::axiom::Erratum))]
 #[cfg_attr(feature = "serde", erratum(rename_all = "kebab-case", rename_all_fields = "camelCase"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
@@ -137,9 +137,10 @@ pub enum ViewPublishedEventsErrResponse {
     #[error("User not found")]
     UserNotFound,
 
-    #[error("User with role `{user_role}` not authorized: must be `{}`", ViewPublishedEventsUserRole::Volunteer)]
+    #[error("User with role `{user_role}` not authorized: must be {}", super::utils::fmt::join_with_comma_ad_hoc(.allowed_user_roles))]
     UserUnauthorized {
         user_role: ViewPublishedEventsUserRole,
+        allowed_user_roles: ::std::vec::Vec<ViewPublishedEventsUserRole>,
     },
 }
 

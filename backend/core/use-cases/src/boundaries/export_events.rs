@@ -15,6 +15,7 @@ pub trait ExportEventsBoundary {
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi))]
 pub struct ExportEventsRequest {
     pub token: ::axiom::string::String,
+
     pub format: ExportEventsExportFormat,
 }
 
@@ -82,9 +83,10 @@ pub enum ExportEventsErrResponse {
     #[error("User not found")]
     UserNotFound,
 
-    #[error("User with role `{user_role}` not authorized: must be `{}`", ExportEventsUserRole::Administrator)]
+    #[error("User with role `{user_role}` not authorized: must be {}", super::utils::fmt::join_with_comma_ad_hoc(.allowed_user_roles))]
     UserUnauthorized {
         user_role: ExportEventsUserRole,
+        allowed_user_roles: ::std::vec::Vec<ExportEventsUserRole>,
     },
 }
 
