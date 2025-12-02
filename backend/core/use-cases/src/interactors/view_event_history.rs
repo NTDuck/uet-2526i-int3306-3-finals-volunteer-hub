@@ -43,7 +43,7 @@ impl ViewEventHistoryBoundary for ViewEventHistoryInteractor {
 
         let events = ::futures::stream::iter(event_registrations)
             .map(|event_registration| (event_registration.event_id, *event_registration.statuses.last()))
-            .filter_map(|(event_id, event_registration_status)| {
+            .then(|(event_id, event_registration_status)| {
                 let event_repository = ::std::sync::Arc::clone(&self.event_repository);
 
                 async move {

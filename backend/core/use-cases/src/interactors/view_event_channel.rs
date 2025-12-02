@@ -89,8 +89,7 @@ impl ViewEventChannelBoundary for ViewEventChannelInteractor {
                         .into_ok()
                 }
             })
-            .filter_map(|fallible| async move { fallible.ok() })
-            .collect::<::std::vec::Vec<_>>().await;
+            .try_collect::<::std::vec::Vec<_>>().await?;
 
         let response = ViewEventChannelOkResponse::builder().posts(posts).build();
 

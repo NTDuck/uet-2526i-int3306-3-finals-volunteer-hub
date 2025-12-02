@@ -41,18 +41,17 @@ impl ViewUsersBoundary for ViewUsersInteractor {
             },
         };
 
-        let users = ::futures::stream::iter(users)
-            .filter_map(|user| {
+        let users = users.into_stream()
+            .then(|user| {
                 let uuid_codec = ::std::sync::Arc::clone(&self.uuid_codec);
 
                 async move {
                     ViewUsersUser::build_from(user)
                         .with_uuid_codec(uuid_codec)
                         .try_build().await
-                        .ok()
                 }
             })
-            .collect::<::std::vec::Vec<_>>().await;
+            .try_collect::<::std::vec::Vec<_>>().await?;
         
         let response = ViewUsersOkResponse::builder().users(users).build();
         ::axiom::ok!(ViewUsers @ response)

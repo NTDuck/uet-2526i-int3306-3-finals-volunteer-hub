@@ -221,11 +221,9 @@ $ deno task preview-sveltekit-minimal
 
 - pattern matching (statuses.last()...) => [.., last]
 - iterator.into_stream() instead of ::futures::stream::iter()
-- then instead of filter map
+- then + try_collect instead of filter map
 - always clone when used ARC
 - add timestamp/created_at
-- line break even when single lined
-- all attrs in #[error] of boundary should be DTO-ed
 
 - impl noti
 - impl rcm
