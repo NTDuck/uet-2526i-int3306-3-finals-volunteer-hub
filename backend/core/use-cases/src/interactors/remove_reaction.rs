@@ -9,7 +9,6 @@ pub struct RemoveEventPostReactionInteractor {
     user_repository: ::std::sync::Arc<dyn UserRepository + ::core::marker::Send + ::core::marker::Sync>,
 
     uuid_codec: ::std::sync::Arc<dyn UuidCodec + ::core::marker::Send + ::core::marker::Sync>,
-    uuid_generator: ::std::sync::Arc<dyn UuidGenerator + ::core::marker::Send + ::core::marker::Sync>,
     auth_token_generator:
         ::std::sync::Arc<dyn AuthenticationTokenGenerator + ::core::marker::Send + ::core::marker::Sync>,
 }
@@ -52,7 +51,7 @@ impl RemoveEventPostReactionBoundary for RemoveEventPostReactionInteractor {
             return ::axiom::err!(RemoveEventPostReaction @ ReactionNotFound);
         };
 
-        if reaction.user_id != actor_id {
+        if reaction.author_id != actor_id {
             return ::axiom::err!(RemoveEventPostReaction @ OwnershipMismatch);
         }
 

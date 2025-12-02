@@ -8,6 +8,7 @@ pub mod prelude {
     pub use crate::option::OptionAsyncExt as _;
 
     pub use crate::iter::IteratorExt as _;
+    pub use crate::iter::IntoIteratorExt as _;
 
     pub use crate::result::IntoFallibleExt as _;
 
@@ -148,6 +149,19 @@ pub mod iter {
                 
                 ::core::result::Result::Err(errs)
             }
+        }
+    }
+
+    pub trait IntoIteratorExt: ::core::iter::IntoIterator {
+        fn into_stream(self) -> ::futures::stream::Iter<Self::IntoIter>;
+    }
+
+    impl<I> IntoIteratorExt for I
+    where
+        I: ::core::iter::IntoIterator,
+    {
+        fn into_stream(self) -> ::futures::stream::Iter<I::IntoIter> {
+            ::futures::stream::iter(self)
         }
     }
 }

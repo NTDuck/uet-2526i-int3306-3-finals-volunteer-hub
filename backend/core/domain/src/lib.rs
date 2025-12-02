@@ -99,7 +99,7 @@ pub enum EventRegistrationStatus {
 pub struct EventPost {
     pub id: Uuid,
     pub event_id: Uuid,
-    pub user_id: Uuid,
+    pub author_id: Uuid,
 
     pub title: EventPostTitle,
     pub content: EventPostContent,
@@ -120,7 +120,7 @@ pub struct EventPostContent(::axiom::string::String);
 pub struct EventPostReaction {
     pub id: Uuid,
     pub post_id: Uuid,
-    pub user_id: Uuid,
+    pub author_id: Uuid,
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
@@ -128,7 +128,7 @@ pub struct EventPostReaction {
 pub struct EventPostComment {
     pub id: Uuid,
     pub post_id: Uuid,
-    pub user_id: Uuid,
+    pub author_id: Uuid,
 
     pub content: EventPostCommentContent,
 }

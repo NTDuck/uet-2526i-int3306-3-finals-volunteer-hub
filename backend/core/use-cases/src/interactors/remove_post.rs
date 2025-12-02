@@ -9,7 +9,6 @@ pub struct RemoveEventPostInteractor {
     user_repository: ::std::sync::Arc<dyn UserRepository + ::core::marker::Send + ::core::marker::Sync>,
 
     uuid_codec: ::std::sync::Arc<dyn UuidCodec + ::core::marker::Send + ::core::marker::Sync>,
-    uuid_generator: ::std::sync::Arc<dyn UuidGenerator + ::core::marker::Send + ::core::marker::Sync>,
     auth_token_generator:
         ::std::sync::Arc<dyn AuthenticationTokenGenerator + ::core::marker::Send + ::core::marker::Sync>,
 }
@@ -47,7 +46,7 @@ impl RemoveEventPostBoundary for RemoveEventPostInteractor {
         let post_id = ::std::sync::Arc::clone(&self.uuid_codec).parse(request.post_id).await?;
 
         match ::std::sync::Arc::clone(&self.post_repository).get_by_id(post_id).await? {
-            ::core::option::Option::Some(::domain::EventPost { user_id, .. }) => {
+            ::core::option::Option::Some(::domain::EventPost { author_id, .. }) => {
                 if user_id != actor_id {
                     return ::axiom::err!(RemoveEventPost @ OwnershipMismatch);
                 }

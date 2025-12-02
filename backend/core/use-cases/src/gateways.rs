@@ -107,7 +107,11 @@ pub trait EventPostReactionRepository {
         self.get_by_post_and_user_id(post_id, user_id).await?.is_some().into_ok()
     }
 
-    async fn count_by_post_id(self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid) -> ::axiom::result::Fallible<u64>;
+    async fn view_by_post_id(self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::EventPostReaction>>;
+
+    async fn count_by_post_id(self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid) -> ::axiom::result::Fallible<u64> {
+        (self.view_by_post_id(post_id).await?.len() as u64).into_ok()
+    }
 }
 
 #[async_trait]
@@ -119,7 +123,11 @@ pub trait EventPostCommentRepository {
 
     async fn view_by_post_and_user_id(self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid, user_id: ::domain::Uuid) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::EventPostComment>>;
 
-    async fn count_by_post_id(self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid) -> ::axiom::result::Fallible<u64>;
+    async fn view_by_post_id(self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::EventPostComment>>;
+
+    async fn count_by_post_id(self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid) -> ::axiom::result::Fallible<u64> {
+        (self.view_by_post_id(post_id).await?.len() as u64).into_ok()
+    }
 }
 
 #[async_trait]

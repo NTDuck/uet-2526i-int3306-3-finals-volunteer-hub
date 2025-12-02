@@ -86,7 +86,7 @@ impl CreateEventPostBoundary for CreateEventPostInteractor {
         let post = ::domain::EventPost::builder()
             .id(post_id)
             .event_id(event_id)
-            .user_id(actor_id)
+            .author_id(actor_id)
             .title(post_title)
             .content(post_content)
             .build();

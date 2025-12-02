@@ -73,7 +73,7 @@ impl CreateEventPostCommentBoundary for CreateEventPostCommentInteractor {
         let comment = ::domain::EventPostComment::builder()
             .id(comment_id)
             .post_id(post_id)
-            .user_id(actor_id)
+            .author_id(actor_id)
             .content(comment_content)
             .build();
 

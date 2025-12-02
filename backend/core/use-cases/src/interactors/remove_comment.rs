@@ -5,12 +5,10 @@ use crate::gateways::*;
 
 #[derive(::bon::Builder)]
 pub struct RemoveEventPostCommentInteractor {
-    post_repository: ::std::sync::Arc<dyn EventPostRepository + ::core::marker::Send + ::core::marker::Sync>,
     comment_repository: ::std::sync::Arc<dyn EventPostCommentRepository + ::core::marker::Send + ::core::marker::Sync>,
     user_repository: ::std::sync::Arc<dyn UserRepository + ::core::marker::Send + ::core::marker::Sync>,
 
     uuid_codec: ::std::sync::Arc<dyn UuidCodec + ::core::marker::Send + ::core::marker::Sync>,
-    uuid_generator: ::std::sync::Arc<dyn UuidGenerator + ::core::marker::Send + ::core::marker::Sync>,
     auth_token_generator:
         ::std::sync::Arc<dyn AuthenticationTokenGenerator + ::core::marker::Send + ::core::marker::Sync>,
 }
@@ -48,8 +46,8 @@ impl RemoveEventPostCommentBoundary for RemoveEventPostCommentInteractor {
         let comment_id = ::std::sync::Arc::clone(&self.uuid_codec).parse(request.comment_id).await?;
 
         match ::std::sync::Arc::clone(&self.comment_repository).get_by_id(comment_id).await? {
-            ::core::option::Option::Some(::domain::EventPostComment { user_id, .. }) => {
-                if user_id != actor_id {
+            ::core::option::Option::Some(::domain::EventPostComment { author_id, .. }) => {
+                if author_id != actor_id {
                     return ::axiom::err!(RemoveEventPostComment @ OwnershipMismatch);
                 }
             },

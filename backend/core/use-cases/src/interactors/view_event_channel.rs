@@ -33,14 +33,14 @@ impl ViewEventChannelBoundary for ViewEventChannelInteractor {
                     return ::axiom::err!(ViewEventChannel @ AuthenticationTokenExpired);
                 }
 
+                if !::std::sync::Arc::clone(&self.user_repository).contains_id(user_id).await? {
+                    return ::axiom::err!(ViewEventChannel @ UserNotFound);
+                }
+
                 user_id
             },
             ::core::option::Option::Some(AuthenticationTokenPayload { user_role, .. }) =>
                 return ::axiom::err!(ViewEventChannel @ UserUnauthorized { user_role: user_role.into() }),
-        };
-
-        let ::core::option::Option::Some(actor) = ::std::sync::Arc::clone(&self.user_repository).get_by_id(actor_id).await? else {
-            return ::axiom::err!(ViewEventChannel @ UserNotFound);
         };
 
         let event_id = ::std::sync::Arc::clone(&self.uuid_codec).parse(request.event_id).await?;
@@ -57,22 +57,36 @@ impl ViewEventChannelBoundary for ViewEventChannelInteractor {
         let posts = ::std::sync::Arc::clone(&self.post_repository).view_by_event_id(event_id).await?;
 
         let posts = ::futures::stream::iter(posts)
-            .zip(::futures::stream::repeat(actor))
+            .zip(::futures::stream::repeat(::std::sync::Arc::clone(&self.user_repository).get_by_id(actor_id).await?))
             .then(|(post, actor)| {
                 let reaction_repository = ::std::sync::Arc::clone(&self.reaction_repository);
                 let comment_repository = ::std::sync::Arc::clone(&self.comment_repository);
+                let user_repository = ::std::sync::Arc::clone(&self.user_repository);
                 let uuid_generator = ::std::sync::Arc::clone(&self.uuid_generator);
                 let uuid_codec = ::std::sync::Arc::clone(&self.uuid_codec);
                 let timestamp_codec = ::std::sync::Arc::clone(&self.timestamp_codec);
 
                 async move {
-                    ViewEventChannelEventPost::build_from(post, actor)
-                        .with_reaction_repository(reaction_repository)
-                        .with_comment_repository(comment_repository)
-                        .with_uuid_generator(uuid_generator)
-                        .with_uuid_codec(uuid_codec)
-                        .with_timestamp_codec(timestamp_codec)
-                        .try_build().await
+                    ViewEventChannelEventPost::builder()
+                        .id(::std::sync::Arc::clone(&uuid_codec).format(post.id).await?)
+                        .created_at(::std::sync::Arc::clone(&timestamp_codec).format(::std::sync::Arc::clone(&uuid_generator).get_timestamp(post.id).await?).await?)
+                        .title(post.title)
+                        .content(post.content)
+                        .reaction_count(::std::sync::Arc::clone(&reaction_repository).count_by_post_id(post.id).await?)
+                        .comment_count(::std::sync::Arc::clone(&comment_repository).count_by_post_id(post.id).await?)
+                        .maybe_author(::std::sync::Arc::clone(&user_repository).get_by_id(post.author_id).await?.map_async(|author| async {
+                            ViewEventChannelUser::build_from(author)
+                                .with_uuid_codec(::std::sync::Arc::clone(&uuid_codec))
+                                .try_build().await
+                        }).await.transpose()?)
+                        .is_reacted_by_actor(::std::sync::Arc::clone(&reaction_repository).contains_post_and_user_id(post.id, actor_id).await?)
+                        .comments_by_actor(::futures::stream::iter(::std::sync::Arc::clone(&comment_repository).view_by_post_and_user_id(post.id, actor_id).await?)
+                            .zip(::futures::stream::repeat(actor))
+                            .then(|(comment, actor)| async { ViewEventChannelEventPostComment::build_from(comment, actor).with_uuid_generator(::std::sync::Arc::clone(&uuid_generator)).with_uuid_codec(::std::sync::Arc::clone(&uuid_codec)).with_timestamp_codec(::std::sync::Arc::clone(&timestamp_codec)).try_build().await })
+                            .filter_map(|fallible| async move { fallible.ok() })
+                            .collect::<::std::vec::Vec<_>>().await)
+                        .build()
+                        .into_ok()
                 }
             })
             .filter_map(|fallible| async move { fallible.ok() })

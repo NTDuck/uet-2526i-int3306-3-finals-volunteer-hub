@@ -102,9 +102,9 @@ impl UuidGenerator for UuidV7Generator {
     }
 
     async fn get_timestamp(
-        self: ::std::sync::Arc<Self>, uuid: &::domain::Uuid,
+        self: ::std::sync::Arc<Self>, uuid: ::domain::Uuid,
     ) -> ::axiom::result::Fallible<::axiom::time::Timestamp> {
-        let uuid = ::uuid::Uuid::from_bytes(**uuid);
+        let uuid = ::uuid::Uuid::from_bytes(*uuid);
         ::axiom::result::Fallible::Ok(uuid.into_timestamp()?)
     }
 }

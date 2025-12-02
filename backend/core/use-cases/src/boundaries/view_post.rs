@@ -15,7 +15,7 @@ pub trait ViewEventPostBoundary {
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi))]
 pub struct ViewEventPostRequest {
     pub token: ::axiom::string::String,
-    pub event_post_id: ::axiom::string::String,
+    pub post_id: ::axiom::string::String,
 }
 
 #[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
@@ -38,7 +38,7 @@ pub struct ViewEventPostOkResponse {
     pub reactions: ::std::vec::Vec<ViewEventPostEventPostReaction>,
     pub comments: ::std::vec::Vec<ViewEventPostEventPostComment>,
 
-    pub author: ViewEventPostUser,
+    pub author: ::core::option::Option<ViewEventPostUser>,
     pub is_reacted_by_actor: bool,
 }
 
@@ -49,8 +49,28 @@ pub struct ViewEventPostOkResponse {
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
 pub struct ViewEventPostEventPostReaction {
+    pub id: ::axiom::string::String,
+
     pub created_at: ::axiom::string::String,
-    pub user: ViewEventPostUser,
+
+    pub author: ::core::option::Option<ViewEventPostUser>,
+}
+
+#[::bon::bon]
+impl ViewEventPostEventPostReaction {
+    #[builder(finish_fn(name = try_build))]
+    pub async fn build_from(#[builder(start_fn)] reaction: ::domain::EventPostReaction, #[builder(start_fn)] author: ::core::option::Option<::domain::User>, #[builder(setters(name = with_uuid_generator))] uuid_generator: ::std::sync::Arc<dyn crate::gateways::UuidGenerator + ::core::marker::Send + ::core::marker::Sync>, #[builder(setters(name = with_uuid_codec))] uuid_codec: ::std::sync::Arc<dyn crate::gateways::UuidCodec + ::core::marker::Send + ::core::marker::Sync>, #[builder(setters(name = with_timestamp_codec))] timestamp_codec: ::std::sync::Arc<dyn crate::gateways::TimestampCodec + ::core::marker::Send + ::core::marker::Sync>) -> ::axiom::result::Fallible<Self> {
+        Self::builder()
+            .id(::std::sync::Arc::clone(&uuid_codec).format(reaction.id).await?)
+            .created_at(::std::sync::Arc::clone(&timestamp_codec).format(::std::sync::Arc::clone(&uuid_generator).get_timestamp(reaction.id).await?).await?)
+            .maybe_author(author.map_async(|author| async {
+                ViewEventPostUser::build_from(author)
+                    .with_uuid_codec(::std::sync::Arc::clone(&uuid_codec))
+                    .try_build().await
+            }).await.transpose()?)
+            .build()
+            .into_ok()
+    }
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
@@ -61,9 +81,29 @@ pub struct ViewEventPostEventPostReaction {
 #[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
 pub struct ViewEventPostEventPostComment {
     pub id: ::axiom::string::String,
+
     pub created_at: ::axiom::string::String,
-    pub user: ViewEventPostUser,
     pub content: ::axiom::string::String,
+    
+    pub author: ::core::option::Option<ViewEventPostUser>,
+}
+
+#[::bon::bon]
+impl ViewEventPostEventPostComment {
+    #[builder(finish_fn(name = try_build))]
+    pub async fn build_from(#[builder(start_fn)] comment: ::domain::EventPostComment, #[builder(start_fn)] author: ::core::option::Option<::domain::User>, #[builder(setters(name = with_uuid_generator))] uuid_generator: ::std::sync::Arc<dyn crate::gateways::UuidGenerator + ::core::marker::Send + ::core::marker::Sync>, #[builder(setters(name = with_uuid_codec))] uuid_codec: ::std::sync::Arc<dyn crate::gateways::UuidCodec + ::core::marker::Send + ::core::marker::Sync>, #[builder(setters(name = with_timestamp_codec))] timestamp_codec: ::std::sync::Arc<dyn crate::gateways::TimestampCodec + ::core::marker::Send + ::core::marker::Sync>) -> ::axiom::result::Fallible<Self> {
+        Self::builder()
+            .id(::std::sync::Arc::clone(&uuid_codec).format(comment.id).await?)
+            .created_at(::std::sync::Arc::clone(&timestamp_codec).format(::std::sync::Arc::clone(&uuid_generator).get_timestamp(comment.id).await?).await?)
+            .content(comment.content)
+            .maybe_author(author.map_async(|author| async {
+                ViewEventPostUser::build_from(author)
+                    .with_uuid_codec(::std::sync::Arc::clone(&uuid_codec))
+                    .try_build().await
+            }).await.transpose()?)
+            .build()
+            .into_ok()
+    }
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
@@ -75,6 +115,18 @@ pub struct ViewEventPostEventPostComment {
 pub struct ViewEventPostUser {
     pub id: ::axiom::string::String,
     pub username: ::axiom::string::String,
+}
+
+#[::bon::bon]
+impl ViewEventPostUser {
+    #[builder(finish_fn(name = try_build))]
+    pub async fn build_from(#[builder(start_fn)] user: ::domain::User, #[builder(setters(name = with_uuid_codec))] uuid_codec: ::std::sync::Arc<dyn crate::gateways::UuidCodec + ::core::marker::Send + ::core::marker::Sync>) -> ::axiom::result::Fallible<Self> {
+        Self::builder()
+            .id(::std::sync::Arc::clone(&uuid_codec).format(user.id).await?)
+            .username(user.username)
+            .build()
+            .into_ok()
+    }
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]

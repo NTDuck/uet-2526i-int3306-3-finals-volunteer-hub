@@ -62,7 +62,7 @@ impl CreateEventPostReactionBoundary for CreateEventPostReactionInteractor {
         let reaction = ::domain::EventPostReaction::builder()
             .id(reaction_id)
             .post_id(post_id)
-            .user_id(actor_id)
+            .author_id(actor_id)
             .build();
 
         ::std::sync::Arc::clone(&self.reaction_repository).save(reaction).await?;

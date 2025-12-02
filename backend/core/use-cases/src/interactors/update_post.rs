@@ -9,7 +9,6 @@ pub struct UpdateEventPostInteractor {
     user_repository: ::std::sync::Arc<dyn UserRepository + ::core::marker::Send + ::core::marker::Sync>,
 
     uuid_codec: ::std::sync::Arc<dyn UuidCodec + ::core::marker::Send + ::core::marker::Sync>,
-    uuid_generator: ::std::sync::Arc<dyn UuidGenerator + ::core::marker::Send + ::core::marker::Sync>,
     auth_token_generator:
         ::std::sync::Arc<dyn AuthenticationTokenGenerator + ::core::marker::Send + ::core::marker::Sync>,
 }
@@ -51,7 +50,7 @@ impl UpdateEventPostBoundary for UpdateEventPostInteractor {
         let post = ::std::sync::Arc::clone(&self.post_repository).get_by_id(post_id).await?;
 
         match post {
-            ::core::option::Option::Some(::domain::EventPost { user_id, .. }) => {
+            ::core::option::Option::Some(::domain::EventPost { author_id, .. }) => {
                 if user_id != actor_id {
                     errors.push(UpdateEventPostErrResponse::OwnershipMismatch);
                 }

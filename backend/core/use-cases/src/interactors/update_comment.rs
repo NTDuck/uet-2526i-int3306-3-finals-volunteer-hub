@@ -50,7 +50,7 @@ impl UpdateEventPostCommentBoundary for UpdateEventPostCommentInteractor {
         let comment = ::std::sync::Arc::clone(&self.comment_repository).get_by_id(comment_id).await?;
 
         match comment {
-            ::core::option::Option::Some(::domain::EventPostComment { user_id, .. }) => {
+            ::core::option::Option::Some(::domain::EventPostComment { author_id, .. }) => {
                 if user_id != actor_id {
                     errors.push(UpdateEventPostCommentErrResponse::OwnershipMismatch);
                 }

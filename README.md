@@ -218,7 +218,19 @@ $ deno task preview-sveltekit-minimal
 
 ## TODO
 - Increase parallelism via e.g. `buffer_unordered(...)` for streams, `rayon`
+
+- author/actor instead of user
+
 - pattern matching (statuses.last()...) => [.., last]
 - iterator.into_stream() instead of ::futures::stream::iter()
-- author/actor instead of user
 - then instead of filter map
+- always clone when used ARC
+- add timestamp/created_at
+- line break even when single lined
+- all attrs in #[error] of boundary should be DTO-ed
+
+- impl noti
+- impl rcm
+- ensure ordering
+
+- in hot loops, if perf, use smallvec in lieu of vec
