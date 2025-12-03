@@ -220,9 +220,6 @@ $ deno task preview-sveltekit-minimal
 - Increase parallelism via e.g. `buffer_unordered(...)` for streams, `rayon`
 
 - pattern matching (statuses.last()...) => [.., last]
-- iterator.into_stream() instead of ::futures::stream::iter()
-- then + try_collect instead of filter map
-- always clone when used ARC
 - add timestamp/created_at, avatar
 - try to remove unsafe
 
