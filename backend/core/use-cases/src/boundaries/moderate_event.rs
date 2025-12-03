@@ -65,7 +65,7 @@ pub enum ModerateEventErrResponse {
     EventStatusNotEligible {
         event_status: ModerateEventEventStatus,
         allowed_event_statuses: ::std::vec::Vec<ModerateEventEventStatus>,
-    }
+    },
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::strum::Display)]

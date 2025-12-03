@@ -19,11 +19,16 @@ impl RemoveEventPostBoundary for RemoveEventPostInteractor {
     async fn apply(
         self: ::std::sync::Arc<Self>, request: RemoveEventPostRequest,
     ) -> ::axiom::result::Fallible<RemoveEventPostResponse> {
-        let actor_id = match ::std::sync::Arc::clone(&self.auth_token_generator).get_payload(request.token).await? {
-            ::core::option::Option::None =>
-                return ::axiom::err!(RemoveEventPost @ AuthenticationTokenInvalid),
-            ::core::option::Option::Some
-            (AuthenticationTokenPayload { user_id, user_role: ::domain::UserRole::Volunteer | ::domain::UserRole::EventManager, expiry_timestamp }) => {
+        let actor_id = match ::std::sync::Arc::clone(&self.auth_token_generator)
+            .get_payload(request.token)
+            .await?
+        {
+            ::core::option::Option::None => return ::axiom::err!(RemoveEventPost @ AuthenticationTokenInvalid),
+            ::core::option::Option::Some(AuthenticationTokenPayload {
+                user_id,
+                user_role: ::domain::UserRole::Volunteer | ::domain::UserRole::EventManager,
+                expiry_timestamp,
+            }) => {
                 if expiry_timestamp < ::axiom::time::Timestamp::now() {
                     return ::axiom::err!(RemoveEventPost @ AuthenticationTokenExpired);
                 }
@@ -34,8 +39,7 @@ impl RemoveEventPostBoundary for RemoveEventPostInteractor {
                             return ::axiom::err!(RemoveEventPost @ UserSuspended);
                         }
                     },
-                    ::core::option::Option::None =>
-                        return ::axiom::err!(RemoveEventPost @ UserNotFound),
+                    ::core::option::Option::None => return ::axiom::err!(RemoveEventPost @ UserNotFound),
                 }
 
                 user_id
@@ -47,17 +51,18 @@ impl RemoveEventPostBoundary for RemoveEventPostInteractor {
         let post_id = ::std::sync::Arc::clone(&self.uuid_codec).parse(request.post_id).await?;
 
         match ::std::sync::Arc::clone(&self.post_repository).get_by_id(post_id).await? {
-            ::core::option::Option::Some(::domain::EventPost { author_id, .. }) => {
+            ::core::option::Option::Some(::domain::EventPost { author_id, .. }) =>
                 if author_id != actor_id {
                     return ::axiom::err!(RemoveEventPost @ OwnershipMismatch);
-                }
-            },
+                },
             ::core::option::Option::None => return ::axiom::err!(RemoveEventPost @ PostNotFound),
         };
 
         ::std::sync::Arc::clone(&self.post_repository).remove(post_id).await?;
 
-        ::std::sync::Arc::clone(&self.event_recommender).untrack_posted(post_id, actor_id).await?;
+        ::std::sync::Arc::clone(&self.event_recommender)
+            .untrack_posted(post_id, actor_id)
+            .await?;
 
         ::axiom::ok!(RemoveEventPost)
     }

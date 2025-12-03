@@ -3,15 +3,12 @@ pub use ::axiom_derive::*;
 pub mod prelude {
     pub use ::async_trait::async_trait;
 
-    pub use crate::option::OptionExt as _;
+    pub use crate::iter::IntoIteratorExt as _;
+    pub use crate::iter::IteratorExt as _;
     pub use crate::option::IntoOptionExt as _;
     pub use crate::option::OptionAsyncExt as _;
-
-    pub use crate::iter::IteratorExt as _;
-    pub use crate::iter::IntoIteratorExt as _;
-
+    pub use crate::option::OptionExt as _;
     pub use crate::result::IntoFallibleExt as _;
-
     pub use crate::time::TimestampExt as _;
 }
 
@@ -100,7 +97,8 @@ pub mod option {
         where
             F: ::core::ops::FnOnce() -> Fut + ::core::marker::Send,
             E: ::core::marker::Send,
-            Fut: ::core::future::Future<Output = ::core::result::Result<::core::option::Option<T>, E>> + ::core::marker::Send,
+            Fut: ::core::future::Future<Output = ::core::result::Result<::core::option::Option<T>, E>>
+                + ::core::marker::Send,
         {
             match self {
                 ::core::option::Option::Some(val) => ::core::result::Result::Ok(::core::option::Option::Some(val)),
@@ -112,7 +110,9 @@ pub mod option {
 
 pub mod iter {
     pub trait IteratorExt: ::core::iter::Iterator {
-        fn try_collect_all<BT, BE, F, T, E>(self, f: F) -> ::core::result::Result<::std::vec::Vec<T>, ::std::vec::Vec<E>>
+        fn try_collect_all<BT, BE, F, T, E>(
+            self, f: F,
+        ) -> ::core::result::Result<::std::vec::Vec<T>, ::std::vec::Vec<E>>
         where
             Self: ::core::marker::Sized,
             BT: ::core::iter::FromIterator<T>,
@@ -124,29 +124,30 @@ pub mod iter {
     where
         I: ::core::iter::Iterator,
     {
-        fn try_collect_all<BT, BE, F, T, E>(self, f: F) -> ::core::result::Result<::std::vec::Vec<T>, ::std::vec::Vec<E>>
+        fn try_collect_all<B0, B1, F, T, E>(
+            self, f: F,
+        ) -> ::core::result::Result<::std::vec::Vec<T>, ::std::vec::Vec<E>>
         where
             Self: ::core::marker::Sized,
-            BT: ::core::iter::FromIterator<T>,
-            BE: ::core::iter::FromIterator<E>,
+            B0: ::core::iter::FromIterator<T>,
+            B1: ::core::iter::FromIterator<E>,
             F: ::core::ops::Fn(Self::Item) -> ::core::result::Result<T, E>,
         {
-            let (oks, errs) = self
-                .map(f)
-                .partition::<::std::vec::Vec<_>, _>(::core::result::Result::is_ok);
+            let (oks, errs) = self.map(f).partition::<::std::vec::Vec<_>, _>(::core::result::Result::is_ok);
 
             if errs.is_empty() {
-                let oks = oks.into_iter()
+                let oks = oks
+                    .into_iter()
                     .map(|ok| unsafe { ::core::result::Result::unwrap_unchecked(ok) })
                     .collect();
 
                 ::core::result::Result::Ok(oks)
-
             } else {
-                let errs = errs.into_iter()
+                let errs = errs
+                    .into_iter()
                     .map(|err| unsafe { ::core::result::Result::unwrap_err_unchecked(err) })
                     .collect();
-                
+
                 ::core::result::Result::Err(errs)
             }
         }
@@ -182,7 +183,8 @@ pub mod result {
         }
     }
 
-    /// Assumes: **(1)** `$ok` is of type `<$ident>OkResponse`; **(2)** `paste` is within scope.
+    /// Assumes: **(1)** `$ok` is of type `<$ident>OkResponse`; **(2)** `paste`
+    /// is within scope.
     #[macro_export]
     macro_rules! ok {
         ($ident:ident @ $($ok:tt)*) => {
@@ -198,7 +200,8 @@ pub mod result {
         };
     }
 
-    /// Assumes: **(1)** `$errs` is of type `::std::vec::Vec<<$ident>ErrResponse>`; **(2)** `paste` is within scope.
+    /// Assumes: **(1)** `$errs` is of type
+    /// `::std::vec::Vec<<$ident>ErrResponse>`; **(2)** `paste` is within scope.
     #[macro_export]
     macro_rules! errs {
         ($ident:ident @ $($errs:tt)*) => {
@@ -208,7 +211,8 @@ pub mod result {
         };
     }
 
-    /// Assumes: **(1)** `$err` is of type `<$ident>ErrResponse`; **(2)** `paste` is within scope.
+    /// Assumes: **(1)** `$err` is of type `<$ident>ErrResponse`; **(2)**
+    /// `paste` is within scope.
     #[macro_export]
     macro_rules! err {
         ($ident:ident @ $($err:tt)*) => {
@@ -217,6 +221,10 @@ pub mod result {
             }
         };
     }
+
+    pub use err;
+    pub use errs;
+    pub use ok;
 }
 
 pub mod time {
@@ -246,4 +254,6 @@ pub mod string {
             REGEX.get_or_init(|| ::regex::Regex::new($regex).unwrap())
         }};
     }
+
+    pub use regex;
 }

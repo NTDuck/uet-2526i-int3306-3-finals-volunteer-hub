@@ -17,7 +17,7 @@ pub struct CreateEventPostCommentRequest {
     pub token: ::axiom::string::String,
 
     pub post_id: ::axiom::string::String,
-    
+
     pub comment_content: ::axiom::string::String,
 }
 

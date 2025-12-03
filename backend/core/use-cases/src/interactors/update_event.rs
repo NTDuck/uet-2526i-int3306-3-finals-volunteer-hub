@@ -18,11 +18,16 @@ impl UpdateEventBoundary for UpdateEventInteractor {
     async fn apply(
         self: ::std::sync::Arc<Self>, request: UpdateEventRequest,
     ) -> ::axiom::result::Fallible<UpdateEventResponse> {
-        let actor_id = match ::std::sync::Arc::clone(&self.auth_token_generator).get_payload(request.token).await? {
-            ::core::option::Option::None =>
-                return ::axiom::err!(UpdateEvent @ AuthenticationTokenInvalid),
-            ::core::option::Option::Some
-            (AuthenticationTokenPayload { user_id, user_role: ::domain::UserRole::EventManager, expiry_timestamp }) => {
+        let actor_id = match ::std::sync::Arc::clone(&self.auth_token_generator)
+            .get_payload(request.token)
+            .await?
+        {
+            ::core::option::Option::None => return ::axiom::err!(UpdateEvent @ AuthenticationTokenInvalid),
+            ::core::option::Option::Some(AuthenticationTokenPayload {
+                user_id,
+                user_role: ::domain::UserRole::EventManager,
+                expiry_timestamp,
+            }) => {
                 if expiry_timestamp < ::axiom::time::Timestamp::now() {
                     return ::axiom::err!(UpdateEvent @ AuthenticationTokenExpired);
                 }
@@ -33,8 +38,7 @@ impl UpdateEventBoundary for UpdateEventInteractor {
                             return ::axiom::err!(UpdateEvent @ UserSuspended);
                         }
                     },
-                    ::core::option::Option::None =>
-                        return ::axiom::err!(UpdateEvent @ UserNotFound),
+                    ::core::option::Option::None => return ::axiom::err!(UpdateEvent @ UserNotFound),
                 }
 
                 user_id
@@ -53,8 +57,17 @@ impl UpdateEventBoundary for UpdateEventInteractor {
             ::core::option::Option::Some(::domain::Event { ref statuses, .. }) => {
                 let event_status = statuses.last();
 
-                if !::core::matches!(event_status, ::domain::EventStatus::Created { .. } | ::domain::EventStatus::Updated { .. }) {
-                    errors.push(UpdateEventErrResponse::EventStatusNotEligible { event_status: (*event_status).into(), allowed_event_statuses: ::std::vec![UpdateEventEventStatus::Created, UpdateEventEventStatus::Updated] });
+                if !::core::matches!(
+                    event_status,
+                    ::domain::EventStatus::Created { .. } | ::domain::EventStatus::Updated { .. }
+                ) {
+                    errors.push(UpdateEventErrResponse::EventStatusNotEligible {
+                        event_status: (*event_status).into(),
+                        allowed_event_statuses: ::std::vec![
+                            UpdateEventEventStatus::Created,
+                            UpdateEventEventStatus::Updated
+                        ],
+                    });
                 }
             },
 
@@ -63,34 +76,57 @@ impl UpdateEventBoundary for UpdateEventInteractor {
             },
         }
 
-        let event_name = request.event_name
-            .map(|event_name| ::domain::EventName::try_from(event_name)
-                .map_err(|error| errors.push(UpdateEventErrResponse::EventNameInvalid { event_name: error.into() })))
-                .transpose();
+        let event_name = request
+            .event_name
+            .map(|event_name| {
+                ::domain::EventName::try_from(event_name)
+                    .map_err(|error| errors.push(UpdateEventErrResponse::EventNameInvalid { event_name: error.into() }))
+            })
+            .transpose();
 
-        let event_description = request.event_description
-            .map(|event_description| ::domain::EventDescription::try_from(event_description)
-                .map_err(|error| errors.push(UpdateEventErrResponse::EventDescriptionInvalid { event_description: error.into() })))
-                .transpose();
+        let event_description = request
+            .event_description
+            .map(|event_description| {
+                ::domain::EventDescription::try_from(event_description).map_err(|error| {
+                    errors.push(UpdateEventErrResponse::EventDescriptionInvalid { event_description: error.into() })
+                })
+            })
+            .transpose();
 
-        let event_categories = request.event_categories
-            .map(|event_categories| event_categories
-                .into_iter()
-                .try_collect_all::<::std::vec::Vec<_>, ::std::vec::Vec<_>, _, _, _>(::domain::EventCategory::try_from)
-                .map_err(|errors_| errors.push(UpdateEventErrResponse::EventCategoriesInvalid { event_categories: errors_.into_iter().map(::core::convert::Into::into).collect() })))
-                .transpose();
+        let event_categories = request
+            .event_categories
+            .map(|event_categories| {
+                event_categories
+                    .into_iter()
+                    .try_collect_all::<::std::vec::Vec<_>, ::std::vec::Vec<_>, _, _, _>(
+                        ::domain::EventCategory::try_from,
+                    )
+                    .map_err(|errors_| {
+                        errors.push(UpdateEventErrResponse::EventCategoriesInvalid {
+                            event_categories: errors_.into_iter().map(::core::convert::Into::into).collect(),
+                        })
+                    })
+            })
+            .transpose();
 
-        let event_location = request.event_location
-            .map(|event_location| ::domain::EventLocation::try_from(event_location)
-                .map_err(|error| errors.push(UpdateEventErrResponse::EventLocationInvalid { event_location: error.into() })))
-                .transpose();
+        let event_location = request
+            .event_location
+            .map(|event_location| {
+                ::domain::EventLocation::try_from(event_location).map_err(|error| {
+                    errors.push(UpdateEventErrResponse::EventLocationInvalid { event_location: error.into() })
+                })
+            })
+            .transpose();
 
         let (
             ::core::result::Result::Ok(event_name),
             ::core::result::Result::Ok(event_description),
             ::core::result::Result::Ok(event_categories),
             ::core::result::Result::Ok(event_location),
-        ) = (event_name, event_description, event_categories, event_location) else { return ::axiom::errs!(UpdateEvent @ errors) };
+        ) = (event_name, event_description, event_categories, event_location)
+        else {
+            return ::axiom::errs!(UpdateEvent @ errors);
+        };
 
         if !errors.is_empty() {
             return ::axiom::errs!(UpdateEvent @ errors);
@@ -98,7 +134,10 @@ impl UpdateEventBoundary for UpdateEventInteractor {
 
         let mut event = unsafe { event.unwrap_unchecked() };
 
-        event.statuses.push(::domain::EventStatus::Updated { updated_by_manager_id: actor_id, updated_at: ::axiom::time::Timestamp::now() });
+        event.statuses.push(::domain::EventStatus::Updated {
+            updated_by_manager_id: actor_id,
+            updated_at: ::axiom::time::Timestamp::now(),
+        });
         event_name.map(|event_name| event.name = event_name);
         event_description.map(|event_description| event.description = event_description);
         event_categories.map(|event_categories| event.categories = event_categories);

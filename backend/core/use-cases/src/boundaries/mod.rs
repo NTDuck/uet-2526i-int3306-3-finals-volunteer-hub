@@ -22,10 +22,10 @@ mod view_event_channel;
 mod view_event_history;
 mod view_event_recommendation;
 mod view_event_volunteers;
+mod view_events;
 mod view_post;
 mod view_published_events;
 mod view_users;
-mod view_events;
 
 pub use self::create_comment::*;
 pub use self::create_event::*;
@@ -51,10 +51,10 @@ pub use self::view_event_channel::*;
 pub use self::view_event_history::*;
 pub use self::view_event_recommendation::*;
 pub use self::view_event_volunteers::*;
+pub use self::view_events::*;
 pub use self::view_post::*;
 pub use self::view_published_events::*;
 pub use self::view_users::*;
-pub use self::view_events::*;
 
 mod utils {
     pub mod fmt {
@@ -73,9 +73,13 @@ mod utils {
                 [first] => ::std::format!("`{first}`").into(),
                 [first, last] => ::std::format!("`{first}` or `{last}`").into(),
                 [firsts @ .., last] => {
-                    let firsts = firsts.iter().map(|value| ::std::format!("`{value}`")).collect::<::std::vec::Vec<_>>().join(", ");
+                    let firsts = firsts
+                        .iter()
+                        .map(|value| ::std::format!("`{value}`"))
+                        .collect::<::std::vec::Vec<_>>()
+                        .join(", ");
                     ::std::format!("{firsts}, or `{last}`").into()
-                }
+                },
             }
         }
     }

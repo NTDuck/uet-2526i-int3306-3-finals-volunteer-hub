@@ -1,5 +1,4 @@
 use ::axiom::prelude::*;
-
 use ::use_cases::gateways::*;
 
 #[derive(::bon::Builder)]
@@ -72,7 +71,9 @@ impl UserRepository for InMemoryUserRepository {
         ::axiom::result::Fallible::Ok(contains)
     }
 
-    async fn search(self: ::std::sync::Arc<Self>, _filter: UserRepositorySearchFilter) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::User>> {
+    async fn search(
+        self: ::std::sync::Arc<Self>, _filter: UserRepositorySearchFilter,
+    ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::User>> {
         todo!()
     }
 

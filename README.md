@@ -223,7 +223,8 @@ $ deno task preview-sveltekit-minimal
 - iterator.into_stream() instead of ::futures::stream::iter()
 - then + try_collect instead of filter map
 - always clone when used ARC
-- add timestamp/created_at
+- add timestamp/created_at, avatar
+- try to remove unsafe
 
 - impl noti
 - impl rcm

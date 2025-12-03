@@ -53,7 +53,8 @@ impl SignInBoundary for SignInInteractor {
 
         if !::std::sync::Arc::clone(&self.password_hasher)
             .verify(password, user.password)
-            .await? {
+            .await?
+        {
             errors.push(SignInErrResponse::PasswordMismatch);
             return ::axiom::errs!(SignIn @ errors);
         }

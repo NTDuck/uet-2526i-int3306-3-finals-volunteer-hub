@@ -5,7 +5,9 @@ pub trait EventRepository {
     async fn save(self: ::std::sync::Arc<Self>, event: ::domain::Event) -> ::axiom::result::Fallible;
     async fn remove(self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid) -> ::axiom::result::Fallible;
 
-    async fn get_by_id(self: ::std::sync::Arc<Self>, id: ::domain::Uuid) -> ::axiom::result::Fallible<::core::option::Option<::domain::Event>>;
+    async fn get_by_id(
+        self: ::std::sync::Arc<Self>, id: ::domain::Uuid,
+    ) -> ::axiom::result::Fallible<::core::option::Option<::domain::Event>>;
 
     async fn contains_id(self: ::std::sync::Arc<Self>, id: ::domain::Uuid) -> ::axiom::result::Fallible<bool> {
         ::axiom::result::Fallible::Ok(self.get_by_id(id).await?.is_some())
@@ -53,15 +55,31 @@ pub trait EventRecommender {
     async fn track_approved(self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid) -> ::axiom::result::Fallible;
     async fn untrack_approved(self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid) -> ::axiom::result::Fallible;
 
-    async fn track_posted(self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid, user_id: ::domain::Uuid) -> ::axiom::result::Fallible;
-    async fn untrack_posted(self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid, user_id: ::domain::Uuid) -> ::axiom::result::Fallible;
+    async fn track_posted(
+        self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid, user_id: ::domain::Uuid,
+    ) -> ::axiom::result::Fallible;
+    async fn untrack_posted(
+        self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid, user_id: ::domain::Uuid,
+    ) -> ::axiom::result::Fallible;
 
-    async fn track_subscribed(self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid, user_id: ::domain::Uuid) -> ::axiom::result::Fallible;
-    async fn track_reacted(self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid, user_id: ::domain::Uuid) -> ::axiom::result::Fallible;
-    async fn track_commented(self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid, user_id: ::domain::Uuid) -> ::axiom::result::Fallible;
-    async fn untrack_subscribed(self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid, user_id: ::domain::Uuid) -> ::axiom::result::Fallible;
-    async fn untrack_reacted(self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid, user_id: ::domain::Uuid) -> ::axiom::result::Fallible;
-    async fn untrack_commented(self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid, user_id: ::domain::Uuid) -> ::axiom::result::Fallible;
+    async fn track_subscribed(
+        self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid, user_id: ::domain::Uuid,
+    ) -> ::axiom::result::Fallible;
+    async fn track_reacted(
+        self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid, user_id: ::domain::Uuid,
+    ) -> ::axiom::result::Fallible;
+    async fn track_commented(
+        self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid, user_id: ::domain::Uuid,
+    ) -> ::axiom::result::Fallible;
+    async fn untrack_subscribed(
+        self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid, user_id: ::domain::Uuid,
+    ) -> ::axiom::result::Fallible;
+    async fn untrack_reacted(
+        self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid, user_id: ::domain::Uuid,
+    ) -> ::axiom::result::Fallible;
+    async fn untrack_commented(
+        self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid, user_id: ::domain::Uuid,
+    ) -> ::axiom::result::Fallible;
 
     async fn view_recently_approved(
         self: ::std::sync::Arc<Self>,
@@ -71,9 +89,8 @@ pub trait EventRecommender {
         self: ::std::sync::Arc<Self>,
     ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::Event>>;
 
-    async fn view_trending(
-        self: ::std::sync::Arc<Self>,
-    ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::Event>>;
+    async fn view_trending(self: ::std::sync::Arc<Self>)
+        -> ::axiom::result::Fallible<::std::vec::Vec<::domain::Event>>;
 
     async fn view_personalized(
         self: ::std::sync::Arc<Self>, user_id: ::domain::Uuid,
@@ -88,17 +105,24 @@ pub trait EventExporter {
 
 #[async_trait]
 pub trait EventRegistrationRepository {
-    async fn save(self: ::std::sync::Arc<Self>, registration: ::domain::EventRegistration) -> ::axiom::result::Fallible;
+    async fn save(self: ::std::sync::Arc<Self>, registration: ::domain::EventRegistration)
+        -> ::axiom::result::Fallible;
 
-    async fn get_by_id(self: ::std::sync::Arc<Self>, id: ::domain::Uuid) -> ::axiom::result::Fallible<::core::option::Option<::domain::EventRegistration>>;
+    async fn get_by_id(
+        self: ::std::sync::Arc<Self>, id: ::domain::Uuid,
+    ) -> ::axiom::result::Fallible<::core::option::Option<::domain::EventRegistration>>;
 
     async fn get_by_event_and_user_id(
         self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid, user_id: ::domain::Uuid,
     ) -> ::axiom::result::Fallible<::core::option::Option<::domain::EventRegistration>>;
 
-    async fn view_by_event_id(self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::EventRegistration>>;
+    async fn view_by_event_id(
+        self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid,
+    ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::EventRegistration>>;
 
-    async fn view_by_user_id(self: ::std::sync::Arc<Self>, user_id: ::domain::Uuid) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::EventRegistration>>;
+    async fn view_by_user_id(
+        self: ::std::sync::Arc<Self>, user_id: ::domain::Uuid,
+    ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::EventRegistration>>;
 }
 
 #[async_trait]
@@ -106,13 +130,17 @@ pub trait EventPostRepository {
     async fn save(self: ::std::sync::Arc<Self>, post: ::domain::EventPost) -> ::axiom::result::Fallible;
     async fn remove(self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid) -> ::axiom::result::Fallible;
 
-    async fn get_by_id(self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid) -> ::axiom::result::Fallible<::core::option::Option<::domain::EventPost>>;
+    async fn get_by_id(
+        self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid,
+    ) -> ::axiom::result::Fallible<::core::option::Option<::domain::EventPost>>;
 
     async fn contains_id(self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid) -> ::axiom::result::Fallible<bool> {
         self.get_by_id(post_id).await?.is_some().into_ok()
     }
 
-    async fn view_by_event_id(self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::EventPost>>;
+    async fn view_by_event_id(
+        self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid,
+    ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::EventPost>>;
 }
 
 #[async_trait]
@@ -120,15 +148,23 @@ pub trait EventPostReactionRepository {
     async fn save(self: ::std::sync::Arc<Self>, reaction: ::domain::EventPostReaction) -> ::axiom::result::Fallible;
     async fn remove(self: ::std::sync::Arc<Self>, reaction_id: ::domain::Uuid) -> ::axiom::result::Fallible;
 
-    async fn get_by_id(self: ::std::sync::Arc<Self>, reaction_id: ::domain::Uuid) -> ::axiom::result::Fallible<::core::option::Option<::domain::EventPostReaction>>;
+    async fn get_by_id(
+        self: ::std::sync::Arc<Self>, reaction_id: ::domain::Uuid,
+    ) -> ::axiom::result::Fallible<::core::option::Option<::domain::EventPostReaction>>;
 
-    async fn get_by_post_and_user_id(self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid, user_id: ::domain::Uuid) -> ::axiom::result::Fallible<::core::option::Option<::domain::EventPostReaction>>;
+    async fn get_by_post_and_user_id(
+        self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid, user_id: ::domain::Uuid,
+    ) -> ::axiom::result::Fallible<::core::option::Option<::domain::EventPostReaction>>;
 
-    async fn contains_post_and_user_id(self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid, user_id: ::domain::Uuid) -> ::axiom::result::Fallible<bool> {
+    async fn contains_post_and_user_id(
+        self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid, user_id: ::domain::Uuid,
+    ) -> ::axiom::result::Fallible<bool> {
         self.get_by_post_and_user_id(post_id, user_id).await?.is_some().into_ok()
     }
 
-    async fn view_by_post_id(self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::EventPostReaction>>;
+    async fn view_by_post_id(
+        self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid,
+    ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::EventPostReaction>>;
 
     async fn count_by_post_id(self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid) -> ::axiom::result::Fallible<u64> {
         (self.view_by_post_id(post_id).await?.len() as u64).into_ok()
@@ -140,11 +176,17 @@ pub trait EventPostCommentRepository {
     async fn save(self: ::std::sync::Arc<Self>, comment: ::domain::EventPostComment) -> ::axiom::result::Fallible;
     async fn remove(self: ::std::sync::Arc<Self>, comment_id: ::domain::Uuid) -> ::axiom::result::Fallible;
 
-    async fn get_by_id(self: ::std::sync::Arc<Self>, comment_id: ::domain::Uuid) -> ::axiom::result::Fallible<::core::option::Option<::domain::EventPostComment>>;
+    async fn get_by_id(
+        self: ::std::sync::Arc<Self>, comment_id: ::domain::Uuid,
+    ) -> ::axiom::result::Fallible<::core::option::Option<::domain::EventPostComment>>;
 
-    async fn view_by_post_and_user_id(self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid, user_id: ::domain::Uuid) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::EventPostComment>>;
+    async fn view_by_post_and_user_id(
+        self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid, user_id: ::domain::Uuid,
+    ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::EventPostComment>>;
 
-    async fn view_by_post_id(self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::EventPostComment>>;
+    async fn view_by_post_id(
+        self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid,
+    ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::EventPostComment>>;
 
     async fn count_by_post_id(self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid) -> ::axiom::result::Fallible<u64> {
         (self.view_by_post_id(post_id).await?.len() as u64).into_ok()
@@ -179,7 +221,9 @@ pub trait UserRepository {
         self.get_by_email(email).await?.is_some().into_ok()
     }
 
-    async fn search(self: ::std::sync::Arc<Self>, filter: UserRepositorySearchFilter) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::User>>;
+    async fn search(
+        self: ::std::sync::Arc<Self>, filter: UserRepositorySearchFilter,
+    ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::User>>;
 
     async fn view(self: ::std::sync::Arc<Self>) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::User>> {
         self.search(::core::default::Default::default()).await?.into_ok()
@@ -241,8 +285,12 @@ impl ::core::convert::From<UserRepositoryViewFilterUserRole> for ::domain::UserR
 
 #[async_trait]
 pub trait UserExporter {
-    async fn export_volunteers_as_csv(self: ::std::sync::Arc<Self>) -> ::axiom::result::Fallible<::std::boxed::Box<[u8]>>;
-    async fn export_volunteers_as_json(self: ::std::sync::Arc<Self>) -> ::axiom::result::Fallible<::std::boxed::Box<[u8]>>;
+    async fn export_volunteers_as_csv(
+        self: ::std::sync::Arc<Self>,
+    ) -> ::axiom::result::Fallible<::std::boxed::Box<[u8]>>;
+    async fn export_volunteers_as_json(
+        self: ::std::sync::Arc<Self>,
+    ) -> ::axiom::result::Fallible<::std::boxed::Box<[u8]>>;
 }
 
 #[async_trait]
@@ -431,6 +479,4 @@ pub trait PasswordHasher {
 }
 
 #[async_trait]
-pub trait Notifier {
-
-}
+pub trait Notifier {}

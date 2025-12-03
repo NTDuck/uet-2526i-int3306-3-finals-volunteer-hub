@@ -2,7 +2,9 @@ use ::axiom::prelude::*;
 
 #[async_trait]
 pub trait RemoveEventBoundary {
-    async fn apply(self: ::std::sync::Arc<Self>, request: RemoveEventRequest) -> ::axiom::result::Fallible<RemoveEventResponse>;
+    async fn apply(
+        self: ::std::sync::Arc<Self>, request: RemoveEventRequest,
+    ) -> ::axiom::result::Fallible<RemoveEventResponse>;
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]

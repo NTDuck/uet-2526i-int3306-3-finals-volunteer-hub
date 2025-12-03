@@ -7,7 +7,8 @@ use crate::gateways::*;
 pub struct CreateEventPostReactionInteractor {
     event_recommender: ::std::sync::Arc<dyn EventRecommender + ::core::marker::Send + ::core::marker::Sync>,
     post_repository: ::std::sync::Arc<dyn EventPostRepository + ::core::marker::Send + ::core::marker::Sync>,
-    reaction_repository: ::std::sync::Arc<dyn EventPostReactionRepository + ::core::marker::Send + ::core::marker::Sync>,
+    reaction_repository:
+        ::std::sync::Arc<dyn EventPostReactionRepository + ::core::marker::Send + ::core::marker::Sync>,
     user_repository: ::std::sync::Arc<dyn UserRepository + ::core::marker::Send + ::core::marker::Sync>,
 
     uuid_codec: ::std::sync::Arc<dyn UuidCodec + ::core::marker::Send + ::core::marker::Sync>,
@@ -21,11 +22,16 @@ impl CreateEventPostReactionBoundary for CreateEventPostReactionInteractor {
     async fn apply(
         self: ::std::sync::Arc<Self>, request: CreateEventPostReactionRequest,
     ) -> ::axiom::result::Fallible<CreateEventPostReactionResponse> {
-        let actor_id = match ::std::sync::Arc::clone(&self.auth_token_generator).get_payload(request.token).await? {
-            ::core::option::Option::None =>
-                return ::axiom::err!(CreateEventPostReaction @ AuthenticationTokenInvalid),
-            ::core::option::Option::Some
-            (AuthenticationTokenPayload { user_id, user_role: ::domain::UserRole::Volunteer | ::domain::UserRole::EventManager, expiry_timestamp }) => {
+        let actor_id = match ::std::sync::Arc::clone(&self.auth_token_generator)
+            .get_payload(request.token)
+            .await?
+        {
+            ::core::option::Option::None => return ::axiom::err!(CreateEventPostReaction @ AuthenticationTokenInvalid),
+            ::core::option::Option::Some(AuthenticationTokenPayload {
+                user_id,
+                user_role: ::domain::UserRole::Volunteer | ::domain::UserRole::EventManager,
+                expiry_timestamp,
+            }) => {
                 if expiry_timestamp < ::axiom::time::Timestamp::now() {
                     return ::axiom::err!(CreateEventPostReaction @ AuthenticationTokenExpired);
                 }
@@ -36,8 +42,7 @@ impl CreateEventPostReactionBoundary for CreateEventPostReactionInteractor {
                             return ::axiom::err!(CreateEventPostReaction @ UserSuspended);
                         }
                     },
-                    ::core::option::Option::None =>
-                        return ::axiom::err!(CreateEventPostReaction @ UserNotFound),
+                    ::core::option::Option::None => return ::axiom::err!(CreateEventPostReaction @ UserNotFound),
                 }
 
                 user_id
@@ -48,7 +53,9 @@ impl CreateEventPostReactionBoundary for CreateEventPostReactionInteractor {
 
         let post_id = ::std::sync::Arc::clone(&self.uuid_codec).parse(request.post_id).await?;
 
-        let ::core::option::Option::Some(::domain::EventPost { event_id, .. }) = ::std::sync::Arc::clone(&self.post_repository).get_by_id(post_id).await? else {
+        let ::core::option::Option::Some(::domain::EventPost { event_id, .. }) =
+            ::std::sync::Arc::clone(&self.post_repository).get_by_id(post_id).await?
+        else {
             return ::axiom::err!(CreateEventPostReaction @ PostNotFound);
         };
 
@@ -68,7 +75,9 @@ impl CreateEventPostReactionBoundary for CreateEventPostReactionInteractor {
 
         ::std::sync::Arc::clone(&self.reaction_repository).save(reaction).await?;
 
-        ::std::sync::Arc::clone(&self.event_recommender).track_reacted(event_id, actor_id).await?;
+        ::std::sync::Arc::clone(&self.event_recommender)
+            .track_reacted(event_id, actor_id)
+            .await?;
 
         ::axiom::ok!(CreateEventPostReaction)
     }

@@ -35,8 +35,18 @@ impl ::core::convert::From<ViewUsersFilter> for crate::gateways::UserRepositoryS
     fn from(value: ViewUsersFilter) -> Self {
         Self::builder()
             .maybe_query(value.query)
-            .maybe_roles(value.roles.map(|roles| roles.into_iter().map(::core::convert::Into::into).collect::<::std::vec::Vec<_>>()))
-            .maybe_statuses(value.statuses.map(|statuses| statuses.into_iter().map(::core::convert::Into::into).collect::<::std::vec::Vec<_>>()))
+            .maybe_roles(value.roles.map(|roles| {
+                roles
+                    .into_iter()
+                    .map(::core::convert::Into::into)
+                    .collect::<::std::vec::Vec<_>>()
+            }))
+            .maybe_statuses(value.statuses.map(|statuses| {
+                statuses
+                    .into_iter()
+                    .map(::core::convert::Into::into)
+                    .collect::<::std::vec::Vec<_>>()
+            }))
             .build()
     }
 }
@@ -166,7 +176,12 @@ pub struct ViewUsersUser {
 #[::bon::bon]
 impl ViewUsersUser {
     #[builder(finish_fn(name = try_build))]
-    pub async fn build_from(#[builder(start_fn)] user: ::domain::User, #[builder(setters(name = with_uuid_codec))] uuid_codec: ::std::sync::Arc<dyn crate::gateways::UuidCodec + ::core::marker::Send + ::core::marker::Sync>) -> ::axiom::result::Fallible<Self> {
+    pub async fn build_from(
+        #[builder(start_fn)] user: ::domain::User,
+        #[builder(setters(name = with_uuid_codec))] uuid_codec: ::std::sync::Arc<
+            dyn crate::gateways::UuidCodec + ::core::marker::Send + ::core::marker::Sync,
+        >,
+    ) -> ::axiom::result::Fallible<Self> {
         Self::builder()
             .id(uuid_codec.format(user.id).await?)
             .role(user.role)

@@ -8,7 +8,8 @@ use crate::gateways::*;
 pub struct ViewEventChannelInteractor {
     event_repository: ::std::sync::Arc<dyn EventRepository + ::core::marker::Send + ::core::marker::Sync>,
     post_repository: ::std::sync::Arc<dyn EventPostRepository + ::core::marker::Send + ::core::marker::Sync>,
-    reaction_repository: ::std::sync::Arc<dyn EventPostReactionRepository + ::core::marker::Send + ::core::marker::Sync>,
+    reaction_repository:
+        ::std::sync::Arc<dyn EventPostReactionRepository + ::core::marker::Send + ::core::marker::Sync>,
     comment_repository: ::std::sync::Arc<dyn EventPostCommentRepository + ::core::marker::Send + ::core::marker::Sync>,
     user_repository: ::std::sync::Arc<dyn UserRepository + ::core::marker::Send + ::core::marker::Sync>,
 
@@ -24,11 +25,16 @@ impl ViewEventChannelBoundary for ViewEventChannelInteractor {
     async fn apply(
         self: ::std::sync::Arc<Self>, request: ViewEventChannelRequest,
     ) -> ::axiom::result::Fallible<ViewEventChannelResponse> {
-        let actor_id = match ::std::sync::Arc::clone(&self.auth_token_generator).get_payload(request.token).await? {
-            ::core::option::Option::None =>
-                return ::axiom::err!(ViewEventChannel @ AuthenticationTokenInvalid),
-            ::core::option::Option::Some
-            (AuthenticationTokenPayload { user_id, user_role: ::domain::UserRole::Volunteer, expiry_timestamp }) => {
+        let actor_id = match ::std::sync::Arc::clone(&self.auth_token_generator)
+            .get_payload(request.token)
+            .await?
+        {
+            ::core::option::Option::None => return ::axiom::err!(ViewEventChannel @ AuthenticationTokenInvalid),
+            ::core::option::Option::Some(AuthenticationTokenPayload {
+                user_id,
+                user_role: ::domain::UserRole::Volunteer,
+                expiry_timestamp,
+            }) => {
                 if expiry_timestamp < ::axiom::time::Timestamp::now() {
                     return ::axiom::err!(ViewEventChannel @ AuthenticationTokenExpired);
                 }
@@ -54,9 +60,10 @@ impl ViewEventChannelBoundary for ViewEventChannelInteractor {
             ::core::option::Option::None => return ::axiom::err!(ViewEventChannel @ EventChannelNotFound),
         }
 
-        let posts = ::std::sync::Arc::clone(&self.post_repository).view_by_event_id(event_id).await?;
-
-        let posts = ::futures::stream::iter(posts)
+        let posts = ::std::sync::Arc::clone(&self.post_repository)
+            .view_by_event_id(event_id)
+            .await?
+            .into_stream()
             .zip(::futures::stream::repeat(::std::sync::Arc::clone(&self.user_repository).get_by_id(actor_id).await?))
             .then(|(post, actor)| {
                 let reaction_repository = ::std::sync::Arc::clone(&self.reaction_repository);
@@ -69,27 +76,58 @@ impl ViewEventChannelBoundary for ViewEventChannelInteractor {
                 async move {
                     ViewEventChannelEventPost::builder()
                         .id(::std::sync::Arc::clone(&uuid_codec).format(post.id).await?)
-                        .created_at(::std::sync::Arc::clone(&timestamp_codec).format(::std::sync::Arc::clone(&uuid_generator).get_timestamp(post.id).await?).await?)
+                        .created_at(
+                            ::std::sync::Arc::clone(&timestamp_codec)
+                                .format(::std::sync::Arc::clone(&uuid_generator).get_timestamp(post.id).await?)
+                                .await?,
+                        )
                         .title(post.title)
                         .content(post.content)
                         .reaction_count(::std::sync::Arc::clone(&reaction_repository).count_by_post_id(post.id).await?)
                         .comment_count(::std::sync::Arc::clone(&comment_repository).count_by_post_id(post.id).await?)
-                        .maybe_author(::std::sync::Arc::clone(&user_repository).get_by_id(post.author_id).await?.map_async(|author| async {
-                            ViewEventChannelUser::build_from(author)
-                                .with_uuid_codec(::std::sync::Arc::clone(&uuid_codec))
-                                .try_build().await
-                        }).await.transpose()?)
-                        .is_reacted_by_actor(::std::sync::Arc::clone(&reaction_repository).contains_post_and_user_id(post.id, actor_id).await?)
-                        .comments_by_actor(::futures::stream::iter(::std::sync::Arc::clone(&comment_repository).view_by_post_and_user_id(post.id, actor_id).await?)
+                        .maybe_author(
+                            ::std::sync::Arc::clone(&user_repository)
+                                .get_by_id(post.author_id)
+                                .await?
+                                .map_async(|author| async {
+                                    ViewEventChannelUser::build_from(author)
+                                        .with_uuid_codec(::std::sync::Arc::clone(&uuid_codec))
+                                        .try_build()
+                                        .await
+                                })
+                                .await
+                                .transpose()?,
+                        )
+                        .is_reacted_by_actor(
+                            ::std::sync::Arc::clone(&reaction_repository)
+                                .contains_post_and_user_id(post.id, actor_id)
+                                .await?,
+                        )
+                        .comments_by_actor(
+                            ::futures::stream::iter(
+                                ::std::sync::Arc::clone(&comment_repository)
+                                    .view_by_post_and_user_id(post.id, actor_id)
+                                    .await?,
+                            )
                             .zip(::futures::stream::repeat(actor))
-                            .then(|(comment, actor)| async { ViewEventChannelEventPostComment::build_from(comment, actor).with_uuid_generator(::std::sync::Arc::clone(&uuid_generator)).with_uuid_codec(::std::sync::Arc::clone(&uuid_codec)).with_timestamp_codec(::std::sync::Arc::clone(&timestamp_codec)).try_build().await })
+                            .then(|(comment, actor)| async {
+                                ViewEventChannelEventPostComment::build_from(comment, actor)
+                                    .with_uuid_generator(::std::sync::Arc::clone(&uuid_generator))
+                                    .with_uuid_codec(::std::sync::Arc::clone(&uuid_codec))
+                                    .with_timestamp_codec(::std::sync::Arc::clone(&timestamp_codec))
+                                    .try_build()
+                                    .await
+                            })
                             .filter_map(|fallible| async move { fallible.ok() })
-                            .collect::<::std::vec::Vec<_>>().await)
+                            .collect::<::std::vec::Vec<_>>()
+                            .await,
+                        )
                         .build()
                         .into_ok()
                 }
             })
-            .try_collect::<::std::vec::Vec<_>>().await?;
+            .try_collect::<::std::vec::Vec<_>>()
+            .await?;
 
         let response = ViewEventChannelOkResponse::builder().posts(posts).build();
 

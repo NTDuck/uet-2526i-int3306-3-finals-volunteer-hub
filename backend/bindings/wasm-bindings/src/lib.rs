@@ -8,7 +8,6 @@ use ::wasm_bindgen::prelude::*;
 /// fulfilled with `<...>OkResponse` or rejected with `<...>ErrResponse[]`. A
 /// `<...>ErrResponse` satisfies `{ error: <...>, message: <...>, data: { ... }
 /// }`.
-/// 
 #[wasm_bindgen]
 #[derive(::bon::Builder)]
 pub struct Application {
@@ -106,9 +105,11 @@ impl ::core::convert::TryFrom<Profile> for Gateways {
         ::wasm_bindgen_futures::spawn_local(async {
             use ::futures::StreamExt as _;
 
-            ::gloo::timers::future::IntervalStream::new(1000).for_each(|_| async move {
-                ::tracing::debug!("PING");
-            }).await;
+            ::gloo::timers::future::IntervalStream::new(1000)
+                .for_each(|_| async move {
+                    ::tracing::debug!("PING");
+                })
+                .await;
         });
 
         ::axiom::result::Fallible::Ok(gateways)

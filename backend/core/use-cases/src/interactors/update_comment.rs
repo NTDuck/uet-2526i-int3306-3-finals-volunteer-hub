@@ -18,11 +18,16 @@ impl UpdateEventPostCommentBoundary for UpdateEventPostCommentInteractor {
     async fn apply(
         self: ::std::sync::Arc<Self>, request: UpdateEventPostCommentRequest,
     ) -> ::axiom::result::Fallible<UpdateEventPostCommentResponse> {
-        let actor_id = match ::std::sync::Arc::clone(&self.auth_token_generator).get_payload(request.token).await? {
-            ::core::option::Option::None =>
-                return ::axiom::err!(UpdateEventPostComment @ AuthenticationTokenInvalid),
-            ::core::option::Option::Some
-            (AuthenticationTokenPayload { user_id, user_role: ::domain::UserRole::Volunteer | ::domain::UserRole::EventManager, expiry_timestamp }) => {
+        let actor_id = match ::std::sync::Arc::clone(&self.auth_token_generator)
+            .get_payload(request.token)
+            .await?
+        {
+            ::core::option::Option::None => return ::axiom::err!(UpdateEventPostComment @ AuthenticationTokenInvalid),
+            ::core::option::Option::Some(AuthenticationTokenPayload {
+                user_id,
+                user_role: ::domain::UserRole::Volunteer | ::domain::UserRole::EventManager,
+                expiry_timestamp,
+            }) => {
                 if expiry_timestamp < ::axiom::time::Timestamp::now() {
                     return ::axiom::err!(UpdateEventPostComment @ AuthenticationTokenExpired);
                 }
@@ -33,8 +38,7 @@ impl UpdateEventPostCommentBoundary for UpdateEventPostCommentInteractor {
                             return ::axiom::err!(UpdateEventPostComment @ UserSuspended);
                         }
                     },
-                    ::core::option::Option::None =>
-                        return ::axiom::err!(UpdateEventPostComment @ UserNotFound),
+                    ::core::option::Option::None => return ::axiom::err!(UpdateEventPostComment @ UserNotFound),
                 }
 
                 user_id
@@ -44,28 +48,35 @@ impl UpdateEventPostCommentBoundary for UpdateEventPostCommentInteractor {
         };
 
         let mut errors = ::std::vec::Vec::new();
-    
+
         let comment_id = ::std::sync::Arc::clone(&self.uuid_codec).parse(request.comment_id).await?;
 
         let comment = ::std::sync::Arc::clone(&self.comment_repository).get_by_id(comment_id).await?;
 
         match comment {
-            ::core::option::Option::Some(::domain::EventPostComment { author_id, .. }) => {
+            ::core::option::Option::Some(::domain::EventPostComment { author_id, .. }) =>
                 if author_id != actor_id {
                     errors.push(UpdateEventPostCommentErrResponse::OwnershipMismatch);
-                }
-            },
+                },
             ::core::option::Option::None => {
                 errors.push(UpdateEventPostCommentErrResponse::CommentNotFound);
             },
         }
 
-        let comment_content = request.comment_content.map(|
-        comment_content| ::domain::EventPostCommentContent::try_from(comment_content)
-            .map_err(|error| errors.push(UpdateEventPostCommentErrResponse::CommentContentInvalid { comment_content: error.into() })))
+        let comment_content = request
+            .comment_content
+            .map(|comment_content| {
+                ::domain::EventPostCommentContent::try_from(comment_content).map_err(|error| {
+                    errors.push(UpdateEventPostCommentErrResponse::CommentContentInvalid {
+                        comment_content: error.into(),
+                    })
+                })
+            })
             .transpose();
 
-        let ::core::result::Result::Ok(comment_content) = comment_content else { return ::axiom::errs!(UpdateEventPostComment @ errors) };
+        let ::core::result::Result::Ok(comment_content) = comment_content else {
+            return ::axiom::errs!(UpdateEventPostComment @ errors);
+        };
 
         if !errors.is_empty() {
             return ::axiom::errs!(UpdateEventPostComment @ errors);

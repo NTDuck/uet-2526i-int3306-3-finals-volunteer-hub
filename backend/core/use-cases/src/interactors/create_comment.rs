@@ -21,11 +21,16 @@ impl CreateEventPostCommentBoundary for CreateEventPostCommentInteractor {
     async fn apply(
         self: ::std::sync::Arc<Self>, request: CreateEventPostCommentRequest,
     ) -> ::axiom::result::Fallible<CreateEventPostCommentResponse> {
-        let actor_id = match ::std::sync::Arc::clone(&self.auth_token_generator).get_payload(request.token).await? {
-            ::core::option::Option::None =>
-                return ::axiom::err!(CreateEventPostComment @ AuthenticationTokenInvalid),
-            ::core::option::Option::Some
-            (AuthenticationTokenPayload { user_id, user_role: ::domain::UserRole::Volunteer | ::domain::UserRole::EventManager, expiry_timestamp }) => {
+        let actor_id = match ::std::sync::Arc::clone(&self.auth_token_generator)
+            .get_payload(request.token)
+            .await?
+        {
+            ::core::option::Option::None => return ::axiom::err!(CreateEventPostComment @ AuthenticationTokenInvalid),
+            ::core::option::Option::Some(AuthenticationTokenPayload {
+                user_id,
+                user_role: ::domain::UserRole::Volunteer | ::domain::UserRole::EventManager,
+                expiry_timestamp,
+            }) => {
                 if expiry_timestamp < ::axiom::time::Timestamp::now() {
                     return ::axiom::err!(CreateEventPostComment @ AuthenticationTokenExpired);
                 }
@@ -36,8 +41,7 @@ impl CreateEventPostCommentBoundary for CreateEventPostCommentInteractor {
                             return ::axiom::err!(CreateEventPostComment @ UserSuspended);
                         }
                     },
-                    ::core::option::Option::None =>
-                        return ::axiom::err!(CreateEventPostComment @ UserNotFound),
+                    ::core::option::Option::None => return ::axiom::err!(CreateEventPostComment @ UserNotFound),
                 }
 
                 user_id
@@ -48,8 +52,9 @@ impl CreateEventPostCommentBoundary for CreateEventPostCommentInteractor {
 
         let mut errors = ::std::vec::Vec::new();
 
-        let comment_content = ::domain::EventPostCommentContent::try_from(request.comment_content)
-            .map_err(|error| errors.push(CreateEventPostCommentErrResponse::CommentContentInvalid { comment_content: error.into() }));
+        let comment_content = ::domain::EventPostCommentContent::try_from(request.comment_content).map_err(|error| {
+            errors.push(CreateEventPostCommentErrResponse::CommentContentInvalid { comment_content: error.into() })
+        });
 
         let post_id = ::std::sync::Arc::clone(&self.uuid_codec).parse(request.post_id).await?;
 
@@ -62,7 +67,9 @@ impl CreateEventPostCommentBoundary for CreateEventPostCommentInteractor {
             _ => {},
         }
 
-        let ::core::result::Result::Ok(comment_content) = comment_content else { return ::axiom::errs!(CreateEventPostComment @ errors) };
+        let ::core::result::Result::Ok(comment_content) = comment_content else {
+            return ::axiom::errs!(CreateEventPostComment @ errors);
+        };
 
         if !errors.is_empty() {
             return ::axiom::errs!(CreateEventPostComment @ errors);
@@ -87,7 +94,9 @@ impl CreateEventPostCommentBoundary for CreateEventPostCommentInteractor {
 
         let event_id = unsafe { post.unwrap_unchecked() }.event_id;
 
-        ::std::sync::Arc::clone(&self.event_recommender).track_commented(event_id, actor_id).await?;
+        ::std::sync::Arc::clone(&self.event_recommender)
+            .track_commented(event_id, actor_id)
+            .await?;
 
         ::axiom::ok!(CreateEventPostComment)
     }

@@ -53,7 +53,6 @@ pub struct EventCategory(::axiom::string::String);
 #[verifiable(regex = r#"^.{4,128}$"#, hint = "must be between 4 and 128 characters")]
 pub struct EventLocation(::axiom::string::String);
 
-
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
 #[builder(on(_, into))]
 pub struct EventRegistration {

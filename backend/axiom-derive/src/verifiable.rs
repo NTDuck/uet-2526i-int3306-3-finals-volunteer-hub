@@ -80,7 +80,7 @@ impl ::quote::ToTokens for DeriveInput {
                     }
 
                     fn validate(value: ::axiom::string::String) -> ::core::result::Result<::axiom::string::String, #error_ident> {
-                        let regex = ::axiom::regex!(#regex);
+                        let regex = ::axiom::string::regex!(#regex);
 
                         if !regex.is_match(&value) {
                             ::core::result::Result::Err(#error_ident::InvalidFormat { value })

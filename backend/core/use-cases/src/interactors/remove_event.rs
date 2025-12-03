@@ -18,11 +18,16 @@ impl RemoveEventBoundary for RemoveEventInteractor {
     async fn apply(
         self: ::std::sync::Arc<Self>, request: RemoveEventRequest,
     ) -> ::axiom::result::Fallible<RemoveEventResponse> {
-        match ::std::sync::Arc::clone(&self.auth_token_generator).get_payload(request.token).await? {
-            ::core::option::Option::None =>
-                return ::axiom::err!(RemoveEvent @ AuthenticationTokenInvalid),
-            ::core::option::Option::Some
-            (AuthenticationTokenPayload { user_id, user_role: ::domain::UserRole::EventManager, expiry_timestamp }) => {
+        match ::std::sync::Arc::clone(&self.auth_token_generator)
+            .get_payload(request.token)
+            .await?
+        {
+            ::core::option::Option::None => return ::axiom::err!(RemoveEvent @ AuthenticationTokenInvalid),
+            ::core::option::Option::Some(AuthenticationTokenPayload {
+                user_id,
+                user_role: ::domain::UserRole::EventManager,
+                expiry_timestamp,
+            }) => {
                 if expiry_timestamp < ::axiom::time::Timestamp::now() {
                     return ::axiom::err!(RemoveEvent @ AuthenticationTokenExpired);
                 }
@@ -33,8 +38,7 @@ impl RemoveEventBoundary for RemoveEventInteractor {
                             return ::axiom::err!(RemoveEvent @ UserSuspended);
                         }
                     },
-                    ::core::option::Option::None =>
-                        return ::axiom::err!(RemoveEvent @ UserNotFound),
+                    ::core::option::Option::None => return ::axiom::err!(RemoveEvent @ UserNotFound),
                 }
             },
             ::core::option::Option::Some(AuthenticationTokenPayload { user_role, .. }) =>
@@ -49,10 +53,19 @@ impl RemoveEventBoundary for RemoveEventInteractor {
 
         match event {
             ::core::option::Option::Some(::domain::Event { ref statuses, .. }) => {
-                let event_status = statuses.last();
+                let event_status = *statuses.last();
 
-                if !::core::matches!(event_status, ::domain::EventStatus::Created { .. } | ::domain::EventStatus::Updated { .. }) {
-                    errors.push(RemoveEventErrResponse::EventStatusNotEligible { event_status: (*event_status).into(), allowed_event_statuses: ::std::vec![RemoveEventEventStatus::Created, RemoveEventEventStatus::Updated] });
+                if !::core::matches!(
+                    event_status,
+                    ::domain::EventStatus::Created { .. } | ::domain::EventStatus::Updated { .. }
+                ) {
+                    errors.push(RemoveEventErrResponse::EventStatusNotEligible {
+                        event_status: event_status.into(),
+                        allowed_event_statuses: ::std::vec![
+                            RemoveEventEventStatus::Created,
+                            RemoveEventEventStatus::Updated
+                        ],
+                    });
                 }
             },
 

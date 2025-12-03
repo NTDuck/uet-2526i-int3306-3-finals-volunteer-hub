@@ -21,11 +21,16 @@ impl CreateEventPostBoundary for CreateEventPostInteractor {
     async fn apply(
         self: ::std::sync::Arc<Self>, request: CreateEventPostRequest,
     ) -> ::axiom::result::Fallible<CreateEventPostResponse> {
-        let actor_id = match ::std::sync::Arc::clone(&self.auth_token_generator).get_payload(request.token).await? {
-            ::core::option::Option::None =>
-                return ::axiom::err!(CreateEventPost @ AuthenticationTokenInvalid),
-            ::core::option::Option::Some
-            (AuthenticationTokenPayload { user_id, user_role: ::domain::UserRole::Volunteer | ::domain::UserRole::EventManager, expiry_timestamp }) => {
+        let actor_id = match ::std::sync::Arc::clone(&self.auth_token_generator)
+            .get_payload(request.token)
+            .await?
+        {
+            ::core::option::Option::None => return ::axiom::err!(CreateEventPost @ AuthenticationTokenInvalid),
+            ::core::option::Option::Some(AuthenticationTokenPayload {
+                user_id,
+                user_role: ::domain::UserRole::Volunteer | ::domain::UserRole::EventManager,
+                expiry_timestamp,
+            }) => {
                 if expiry_timestamp < ::axiom::time::Timestamp::now() {
                     return ::axiom::err!(CreateEventPost @ AuthenticationTokenExpired);
                 }
@@ -36,8 +41,7 @@ impl CreateEventPostBoundary for CreateEventPostInteractor {
                             return ::axiom::err!(CreateEventPost @ UserSuspended);
                         }
                     },
-                    ::core::option::Option::None =>
-                        return ::axiom::err!(CreateEventPost @ UserNotFound),
+                    ::core::option::Option::None => return ::axiom::err!(CreateEventPost @ UserNotFound),
                 }
 
                 user_id
@@ -51,8 +55,9 @@ impl CreateEventPostBoundary for CreateEventPostInteractor {
         let post_title = ::domain::EventPostTitle::try_from(request.post_title)
             .map_err(|error| errors.push(CreateEventPostErrResponse::PostTitleInvalid { post_title: error.into() }));
 
-        let post_content = ::domain::EventPostContent::try_from(request.post_content)
-            .map_err(|error| errors.push(CreateEventPostErrResponse::PostContentInvalid { post_content: error.into() }));
+        let post_content = ::domain::EventPostContent::try_from(request.post_content).map_err(|error| {
+            errors.push(CreateEventPostErrResponse::PostContentInvalid { post_content: error.into() })
+        });
 
         let event_id = ::std::sync::Arc::clone(&self.uuid_codec).parse(request.event_id).await?;
 
@@ -67,10 +72,11 @@ impl CreateEventPostBoundary for CreateEventPostInteractor {
             },
         }
 
-        let (
-            ::core::result::Result::Ok(post_title),
-            ::core::result::Result::Ok(post_content),
-        ) = (post_title, post_content) else { return ::axiom::errs!(CreateEventPost @ errors) };
+        let (::core::result::Result::Ok(post_title), ::core::result::Result::Ok(post_content)) =
+            (post_title, post_content)
+        else {
+            return ::axiom::errs!(CreateEventPost @ errors);
+        };
 
         if !errors.is_empty() {
             return ::axiom::errs!(CreateEventPost @ errors);
@@ -94,7 +100,9 @@ impl CreateEventPostBoundary for CreateEventPostInteractor {
 
         ::std::sync::Arc::clone(&self.post_repository).save(post).await?;
 
-        ::std::sync::Arc::clone(&self.event_recommender).track_posted(event_id, actor_id).await?;
+        ::std::sync::Arc::clone(&self.event_recommender)
+            .track_posted(event_id, actor_id)
+            .await?;
 
         ::axiom::ok!(CreateEventPost)
     }

@@ -22,8 +22,8 @@ impl SignUpBoundary for SignUpInteractor {
         let email = ::domain::Email::try_from(request.email)
             .map_err(|error| errors.push(SignUpErrResponse::EmailInvalid { email: error.into() }));
 
-        let password = ::domain::Password::try_from(request.password)
-            .map_err(|_| errors.push(SignUpErrResponse::PasswordInvalid));
+        let password =
+            ::domain::Password::try_from(request.password).map_err(|_| errors.push(SignUpErrResponse::PasswordInvalid));
 
         let full_name = ::domain::FullName::try_from(request.full_name)
             .map_err(|error| errors.push(SignUpErrResponse::FullNameInvalid { full_name: error.into() }));
@@ -40,13 +40,15 @@ impl SignUpBoundary for SignUpInteractor {
 
         if ::std::sync::Arc::clone(&self.user_repository)
             .contains_username(username.clone())
-            .await? {
+            .await?
+        {
             errors.push(SignUpErrResponse::UsernameAlreadyExists { username: username.to_string().into() });
         }
 
         if ::std::sync::Arc::clone(&self.user_repository)
             .contains_email(email.clone())
-            .await? {
+            .await?
+        {
             errors.push(SignUpErrResponse::EmailAlreadyExists { email: email.to_string().into() });
         }
 

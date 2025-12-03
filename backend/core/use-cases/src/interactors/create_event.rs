@@ -18,11 +18,16 @@ impl CreateEventBoundary for CreateEventInteractor {
     async fn apply(
         self: ::std::sync::Arc<Self>, request: CreateEventRequest,
     ) -> ::axiom::result::Fallible<CreateEventResponse> {
-        let actor_id = match ::std::sync::Arc::clone(&self.auth_token_generator).get_payload(request.token).await? {
-            ::core::option::Option::None =>
-                return ::axiom::err!(CreateEvent @ AuthenticationTokenInvalid),
-            ::core::option::Option::Some
-            (AuthenticationTokenPayload { user_id, user_role: ::domain::UserRole::EventManager, expiry_timestamp }) => {
+        let actor_id = match ::std::sync::Arc::clone(&self.auth_token_generator)
+            .get_payload(request.token)
+            .await?
+        {
+            ::core::option::Option::None => return ::axiom::err!(CreateEvent @ AuthenticationTokenInvalid),
+            ::core::option::Option::Some(AuthenticationTokenPayload {
+                user_id,
+                user_role: ::domain::UserRole::EventManager,
+                expiry_timestamp,
+            }) => {
                 if expiry_timestamp < ::axiom::time::Timestamp::now() {
                     return ::axiom::err!(CreateEvent @ AuthenticationTokenExpired);
                 }
@@ -33,8 +38,7 @@ impl CreateEventBoundary for CreateEventInteractor {
                             return ::axiom::err!(CreateEvent @ UserSuspended);
                         }
                     },
-                    ::core::option::Option::None =>
-                        return ::axiom::err!(CreateEvent @ UserNotFound),
+                    ::core::option::Option::None => return ::axiom::err!(CreateEvent @ UserNotFound),
                 }
 
                 user_id
@@ -48,18 +52,31 @@ impl CreateEventBoundary for CreateEventInteractor {
         let event_name = ::domain::EventName::try_from(request.event_name)
             .map_err(|error| errors.push(CreateEventErrResponse::EventNameInvalid { event_name: error.into() }));
 
-        let event_description = ::domain::EventDescription::try_from(request.event_description)
-            .map_err(|error| errors.push(CreateEventErrResponse::EventDescriptionInvalid { event_description: error.into() }));
+        let event_description = ::domain::EventDescription::try_from(request.event_description).map_err(|error| {
+            errors.push(CreateEventErrResponse::EventDescriptionInvalid { event_description: error.into() })
+        });
 
-        let event_categories = request.event_categories
+        let event_categories = request
+            .event_categories
             .into_iter()
             .try_collect_all::<::std::vec::Vec<_>, ::std::vec::Vec<_>, _, _, _>(::domain::EventCategory::try_from)
-            .map_err(|errors_| errors.push(CreateEventErrResponse::EventCategoriesInvalid { event_categories: errors_.into_iter().map(::core::convert::Into::into).collect() }));
+            .map_err(|errors_| {
+                errors.push(CreateEventErrResponse::EventCategoriesInvalid {
+                    event_categories: errors_.into_iter().map(::core::convert::Into::into).collect(),
+                })
+            });
 
-        let event_location = ::domain::EventLocation::try_from(request.event_location)
-            .map_err(|error| errors.push(CreateEventErrResponse::EventLocationInvalid { event_location: error.into() }));
+        let event_location = ::domain::EventLocation::try_from(request.event_location).map_err(|error| {
+            errors.push(CreateEventErrResponse::EventLocationInvalid { event_location: error.into() })
+        });
 
-        let (::core::result::Result::Ok(event_name), ::core::result::Result::Ok(event_description), ::core::result::Result::Ok(event_categories), ::core::result::Result::Ok(event_location)) = (event_name, event_description, event_categories, event_location) else {
+        let (
+            ::core::result::Result::Ok(event_name),
+            ::core::result::Result::Ok(event_description),
+            ::core::result::Result::Ok(event_categories),
+            ::core::result::Result::Ok(event_location),
+        ) = (event_name, event_description, event_categories, event_location)
+        else {
             return ::axiom::errs!(CreateEvent @ errors);
         };
 

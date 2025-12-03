@@ -19,11 +19,12 @@ impl ViewEventRecommendationBoundary for ViewEventRecommendationInteractor {
     async fn apply(
         self: ::std::sync::Arc<Self>, request: ViewEventRecommendationRequest,
     ) -> ::axiom::result::Fallible<ViewEventRecommendationResponse> {
-        let actor_id = match ::std::sync::Arc::clone(&self.auth_token_generator).get_payload(request.token).await? {
-            ::core::option::Option::None =>
-                return ::axiom::err!(ViewEventRecommendation @ AuthenticationTokenInvalid),
-            ::core::option::Option::Some
-            (AuthenticationTokenPayload { user_id, expiry_timestamp, .. }) => {
+        let actor_id = match ::std::sync::Arc::clone(&self.auth_token_generator)
+            .get_payload(request.token)
+            .await?
+        {
+            ::core::option::Option::None => return ::axiom::err!(ViewEventRecommendation @ AuthenticationTokenInvalid),
+            ::core::option::Option::Some(AuthenticationTokenPayload { user_id, expiry_timestamp, .. }) => {
                 if expiry_timestamp < ::axiom::time::Timestamp::now() {
                     return ::axiom::err!(ViewEventRecommendation @ AuthenticationTokenExpired);
                 }
@@ -42,28 +43,29 @@ impl ViewEventRecommendationBoundary for ViewEventRecommendationInteractor {
                     .view_recently_approved()
                     .await?,
             crate::boundaries::ViewEventRecommendationRecommendationType::RecentlyPosted =>
-                ::std::sync::Arc::clone(&self.event_recommender)
-                    .view_recently_posted()
-                    .await?,
+                ::std::sync::Arc::clone(&self.event_recommender).view_recently_posted().await?,
             crate::boundaries::ViewEventRecommendationRecommendationType::Trending =>
+                ::std::sync::Arc::clone(&self.event_recommender).view_trending().await?,
+            crate::boundaries::ViewEventRecommendationRecommendationType::Personalized =>
                 ::std::sync::Arc::clone(&self.event_recommender)
-                    .view_trending()
+                    .view_personalized(actor_id)
                     .await?,
-            crate::boundaries::ViewEventRecommendationRecommendationType::Personalized => ::std::sync::Arc::clone(&self.event_recommender).view_personalized(actor_id).await?,
         };
 
-        let events = ::futures::stream::iter(events)
-            .filter_map(|event| {
+        let events = events
+            .into_stream()
+            .then(|event| {
                 let uuid_codec = ::std::sync::Arc::clone(&self.uuid_codec);
 
                 async move {
                     ViewEventRecommendationEvent::build_from(event)
                         .with_uuid_codec(uuid_codec)
-                        .try_build().await
-                        .ok()
+                        .try_build()
+                        .await
                 }
             })
-            .collect::<::std::vec::Vec<_>>().await;
+            .try_collect::<::std::vec::Vec<_>>()
+            .await?;
 
         let response = ViewEventRecommendationOkResponse::builder().events(events).build();
         ::axiom::ok!(ViewEventRecommendation @ response)

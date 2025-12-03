@@ -15,7 +15,7 @@ pub trait RemoveEventPostBoundary {
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi))]
 pub struct RemoveEventPostRequest {
     pub token: ::axiom::string::String,
-    
+
     pub post_id: ::axiom::string::String,
 }
 
