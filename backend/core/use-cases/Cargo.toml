@@ -18,7 +18,6 @@ erased-serde = "0.4.9"
 serde_json = "*"
 vec1 = { workspace = true }
 async-trait = { workspace = true }
-paste = { workspace = true }
 bon = { workspace = true }
 futures = { workspace = true }
 serde = { workspace = true, optional = true }

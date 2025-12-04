@@ -10,27 +10,28 @@ pub struct ViewEventRecommendationInteractor {
     user_repository: ::std::sync::Arc<dyn UserRepository + ::core::marker::Send + ::core::marker::Sync>,
 
     uuid_codec: ::std::sync::Arc<dyn UuidCodec + ::core::marker::Send + ::core::marker::Sync>,
+    timestamp_codec: ::std::sync::Arc<dyn TimestampCodec + ::core::marker::Send + ::core::marker::Sync>,
     auth_token_generator:
-        ::std::sync::Arc<dyn AuthenticationTokenGenerator + ::core::marker::Send + ::core::marker::Sync>,
+        ::std::sync::Arc<dyn AuthTokenGenerator + ::core::marker::Send + ::core::marker::Sync>,
 }
 
 #[async_trait]
 impl ViewEventRecommendationBoundary for ViewEventRecommendationInteractor {
     async fn apply(
-        self: ::std::sync::Arc<Self>, request: ViewEventRecommendationRequest,
-    ) -> ::axiom::result::Fallible<ViewEventRecommendationResponse> {
+        self: ::std::sync::Arc<Self>, request: Request,
+    ) -> ::axiom::result::Fallible<Response> {
         let actor_id = match ::std::sync::Arc::clone(&self.auth_token_generator)
             .get_payload(request.token)
             .await?
         {
-            ::core::option::Option::None => return ::axiom::err!(ViewEventRecommendation @ AuthenticationTokenInvalid),
+            ::core::option::Option::None => return super::err!(AuthenticationTokenInvalid),
             ::core::option::Option::Some(AuthenticationTokenPayload { user_id, expiry_timestamp, .. }) => {
                 if expiry_timestamp < ::axiom::time::Timestamp::now() {
-                    return ::axiom::err!(ViewEventRecommendation @ AuthenticationTokenExpired);
+                    return super::err!(AuthenticationTokenExpired);
                 }
 
                 if !::std::sync::Arc::clone(&self.user_repository).contains_id(user_id).await? {
-                    return ::axiom::err!(ViewEventRecommendation @ UserNotFound);
+                    return super::err!(UserNotFound);
                 }
 
                 user_id
@@ -38,15 +39,15 @@ impl ViewEventRecommendationBoundary for ViewEventRecommendationInteractor {
         };
 
         let events = match request.r#type {
-            crate::boundaries::ViewEventRecommendationRecommendationType::RecentlyPublished =>
+            RecommendationType::RecentlyPublished =>
                 ::std::sync::Arc::clone(&self.event_recommender)
                     .view_recently_approved()
                     .await?,
-            crate::boundaries::ViewEventRecommendationRecommendationType::RecentlyPosted =>
+            RecommendationType::RecentlyPosted =>
                 ::std::sync::Arc::clone(&self.event_recommender).view_recently_posted().await?,
-            crate::boundaries::ViewEventRecommendationRecommendationType::Trending =>
+            RecommendationType::Trending =>
                 ::std::sync::Arc::clone(&self.event_recommender).view_trending().await?,
-            crate::boundaries::ViewEventRecommendationRecommendationType::Personalized =>
+            RecommendationType::Personalized =>
                 ::std::sync::Arc::clone(&self.event_recommender)
                     .view_personalized(actor_id)
                     .await?,
@@ -56,10 +57,12 @@ impl ViewEventRecommendationBoundary for ViewEventRecommendationInteractor {
             .into_stream()
             .then(|event| {
                 let uuid_codec = ::std::sync::Arc::clone(&self.uuid_codec);
+                let timestamp_codec = ::std::sync::Arc::clone(&self.timestamp_codec);
 
                 async move {
-                    ViewEventRecommendationEvent::build_from(event)
-                        .with_uuid_codec(uuid_codec)
+                    Event::build_from(event)
+                        .with_uuid_codec(::std::sync::Arc::clone(&uuid_codec))
+                        .with_timestamp_codec(::std::sync::Arc::clone(&timestamp_codec))
                         .try_build()
                         .await
                 }
@@ -67,7 +70,14 @@ impl ViewEventRecommendationBoundary for ViewEventRecommendationInteractor {
             .try_collect::<::std::vec::Vec<_>>()
             .await?;
 
-        let response = ViewEventRecommendationOkResponse::builder().events(events).build();
-        ::axiom::ok!(ViewEventRecommendation @ response)
+        let response = OkResponse::builder().events(events).build();
+        super::ok!(response)
     }
 }
+
+type Request = ViewEventRecommendationRequest;
+type Response = ViewEventRecommendationResponse;
+type OkResponse = ViewEventRecommendationOkResponse;
+type ErrResponse = ViewEventRecommendationErrResponse;
+type RecommendationType = ViewEventRecommendationRecommendationType;
+type Event = ViewEventRecommendationEvent;

@@ -32,9 +32,12 @@ pub type ViewEventPostResponse =
 pub struct ViewEventPostOkResponse {
     pub id: ::axiom::string::String,
 
-    pub created_at: ::axiom::string::String,
+    pub last_updated_at: ::axiom::string::String,
     pub title: ::axiom::string::String,
     pub content: ::axiom::string::String,
+
+    #[builder(required)]
+    pub image_url: ::core::option::Option<::axiom::string::String>,
 
     pub reactions: ::std::vec::Vec<ViewEventPostEventPostReaction>,
     pub comments: ::std::vec::Vec<ViewEventPostEventPostComment>,
@@ -52,8 +55,6 @@ pub struct ViewEventPostOkResponse {
 pub struct ViewEventPostEventPostReaction {
     pub id: ::axiom::string::String,
 
-    pub created_at: ::axiom::string::String,
-
     pub author: ::core::option::Option<ViewEventPostUser>,
 }
 
@@ -63,26 +64,15 @@ impl ViewEventPostEventPostReaction {
     pub async fn build_from(
         #[builder(start_fn)] reaction: ::domain::EventPostReaction,
         #[builder(start_fn)] author: ::core::option::Option<::domain::User>,
-        #[builder(setters(name = with_uuid_generator))] uuid_generator: ::std::sync::Arc<
-            dyn crate::gateways::UuidGenerator + ::core::marker::Send + ::core::marker::Sync,
-        >,
         #[builder(setters(name = with_uuid_codec))] uuid_codec: ::std::sync::Arc<
             dyn crate::gateways::UuidCodec + ::core::marker::Send + ::core::marker::Sync,
-        >,
-        #[builder(setters(name = with_timestamp_codec))] timestamp_codec: ::std::sync::Arc<
-            dyn crate::gateways::TimestampCodec + ::core::marker::Send + ::core::marker::Sync,
         >,
     ) -> ::axiom::result::Fallible<Self> {
         Self::builder()
             .id(::std::sync::Arc::clone(&uuid_codec).format(reaction.id).await?)
-            .created_at(
-                ::std::sync::Arc::clone(&timestamp_codec)
-                    .format(::std::sync::Arc::clone(&uuid_generator).get_timestamp(reaction.id).await?)
-                    .await?,
-            )
             .maybe_author(
                 author
-                    .map_async(|author| async {
+                    .map_async(|author| async move {
                         ViewEventPostUser::build_from(author)
                             .with_uuid_codec(::std::sync::Arc::clone(&uuid_codec))
                             .try_build()
@@ -105,8 +95,12 @@ impl ViewEventPostEventPostReaction {
 pub struct ViewEventPostEventPostComment {
     pub id: ::axiom::string::String,
 
-    pub created_at: ::axiom::string::String,
-    pub content: ::axiom::string::String,
+    pub last_updated_at: ::axiom::string::String,
+
+    #[builder(required)]
+    pub content: ::core::option::Option<::axiom::string::String>,
+    #[builder(required)]
+    pub image_url: ::core::option::Option<::axiom::string::String>,
 
     pub author: ::core::option::Option<ViewEventPostUser>,
 }
@@ -117,9 +111,6 @@ impl ViewEventPostEventPostComment {
     pub async fn build_from(
         #[builder(start_fn)] comment: ::domain::EventPostComment,
         #[builder(start_fn)] author: ::core::option::Option<::domain::User>,
-        #[builder(setters(name = with_uuid_generator))] uuid_generator: ::std::sync::Arc<
-            dyn crate::gateways::UuidGenerator + ::core::marker::Send + ::core::marker::Sync,
-        >,
         #[builder(setters(name = with_uuid_codec))] uuid_codec: ::std::sync::Arc<
             dyn crate::gateways::UuidCodec + ::core::marker::Send + ::core::marker::Sync,
         >,
@@ -129,15 +120,16 @@ impl ViewEventPostEventPostComment {
     ) -> ::axiom::result::Fallible<Self> {
         Self::builder()
             .id(::std::sync::Arc::clone(&uuid_codec).format(comment.id).await?)
-            .created_at(
+            .last_updated_at(
                 ::std::sync::Arc::clone(&timestamp_codec)
-                    .format(::std::sync::Arc::clone(&uuid_generator).get_timestamp(comment.id).await?)
+                    .format(comment.last_updated_at)
                     .await?,
             )
-            .content(comment.content)
+            .content(comment.content.map(::core::convert::Into::into))
+            .image_url(comment.image_url)
             .maybe_author(
                 author
-                    .map_async(|author| async {
+                    .map_async(|author| async move {
                         ViewEventPostUser::build_from(author)
                             .with_uuid_codec(::std::sync::Arc::clone(&uuid_codec))
                             .try_build()
@@ -194,7 +186,7 @@ pub enum ViewEventPostErrResponse {
     #[error("User not found")]
     UserNotFound,
 
-    #[error("User with role `{user_role}` not authorized: must be {}", super::utils::fmt::join_with_comma_ad_hoc(.allowed_user_roles))]
+    #[error("User with role `{user_role}` not authorized: must be {}", super::fmt::join_with_comma_ad_hoc(.allowed_user_roles))]
     UserUnauthorized {
         user_role: ViewEventPostUserRole,
         allowed_user_roles: ::std::vec::Vec<ViewEventPostUserRole>,

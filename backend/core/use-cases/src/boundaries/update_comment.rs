@@ -18,6 +18,8 @@ pub struct UpdateEventPostCommentRequest {
 
     pub comment_id: ::axiom::string::String,
     pub comment_content: ::core::option::Option<::axiom::string::String>,
+
+    pub comment_image: ::core::option::Option<::std::boxed::Box<[u8]>>,
 }
 
 #[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
@@ -42,7 +44,7 @@ pub enum UpdateEventPostCommentErrResponse {
     #[error("User not found")]
     UserNotFound,
 
-    #[error("User with role `{user_role}` not authorized: must be {}", super::utils::fmt::join_with_comma_ad_hoc(.allowed_user_roles))]
+    #[error("User with role `{user_role}` not authorized: must be {}", super::fmt::join_with_comma_ad_hoc(.allowed_user_roles))]
     UserUnauthorized {
         user_role: UpdateEventPostCommentUserRole,
         allowed_user_roles: ::std::vec::Vec<UpdateEventPostCommentUserRole>,
@@ -58,6 +60,9 @@ pub enum UpdateEventPostCommentErrResponse {
     CommentContentInvalid {
         comment_content: ::axiom::string::String,
     },
+
+    #[error("Invalid comment image")]
+    CommentImageInvalid,
 
     #[error("Comment not owned by user")]
     OwnershipMismatch,

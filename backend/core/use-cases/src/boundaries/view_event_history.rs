@@ -40,13 +40,14 @@ pub struct ViewEventHistoryOkResponse {
 pub struct ViewEventHistoryEvent {
     pub id: ::axiom::string::String,
 
-    pub status: ViewEventHistoryEventStatus,
     pub registration_status: ViewEventHistoryEventRegistrationStatus,
-
+    pub registration_status_last_updated_at: ::axiom::string::String,
+    
     pub name: ::axiom::string::String,
-    #[builder(with = |values: ::std::vec::Vec<impl ::core::convert::Into<::axiom::string::String>>| values.into_iter().map(::core::convert::Into::into).collect())]
     pub categories: ::std::vec::Vec<::axiom::string::String>,
     pub location: ::axiom::string::String,
+    #[builder(required)]
+    pub image_url: ::core::option::Option<::axiom::string::String>,
 }
 
 #[::bon::bon]
@@ -58,39 +59,20 @@ impl ViewEventHistoryEvent {
         #[builder(setters(name = with_uuid_codec))] uuid_codec: ::std::sync::Arc<
             dyn crate::gateways::UuidCodec + ::core::marker::Send + ::core::marker::Sync,
         >,
+        #[builder(setters(name = with_timestamp_codec))] timestamp_codec: ::std::sync::Arc<
+            dyn crate::gateways::TimestampCodec + ::core::marker::Send + ::core::marker::Sync,
+        >,
     ) -> ::axiom::result::Fallible<Self> {
         Self::builder()
-            .id(uuid_codec.format(event.id).await?)
-            .status(*event.statuses.last())
+            .id(::std::sync::Arc::clone(&uuid_codec).format(event.id).await?)
             .registration_status(event_registration_status)
+            .registration_status_last_updated_at(::std::sync::Arc::clone(&timestamp_codec).format(event_registration_status.at()).await?)
             .name(event.name)
-            .categories(event.categories)
+            .categories(event.categories.into_iter().map(::core::convert::Into::into).collect::<::std::vec::Vec<_>>())
             .location(event.location)
+            .image_url(event.image_url)
             .build()
             .into_ok()
-    }
-}
-
-#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::strum::Display)]
-#[cfg_attr(feature = "serde", derive(::serde::Serialize))]
-#[cfg_attr(feature = "serde", serde(rename_all = "kebab-case"))]
-#[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
-#[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
-pub enum ViewEventHistoryEventStatus {
-    Created,
-    Updated,
-    Approved,
-    Rejected,
-}
-
-impl ::core::convert::From<::domain::EventStatus> for ViewEventHistoryEventStatus {
-    fn from(value: ::domain::EventStatus) -> Self {
-        match value {
-            ::domain::EventStatus::Created { .. } => Self::Created,
-            ::domain::EventStatus::Updated { .. } => Self::Updated,
-            ::domain::EventStatus::Approved { .. } => Self::Approved,
-            ::domain::EventStatus::Rejected { .. } => Self::Rejected,
-        }
     }
 }
 
@@ -134,7 +116,7 @@ pub enum ViewEventHistoryErrResponse {
     #[error("User not found")]
     UserNotFound,
 
-    #[error("User with role `{user_role}` not authorized: must be {}", super::utils::fmt::join_with_comma_ad_hoc(.allowed_user_roles))]
+    #[error("User with role `{user_role}` not authorized: must be {}", super::fmt::join_with_comma_ad_hoc(.allowed_user_roles))]
     UserUnauthorized {
         user_role: ViewEventHistoryUserRole,
         allowed_user_roles: ::std::vec::Vec<ViewEventHistoryUserRole>,

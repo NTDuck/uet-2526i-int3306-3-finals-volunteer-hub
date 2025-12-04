@@ -41,7 +41,7 @@ pub enum SubscribeToEventErrResponse {
     #[error("User not found")]
     UserNotFound,
 
-    #[error("User with role `{user_role}` not authorized: must be {}", super::utils::fmt::join_with_comma_ad_hoc(.allowed_user_roles))]
+    #[error("User with role `{user_role}` not authorized: must be {}", super::fmt::join_with_comma_ad_hoc(.allowed_user_roles))]
     UserUnauthorized {
         user_role: SubscribeToEventUserRole,
         allowed_user_roles: ::std::vec::Vec<SubscribeToEventUserRole>,
@@ -53,7 +53,7 @@ pub enum SubscribeToEventErrResponse {
     #[error("Event not found")] // or not published yet
     EventNotFound,
 
-    #[error("Event registration with status `{event_registration_status}` not eligible: must be {}", super::utils::fmt::join_with_comma_ad_hoc(.allowed_event_registration_statuses))]
+    #[error("Event registration with status `{event_registration_status}` not eligible: must be {}", super::fmt::join_with_comma_ad_hoc(.allowed_event_registration_statuses))]
     EventRegistrationStatusNotEligible {
         event_registration_status: SubscribeToEventEventRegistrationStatus,
         allowed_event_registration_statuses: ::std::vec::Vec<SubscribeToEventEventRegistrationStatus>,

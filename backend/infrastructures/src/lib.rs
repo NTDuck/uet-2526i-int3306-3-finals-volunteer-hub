@@ -2,6 +2,11 @@ use ::axiom::prelude::*;
 use ::use_cases::gateways::*;
 
 #[derive(::bon::Builder)]
+pub struct InMemoryEventRepository {
+    
+}
+
+#[derive(::bon::Builder)]
 pub struct InMemoryUserRepository {
     #[builder(default, with = |value: ::std::collections::BTreeMap<::core::cmp::Reverse<::domain::Uuid>, ::domain::User>| ::tokio::sync::Mutex::new(value))]
     users_by_ids:
@@ -101,13 +106,6 @@ impl UuidGenerator for UuidV7Generator {
 
         ::axiom::result::Fallible::Ok(uuid)
     }
-
-    async fn get_timestamp(
-        self: ::std::sync::Arc<Self>, uuid: ::domain::Uuid,
-    ) -> ::axiom::result::Fallible<::axiom::time::Timestamp> {
-        let uuid = ::uuid::Uuid::from_bytes(*uuid);
-        ::axiom::result::Fallible::Ok(uuid.into_timestamp()?)
-    }
 }
 
 trait UuidExt {
@@ -181,7 +179,7 @@ pub struct JsonWebTokenGenerator<Key> {
 }
 
 #[async_trait]
-impl<Key> AuthenticationTokenGenerator for JsonWebTokenGenerator<Key>
+impl<Key> AuthTokenGenerator for JsonWebTokenGenerator<Key>
 where
     Key: ::jwt::SigningAlgorithm + ::jwt::VerifyingAlgorithm + ::core::marker::Send + ::core::marker::Sync,
 {

@@ -19,6 +19,8 @@ pub struct SignUpRequest {
     pub password: ::axiom::string::String,
 
     pub full_name: ::axiom::string::String,
+    
+    pub avatar: ::core::option::Option<::std::boxed::Box<[u8]>>,
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::strum::Display)]
@@ -81,6 +83,9 @@ pub enum SignUpErrResponse {
     FullNameInvalid {
         full_name: ::axiom::string::String,
     },
+
+    #[error("Invalid avatar")]
+    AvatarInvalid,
 
     #[error("User with username `{username}` already exists")]
     UsernameAlreadyExists {

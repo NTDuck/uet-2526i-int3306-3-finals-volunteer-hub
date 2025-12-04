@@ -109,6 +109,7 @@ impl ::core::convert::From<ViewUsersUserRole> for crate::gateways::UserRepositor
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
 pub enum ViewUsersUserStatus {
     Created,
+    Updated,
     Suspended,
     Unsuspended,
 }
@@ -116,7 +117,8 @@ pub enum ViewUsersUserStatus {
 impl ::core::convert::From<::domain::UserStatus> for ViewUsersUserStatus {
     fn from(value: ::domain::UserStatus) -> Self {
         match value {
-            ::domain::UserStatus::Created => Self::Created,
+            ::domain::UserStatus::Created { .. } => Self::Created,
+            ::domain::UserStatus::Updated { .. } => Self::Updated,
             ::domain::UserStatus::Suspended { .. } => Self::Suspended,
             ::domain::UserStatus::Unsuspended { .. } => Self::Unsuspended,
         }
@@ -127,6 +129,7 @@ impl ::core::convert::From<crate::gateways::UserRepositoryViewFilterUserStatus> 
     fn from(value: crate::gateways::UserRepositoryViewFilterUserStatus) -> Self {
         match value {
             crate::gateways::UserRepositoryViewFilterUserStatus::Created => Self::Created,
+            crate::gateways::UserRepositoryViewFilterUserStatus::Updated => Self::Updated,
             crate::gateways::UserRepositoryViewFilterUserStatus::Suspended => Self::Suspended,
             crate::gateways::UserRepositoryViewFilterUserStatus::Unsuspended => Self::Unsuspended,
         }
@@ -137,6 +140,7 @@ impl ::core::convert::From<ViewUsersUserStatus> for crate::gateways::UserReposit
     fn from(value: ViewUsersUserStatus) -> Self {
         match value {
             ViewUsersUserStatus::Created => Self::Created,
+            ViewUsersUserStatus::Updated => Self::Updated,
             ViewUsersUserStatus::Suspended => Self::Suspended,
             ViewUsersUserStatus::Unsuspended => Self::Unsuspended,
         }
@@ -171,6 +175,9 @@ pub struct ViewUsersUser {
     pub username: ::axiom::string::String,
     pub email: ::axiom::string::String,
     pub full_name: ::axiom::string::String,
+
+    #[builder(required)]
+    pub avatar_url: ::core::option::Option<::axiom::string::String>,
 }
 
 #[::bon::bon]
@@ -189,6 +196,7 @@ impl ViewUsersUser {
             .username(user.username)
             .email(user.email)
             .full_name(user.full_name)
+            .avatar_url(user.avatar_url)
             .build()
             .into_ok()
     }
@@ -209,7 +217,7 @@ pub enum ViewUsersErrResponse {
     #[error("User not found")]
     UserNotFound,
 
-    #[error("User with role `{user_role}` not authorized: must be {}", super::utils::fmt::join_with_comma_ad_hoc(.allowed_user_roles))]
+    #[error("User with role `{user_role}` not authorized: must be {}", super::fmt::join_with_comma_ad_hoc(.allowed_user_roles))]
     UserUnauthorized {
         user_role: ViewUsersUserRole,
         allowed_user_roles: ::std::vec::Vec<ViewUsersUserRole>,

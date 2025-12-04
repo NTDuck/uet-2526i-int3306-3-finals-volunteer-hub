@@ -9,47 +9,54 @@ pub struct ExportVolunteersInteractor {
     user_repository: ::std::sync::Arc<dyn UserRepository + ::core::marker::Send + ::core::marker::Sync>,
 
     auth_token_generator:
-        ::std::sync::Arc<dyn AuthenticationTokenGenerator + ::core::marker::Send + ::core::marker::Sync>,
+        ::std::sync::Arc<dyn AuthTokenGenerator + ::core::marker::Send + ::core::marker::Sync>,
 }
 
 #[async_trait]
 impl ExportVolunteersBoundary for ExportVolunteersInteractor {
     async fn apply(
-        self: ::std::sync::Arc<Self>, request: ExportVolunteersRequest,
-    ) -> ::axiom::result::Fallible<ExportVolunteersResponse> {
+        self: ::std::sync::Arc<Self>, request: Request,
+    ) -> ::axiom::result::Fallible<Response> {
         match ::std::sync::Arc::clone(&self.auth_token_generator)
             .get_payload(request.token)
             .await?
         {
-            ::core::option::Option::None => return ::axiom::err!(ExportVolunteers @ AuthenticationTokenInvalid),
+            ::core::option::Option::None => return super::err!(AuthenticationTokenInvalid),
             ::core::option::Option::Some(AuthenticationTokenPayload {
                 user_id,
                 user_role: ::domain::UserRole::Administrator,
                 expiry_timestamp,
             }) => {
                 if expiry_timestamp < ::axiom::time::Timestamp::now() {
-                    return ::axiom::err!(ExportVolunteers @ AuthenticationTokenExpired);
+                    return super::err!(AuthenticationTokenExpired);
                 }
 
                 if !::std::sync::Arc::clone(&self.user_repository).contains_id(user_id).await? {
-                    return ::axiom::err!(ExportVolunteers @ UserNotFound);
+                    return super::err!(UserNotFound);
                 }
             },
             ::core::option::Option::Some(AuthenticationTokenPayload { user_role, .. }) =>
-                return ::axiom::err!(ExportVolunteers @ UserUnauthorized { user_role: user_role.into(), allowed_user_roles: ::std::vec![ExportVolunteersUserRole::Administrator] }),
+                return super::err!(UserUnauthorized { user_role: user_role.into(), allowed_user_roles: ::std::vec![UserRole::Administrator] }),
         };
 
         let bytes = match request.format {
-            ExportVolunteersExportFormat::Csv =>
+            ExportFormat::Csv =>
                 ::std::sync::Arc::clone(&self.user_exporter).export_volunteers_as_csv().await?,
-            ExportVolunteersExportFormat::Json =>
+            ExportFormat::Json =>
                 ::std::sync::Arc::clone(&self.user_exporter).export_volunteers_as_json().await?,
         };
 
-        let response = ExportVolunteersOkResponse::builder()
-            .bytes(bytes)
+        let response = OkResponse::builder()
+            .bytes(bytes.to_vec())
             .format(request.format)
             .build();
-        ::axiom::ok!(ExportVolunteers @ response)
+        super::ok!(response)
     }
 }
+
+type Request = ExportVolunteersRequest;
+type Response = ExportVolunteersResponse;
+type OkResponse = ExportVolunteersOkResponse;
+type ErrResponse = ExportVolunteersErrResponse;
+type ExportFormat = ExportVolunteersExportFormat;
+type UserRole = ExportVolunteersUserRole;

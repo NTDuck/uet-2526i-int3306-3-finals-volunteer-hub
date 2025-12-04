@@ -9,36 +9,36 @@ pub struct ModerateUserInteractor {
 
     uuid_codec: ::std::sync::Arc<dyn UuidCodec + ::core::marker::Send + ::core::marker::Sync>,
     auth_token_generator:
-        ::std::sync::Arc<dyn AuthenticationTokenGenerator + ::core::marker::Send + ::core::marker::Sync>,
+        ::std::sync::Arc<dyn AuthTokenGenerator + ::core::marker::Send + ::core::marker::Sync>,
 }
 
 #[async_trait]
 impl ModerateUserBoundary for ModerateUserInteractor {
     async fn apply(
-        self: ::std::sync::Arc<Self>, request: ModerateUserRequest,
-    ) -> ::axiom::result::Fallible<ModerateUserResponse> {
+        self: ::std::sync::Arc<Self>, request: Request,
+    ) -> ::axiom::result::Fallible<Response> {
         let actor_id = match ::std::sync::Arc::clone(&self.auth_token_generator)
             .get_payload(request.token)
             .await?
         {
-            ::core::option::Option::None => return ::axiom::err!(ModerateUser @ AuthenticationTokenInvalid),
+            ::core::option::Option::None => return super::err!(AuthenticationTokenInvalid),
             ::core::option::Option::Some(AuthenticationTokenPayload {
                 user_id,
                 user_role: ::domain::UserRole::Administrator,
                 expiry_timestamp,
             }) => {
                 if expiry_timestamp < ::axiom::time::Timestamp::now() {
-                    return ::axiom::err!(ModerateUser @ AuthenticationTokenExpired);
+                    return super::err!(AuthenticationTokenExpired);
                 }
 
                 if !::std::sync::Arc::clone(&self.user_repository).contains_id(user_id).await? {
-                    return ::axiom::err!(ModerateUser @ UserNotFound);
+                    return super::err!(UserNotFound);
                 }
 
                 user_id
             },
             ::core::option::Option::Some(AuthenticationTokenPayload { user_role, .. }) =>
-                return ::axiom::err!(ModerateUser @ UserUnauthorized { user_role: user_role.into(), allowed_user_roles: ::std::vec![ModerateUserUserRole::Administrator] }),
+                return super::err!(UserUnauthorized { user_role: user_role.into(), allowed_user_roles: ::std::vec![UserRole::Administrator] }),
         };
 
         let user_id = ::std::sync::Arc::clone(&self.uuid_codec).parse(request.user_id).await?;
@@ -46,15 +46,15 @@ impl ModerateUserBoundary for ModerateUserInteractor {
         let ::core::option::Option::Some(mut user) =
             ::std::sync::Arc::clone(&self.user_repository).get_by_id(user_id).await?
         else {
-            return ::axiom::err!(ModerateUser @ UserNotFound);
+            return super::err!(UserNotFound);
         };
 
         if !::core::matches!(user.role, ::domain::UserRole::Volunteer | ::domain::UserRole::EventManager) {
-            return ::axiom::err!(ModerateUser @ UserRoleNotEligible {
+            return super::err!(UserRoleNotEligible {
                 user_role: user.role.into(),
                 allowed_user_roles: ::std::vec![
-                    ModerateUserUserRole::Volunteer,
-                    ModerateUserUserRole::EventManager,
+                    UserRole::Volunteer,
+                    UserRole::EventManager,
                 ],
             });
         }
@@ -62,16 +62,17 @@ impl ModerateUserBoundary for ModerateUserInteractor {
         let user_status = *user.statuses.last();
 
         match request.user_status {
-            ModerateUserNewUserStatus::Suspended => {
+            NewUserStatus::Suspended => {
                 if !::core::matches!(
                     user_status,
-                    ::domain::UserStatus::Created | ::domain::UserStatus::Suspended { .. }
+                    ::domain::UserStatus::Created { .. } | ::domain::UserStatus::Updated { .. } | ::domain::UserStatus::Suspended { .. }
                 ) {
-                    return ::axiom::err!(ModerateUser @ UserStatusNotEligible {
+                    return super::err!(UserStatusNotEligible {
                         user_status: user_status.into(),
                         allowed_user_statuses: ::std::vec![
-                            ModerateUserUserStatus::Created,
-                            ModerateUserUserStatus::Suspended,
+                            UserStatus::Created,
+                            UserStatus::Updated,
+                            UserStatus::Suspended,
                         ],
                     });
                 }
@@ -82,11 +83,11 @@ impl ModerateUserBoundary for ModerateUserInteractor {
                 });
             },
 
-            ModerateUserNewUserStatus::Unsuspended => {
+            NewUserStatus::Unsuspended => {
                 if !::core::matches!(user_status, ::domain::UserStatus::Suspended { .. }) {
-                    return ::axiom::err!(ModerateUser @ UserStatusNotEligible {
+                    return super::err!(UserStatusNotEligible {
                         user_status: user_status.into(),
-                        allowed_user_statuses: ::std::vec![ModerateUserUserStatus::Suspended],
+                        allowed_user_statuses: ::std::vec![UserStatus::Suspended],
                     });
                 }
 
@@ -99,6 +100,13 @@ impl ModerateUserBoundary for ModerateUserInteractor {
 
         ::std::sync::Arc::clone(&self.user_repository).save(user).await?;
 
-        ::axiom::ok!(ModerateUser)
+        super::ok!(())
     }
 }
+
+type Request = ModerateUserRequest;
+type Response = ModerateUserResponse;
+type ErrResponse = ModerateUserErrResponse;
+type UserRole = ModerateUserUserRole;
+type UserStatus = ModerateUserUserStatus;
+type NewUserStatus = ModerateUserNewUserStatus;

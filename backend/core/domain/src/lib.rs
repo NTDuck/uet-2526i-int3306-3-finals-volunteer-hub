@@ -9,12 +9,15 @@ pub struct Event {
     pub description: EventDescription,
     pub categories: ::std::vec::Vec<EventCategory>,
     pub location: EventLocation,
+
+    pub image_url: ::axiom::string::String,
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
 pub enum EventStatus {
     Created {
         created_by_manager_id: Uuid,
+        created_at: ::axiom::time::Timestamp,
     },
     Updated {
         updated_by_manager_id: Uuid,
@@ -28,6 +31,17 @@ pub enum EventStatus {
         rejected_by_administrator_id: Uuid,
         rejected_at: ::axiom::time::Timestamp,
     },
+}
+
+impl EventStatus {
+    pub const fn at(&self) -> ::axiom::time::Timestamp {
+        match self {
+            EventStatus::Created { created_at, .. } => *created_at,
+            EventStatus::Updated { updated_at, .. } => *updated_at,
+            EventStatus::Approved { approved_at, .. } => *approved_at,
+            EventStatus::Rejected { rejected_at, .. } => *rejected_at,
+        }
+    }
 }
 
 #[repr(transparent)]
@@ -93,6 +107,18 @@ pub enum EventRegistrationStatus {
     },
 }
 
+impl EventRegistrationStatus {
+    pub const fn at(&self) -> ::axiom::time::Timestamp {
+        match self {
+            EventRegistrationStatus::Pending { pending_at } => *pending_at,
+            EventRegistrationStatus::Withdrawn { withdrawn_at } => *withdrawn_at,
+            EventRegistrationStatus::Accepted { accepted_at, .. } => *accepted_at,
+            EventRegistrationStatus::Declined { declined_at, .. } => *declined_at,
+            EventRegistrationStatus::Completed { completed_at, .. } => *completed_at,
+        }
+    }
+}
+
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
 #[builder(on(_, into))]
 pub struct EventPost {
@@ -100,8 +126,12 @@ pub struct EventPost {
     pub event_id: Uuid,
     pub author_id: Uuid,
 
+    pub last_updated_at: ::axiom::time::Timestamp,
     pub title: EventPostTitle,
     pub content: EventPostContent,
+
+    #[builder(required)]
+    pub image_url: ::core::option::Option<::axiom::string::String>,
 }
 
 #[repr(transparent)]
@@ -129,7 +159,13 @@ pub struct EventPostComment {
     pub post_id: Uuid,
     pub author_id: Uuid,
 
-    pub content: EventPostCommentContent,
+    pub last_updated_at: ::axiom::time::Timestamp,
+
+    #[builder(required)]
+    pub content: ::core::option::Option<EventPostCommentContent>,
+
+    #[builder(required)]
+    pub image_url: ::core::option::Option<::axiom::string::String>,
 }
 
 #[repr(transparent)]
@@ -150,6 +186,9 @@ pub struct User {
     pub password: PasswordDigest,
 
     pub full_name: FullName,
+
+    #[builder(required)]
+    pub avatar_url: ::core::option::Option<::axiom::string::String>,
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
@@ -161,7 +200,12 @@ pub enum UserRole {
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
 pub enum UserStatus {
-    Created,
+    Created {
+        created_at: ::axiom::time::Timestamp,
+    },
+    Updated {
+        updated_at: ::axiom::time::Timestamp,
+    },
     Suspended {
         suspended_by_administrator_id: Uuid,
         suspended_at: ::axiom::time::Timestamp,

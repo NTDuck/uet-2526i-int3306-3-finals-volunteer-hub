@@ -12,6 +12,10 @@ pub mod prelude {
     pub use crate::time::TimestampExt as _;
 }
 
+pub mod bytes {
+    pub type Bytes = ::bytes::Bytes;
+}
+
 pub mod option {
     pub trait OptionExt<T> {
         fn some(self) -> crate::result::Fallible<T>;
@@ -54,6 +58,12 @@ pub mod option {
             F: ::core::ops::FnOnce(T) -> Fut + ::core::marker::Send,
             Fut: ::core::future::Future<Output = U> + ::core::marker::Send;
 
+        async fn zip_async<Fut, F, U>(self, other: ::core::option::Option<U>, f: F) -> ::core::option::Option<(T, U)>
+        where
+            F: ::core::ops::FnOnce(T, U) -> Fut + ::core::marker::Send,
+            Fut: ::core::future::Future<Output = (T, U)> + ::core::marker::Send,
+            U: ::core::marker::Send;
+
         async fn or_else_async<Fut, F>(self, f: F) -> ::core::option::Option<T>
         where
             F: ::core::ops::FnOnce() -> Fut + ::core::marker::Send,
@@ -78,6 +88,21 @@ pub mod option {
         {
             match self {
                 ::core::option::Option::Some(val) => ::core::option::Option::Some(f(val).await),
+                ::core::option::Option::None => ::core::option::Option::None,
+            }
+        }
+
+        async fn zip_async<Fut, F, U>(self, other: ::core::option::Option<U>, f: F) -> ::core::option::Option<(T, U)>
+        where
+            F: ::core::ops::FnOnce(T, U) -> Fut + ::core::marker::Send,
+            Fut: ::core::future::Future<Output = (T, U)> + ::core::marker::Send,
+            U: ::core::marker::Send,
+        {
+            match self {
+                ::core::option::Option::Some(val) => match other {
+                    ::core::option::Option::Some(other_val) => ::core::option::Option::Some(f(val, other_val).await),
+                    ::core::option::Option::None => ::core::option::Option::None,
+                },
                 ::core::option::Option::None => ::core::option::Option::None,
             }
         }
@@ -182,49 +207,6 @@ pub mod result {
             crate::result::Fallible::Ok(self)
         }
     }
-
-    /// Assumes: **(1)** `$ok` is of type `<$ident>OkResponse`; **(2)** `paste`
-    /// is within scope.
-    #[macro_export]
-    macro_rules! ok {
-        ($ident:ident @ $($ok:tt)*) => {
-            ::paste::paste! {
-                $crate::result::Fallible::Ok([<$ident Response>]::Ok($($ok)*))
-            }
-        };
-
-        ($ident:ident) => {
-            ::paste::paste! {
-                $crate::result::Fallible::Ok([<$ident Response>]::Ok(()))
-            }
-        };
-    }
-
-    /// Assumes: **(1)** `$errs` is of type
-    /// `::std::vec::Vec<<$ident>ErrResponse>`; **(2)** `paste` is within scope.
-    #[macro_export]
-    macro_rules! errs {
-        ($ident:ident @ $($errs:tt)*) => {
-            ::paste::paste! {
-                $crate::result::Fallible::Ok([<$ident Response>]::Err($($errs)*))
-            }
-        };
-    }
-
-    /// Assumes: **(1)** `$err` is of type `<$ident>ErrResponse`; **(2)**
-    /// `paste` is within scope.
-    #[macro_export]
-    macro_rules! err {
-        ($ident:ident @ $($err:tt)*) => {
-            ::paste::paste! {
-                $crate::result::Fallible::Ok([<$ident Response>]::Err(::std::vec![[<$ident ErrResponse>]::$($err)*]))
-            }
-        };
-    }
-
-    pub use err;
-    pub use errs;
-    pub use ok;
 }
 
 pub mod time {
@@ -257,3 +239,4 @@ pub mod string {
 
     pub use regex;
 }
+

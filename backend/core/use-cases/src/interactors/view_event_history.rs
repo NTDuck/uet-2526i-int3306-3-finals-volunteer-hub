@@ -12,37 +12,38 @@ pub struct ViewEventHistoryInteractor {
     user_repository: ::std::sync::Arc<dyn UserRepository + ::core::marker::Send + ::core::marker::Sync>,
 
     uuid_codec: ::std::sync::Arc<dyn UuidCodec + ::core::marker::Send + ::core::marker::Sync>,
+    timestamp_codec: ::std::sync::Arc<dyn TimestampCodec + ::core::marker::Send + ::core::marker::Sync>,
     auth_token_generator:
-        ::std::sync::Arc<dyn AuthenticationTokenGenerator + ::core::marker::Send + ::core::marker::Sync>,
+        ::std::sync::Arc<dyn AuthTokenGenerator + ::core::marker::Send + ::core::marker::Sync>,
 }
 
 #[async_trait]
 impl ViewEventHistoryBoundary for ViewEventHistoryInteractor {
     async fn apply(
-        self: ::std::sync::Arc<Self>, request: ViewEventHistoryRequest,
-    ) -> ::axiom::result::Fallible<ViewEventHistoryResponse> {
+        self: ::std::sync::Arc<Self>, request: Request,
+    ) -> ::axiom::result::Fallible<Response> {
         let actor_id = match ::std::sync::Arc::clone(&self.auth_token_generator)
             .get_payload(request.token)
             .await?
         {
-            ::core::option::Option::None => return ::axiom::err!(ViewEventHistory @ AuthenticationTokenInvalid),
+            ::core::option::Option::None => return super::err!(AuthenticationTokenInvalid),
             ::core::option::Option::Some(AuthenticationTokenPayload {
                 user_id,
                 user_role: ::domain::UserRole::Volunteer,
                 expiry_timestamp,
             }) => {
                 if expiry_timestamp < ::axiom::time::Timestamp::now() {
-                    return ::axiom::err!(ViewEventHistory @ AuthenticationTokenExpired);
+                    return super::err!(AuthenticationTokenExpired);
                 }
 
                 if !::std::sync::Arc::clone(&self.user_repository).contains_id(user_id).await? {
-                    return ::axiom::err!(ViewEventHistory @ UserNotFound);
+                    return super::err!(UserNotFound);
                 }
 
                 user_id
             },
             ::core::option::Option::Some(AuthenticationTokenPayload { user_role, .. }) =>
-                return ::axiom::err!(ViewEventHistory @ UserUnauthorized { user_role: user_role.into(), allowed_user_roles: ::std::vec![ViewEventHistoryUserRole::Volunteer] }),
+                return super::err!(UserUnauthorized { user_role: user_role.into(), allowed_user_roles: ::std::vec![UserRole::Volunteer] }),
         };
 
         let events = ::std::sync::Arc::clone(&self.event_registration_repository)
@@ -54,7 +55,7 @@ impl ViewEventHistoryBoundary for ViewEventHistoryInteractor {
                 let event_repository = ::std::sync::Arc::clone(&self.event_repository);
 
                 async move {
-                    event_repository
+                    ::std::sync::Arc::clone(&event_repository)
                         .get_by_id(event_id)
                         .await?
                         .map(|event| (event, event_registration_status))
@@ -64,10 +65,12 @@ impl ViewEventHistoryBoundary for ViewEventHistoryInteractor {
             .filter_map(|transposable| async move { transposable.transpose() })
             .and_then(|(event, event_registration_status)| {
                 let uuid_codec = ::std::sync::Arc::clone(&self.uuid_codec);
+                let timestamp_codec = ::std::sync::Arc::clone(&self.timestamp_codec);
 
                 async move {
-                    ViewEventHistoryEvent::build_from(event, event_registration_status)
-                        .with_uuid_codec(uuid_codec)
+                    Event::build_from(event, event_registration_status)
+                        .with_uuid_codec(::std::sync::Arc::clone(&uuid_codec))
+                        .with_timestamp_codec(::std::sync::Arc::clone(&timestamp_codec))
                         .try_build()
                         .await
                 }
@@ -75,7 +78,14 @@ impl ViewEventHistoryBoundary for ViewEventHistoryInteractor {
             .try_collect::<::std::vec::Vec<_>>()
             .await?;
 
-        let response = ViewEventHistoryOkResponse::builder().events(events).build();
-        ::axiom::ok!(ViewEventHistory @ response)
+        let response = OkResponse::builder().events(events).build();
+        super::ok!(response)
     }
 }
+
+type Request = ViewEventHistoryRequest;
+type Response = ViewEventHistoryResponse;
+type OkResponse = ViewEventHistoryOkResponse;
+type ErrResponse = ViewEventHistoryErrResponse;
+type UserRole = ViewEventHistoryUserRole;
+type Event = ViewEventHistoryEvent;

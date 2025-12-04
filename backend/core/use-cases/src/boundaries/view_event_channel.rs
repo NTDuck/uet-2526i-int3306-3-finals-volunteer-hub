@@ -42,9 +42,12 @@ pub struct ViewEventChannelOkResponse {
 pub struct ViewEventChannelEventPost {
     pub id: ::axiom::string::String,
 
-    pub created_at: ::axiom::string::String,
+    pub last_updated_at: ::axiom::string::String,
     pub title: ::axiom::string::String,
     pub content: ::axiom::string::String,
+    
+    #[builder(required)]
+    pub image_url: ::core::option::Option<::axiom::string::String>,
 
     pub reaction_count: u64,
     pub comment_count: u64,
@@ -63,8 +66,12 @@ pub struct ViewEventChannelEventPost {
 pub struct ViewEventChannelEventPostComment {
     pub id: ::axiom::string::String,
 
-    pub created_at: ::axiom::string::String,
-    pub content: ::axiom::string::String,
+    pub last_updated_at: ::axiom::string::String,
+
+    #[builder(required)]
+    pub content: ::core::option::Option<::axiom::string::String>,
+    #[builder(required)]
+    pub image_url: ::core::option::Option<::axiom::string::String>,
 
     pub author: ::core::option::Option<ViewEventChannelUser>,
 }
@@ -75,9 +82,6 @@ impl ViewEventChannelEventPostComment {
     pub async fn build_from(
         #[builder(start_fn)] comment: ::domain::EventPostComment,
         #[builder(start_fn)] author: ::core::option::Option<::domain::User>,
-        #[builder(setters(name = with_uuid_generator))] uuid_generator: ::std::sync::Arc<
-            dyn crate::gateways::UuidGenerator + ::core::marker::Send + ::core::marker::Sync,
-        >,
         #[builder(setters(name = with_uuid_codec))] uuid_codec: ::std::sync::Arc<
             dyn crate::gateways::UuidCodec + ::core::marker::Send + ::core::marker::Sync,
         >,
@@ -87,12 +91,13 @@ impl ViewEventChannelEventPostComment {
     ) -> ::axiom::result::Fallible<Self> {
         Self::builder()
             .id(::std::sync::Arc::clone(&uuid_codec).format(comment.id).await?)
-            .created_at(
+            .last_updated_at(
                 ::std::sync::Arc::clone(&timestamp_codec)
-                    .format(::std::sync::Arc::clone(&uuid_generator).get_timestamp(comment.id).await?)
+                    .format(comment.last_updated_at)
                     .await?,
             )
-            .content(comment.content)
+            .content(comment.content.map(::core::convert::Into::into))
+            .image_url(comment.image_url)
             .maybe_author(
                 author
                     .map_async(|author| async move {
@@ -152,7 +157,7 @@ pub enum ViewEventChannelErrResponse {
     #[error("User not found")]
     UserNotFound,
 
-    #[error("User with role `{user_role}` not authorized: must be {}", super::utils::fmt::join_with_comma_ad_hoc(.allowed_user_roles))]
+    #[error("User with role `{user_role}` not authorized: must be {}", super::fmt::join_with_comma_ad_hoc(.allowed_user_roles))]
     UserUnauthorized {
         user_role: ViewEventChannelUserRole,
         allowed_user_roles: ::std::vec::Vec<ViewEventChannelUserRole>,

@@ -14,41 +14,41 @@ pub struct CreateEventPostReactionInteractor {
     uuid_codec: ::std::sync::Arc<dyn UuidCodec + ::core::marker::Send + ::core::marker::Sync>,
     uuid_generator: ::std::sync::Arc<dyn UuidGenerator + ::core::marker::Send + ::core::marker::Sync>,
     auth_token_generator:
-        ::std::sync::Arc<dyn AuthenticationTokenGenerator + ::core::marker::Send + ::core::marker::Sync>,
+        ::std::sync::Arc<dyn AuthTokenGenerator + ::core::marker::Send + ::core::marker::Sync>,
 }
 
 #[async_trait]
 impl CreateEventPostReactionBoundary for CreateEventPostReactionInteractor {
     async fn apply(
-        self: ::std::sync::Arc<Self>, request: CreateEventPostReactionRequest,
-    ) -> ::axiom::result::Fallible<CreateEventPostReactionResponse> {
+        self: ::std::sync::Arc<Self>, request: Request,
+    ) -> ::axiom::result::Fallible<Response> {
         let actor_id = match ::std::sync::Arc::clone(&self.auth_token_generator)
             .get_payload(request.token)
             .await?
         {
-            ::core::option::Option::None => return ::axiom::err!(CreateEventPostReaction @ AuthenticationTokenInvalid),
+            ::core::option::Option::None => return super::err!(AuthenticationTokenInvalid),
             ::core::option::Option::Some(AuthenticationTokenPayload {
                 user_id,
                 user_role: ::domain::UserRole::Volunteer | ::domain::UserRole::EventManager,
                 expiry_timestamp,
             }) => {
                 if expiry_timestamp < ::axiom::time::Timestamp::now() {
-                    return ::axiom::err!(CreateEventPostReaction @ AuthenticationTokenExpired);
+                    return super::err!(AuthenticationTokenExpired);
                 }
 
                 match ::std::sync::Arc::clone(&self.user_repository).get_by_id(user_id).await? {
-                    ::core::option::Option::Some(user) => {
-                        if ::core::matches!(user.statuses.last(), ::domain::UserStatus::Suspended { .. }) {
-                            return ::axiom::err!(CreateEventPostReaction @ UserSuspended);
+                    ::core::option::Option::Some(::domain::User { statuses, .. }) => {
+                        if ::core::matches!(statuses[..], [.., ::domain::UserStatus::Suspended { .. }]) {
+                            return super::err!(UserSuspended);
                         }
                     },
-                    ::core::option::Option::None => return ::axiom::err!(CreateEventPostReaction @ UserNotFound),
+                    ::core::option::Option::None => return super::err!(UserNotFound),
                 }
 
                 user_id
             },
             ::core::option::Option::Some(AuthenticationTokenPayload { user_role, .. }) =>
-                return ::axiom::err!(CreateEventPostReaction @ UserUnauthorized { user_role: user_role.into(), allowed_user_roles: ::std::vec![CreateEventPostReactionUserRole::Volunteer, CreateEventPostReactionUserRole::EventManager] }),
+                return super::err!(UserUnauthorized { user_role: user_role.into(), allowed_user_roles: ::std::vec![UserRole::Volunteer, UserRole::EventManager] }),
         };
 
         let post_id = ::std::sync::Arc::clone(&self.uuid_codec).parse(request.post_id).await?;
@@ -56,15 +56,12 @@ impl CreateEventPostReactionBoundary for CreateEventPostReactionInteractor {
         let ::core::option::Option::Some(::domain::EventPost { event_id, .. }) =
             ::std::sync::Arc::clone(&self.post_repository).get_by_id(post_id).await?
         else {
-            return ::axiom::err!(CreateEventPostReaction @ PostNotFound);
+            return super::err!(PostNotFound);
         };
 
         let reaction_id = loop {
             let uuid = ::std::sync::Arc::clone(&self.uuid_generator).generate().await?;
-
-            if !::std::sync::Arc::clone(&self.user_repository).contains_id(uuid).await? {
-                break uuid;
-            }
+            if !::std::sync::Arc::clone(&self.user_repository).contains_id(uuid).await? { break uuid; }
         };
 
         let reaction = ::domain::EventPostReaction::builder()
@@ -79,6 +76,11 @@ impl CreateEventPostReactionBoundary for CreateEventPostReactionInteractor {
             .track_reacted(event_id, actor_id)
             .await?;
 
-        ::axiom::ok!(CreateEventPostReaction)
+        super::ok!(())
     }
 }
+
+type Request = CreateEventPostReactionRequest;
+type Response = CreateEventPostReactionResponse;
+type ErrResponse = CreateEventPostReactionErrResponse;
+type UserRole = CreateEventPostReactionUserRole;

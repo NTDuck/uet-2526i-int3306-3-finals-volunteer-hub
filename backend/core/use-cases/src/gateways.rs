@@ -99,8 +99,8 @@ pub trait EventRecommender {
 
 #[async_trait]
 pub trait EventExporter {
-    async fn export_as_csv(self: ::std::sync::Arc<Self>) -> ::axiom::result::Fallible<::std::boxed::Box<[u8]>>;
-    async fn export_as_json(self: ::std::sync::Arc<Self>) -> ::axiom::result::Fallible<::std::boxed::Box<[u8]>>;
+    async fn export_as_csv(self: ::std::sync::Arc<Self>) -> ::axiom::result::Fallible<::axiom::bytes::Bytes>;
+    async fn export_as_json(self: ::std::sync::Arc<Self>) -> ::axiom::result::Fallible<::axiom::bytes::Bytes>;
 }
 
 #[async_trait]
@@ -180,6 +180,10 @@ pub trait EventPostCommentRepository {
         self: ::std::sync::Arc<Self>, comment_id: ::domain::Uuid,
     ) -> ::axiom::result::Fallible<::core::option::Option<::domain::EventPostComment>>;
 
+    async fn contains_id(self: ::std::sync::Arc<Self>, comment_id: ::domain::Uuid) -> ::axiom::result::Fallible<bool> {
+        self.get_by_id(comment_id).await?.is_some().into_ok()
+    }
+
     async fn view_by_post_and_user_id(
         self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid, user_id: ::domain::Uuid,
     ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::EventPostComment>>;
@@ -242,6 +246,7 @@ pub struct UserRepositorySearchFilter {
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
 pub enum UserRepositoryViewFilterUserStatus {
     Created,
+    Updated,
     Suspended,
     Unsuspended,
 }
@@ -249,7 +254,8 @@ pub enum UserRepositoryViewFilterUserStatus {
 impl ::core::convert::From<::domain::UserStatus> for UserRepositoryViewFilterUserStatus {
     fn from(value: ::domain::UserStatus) -> Self {
         match value {
-            ::domain::UserStatus::Created => Self::Created,
+            ::domain::UserStatus::Created { .. } => Self::Created,
+            ::domain::UserStatus::Updated { .. } => Self::Updated,
             ::domain::UserStatus::Suspended { .. } => Self::Suspended,
             ::domain::UserStatus::Unsuspended { .. } => Self::Unsuspended,
         }
@@ -287,19 +293,24 @@ impl ::core::convert::From<UserRepositoryViewFilterUserRole> for ::domain::UserR
 pub trait UserExporter {
     async fn export_volunteers_as_csv(
         self: ::std::sync::Arc<Self>,
-    ) -> ::axiom::result::Fallible<::std::boxed::Box<[u8]>>;
+    ) -> ::axiom::result::Fallible<::axiom::bytes::Bytes>;
     async fn export_volunteers_as_json(
         self: ::std::sync::Arc<Self>,
-    ) -> ::axiom::result::Fallible<::std::boxed::Box<[u8]>>;
+    ) -> ::axiom::result::Fallible<::axiom::bytes::Bytes>;
+}
+
+#[async_trait]
+pub trait MediaRepository {
+    async fn verify(self: ::std::sync::Arc<Self>, bytes: ::axiom::bytes::Bytes) -> ::axiom::result::Fallible<bool>;
+
+    async fn save(self: ::std::sync::Arc<Self>, bytes: ::axiom::bytes::Bytes) -> ::axiom::result::Fallible<::axiom::string::String>;
+
+    async fn remove(self: ::std::sync::Arc<Self>, url: ::axiom::string::String) -> ::axiom::result::Fallible<()>;
 }
 
 #[async_trait]
 pub trait UuidGenerator {
     async fn generate(self: ::std::sync::Arc<Self>) -> ::axiom::result::Fallible<::domain::Uuid>;
-
-    async fn get_timestamp(
-        self: ::std::sync::Arc<Self>, uuid: ::domain::Uuid,
-    ) -> ::axiom::result::Fallible<::axiom::time::Timestamp>;
 }
 
 #[async_trait]
@@ -323,7 +334,7 @@ pub trait TimestampCodec {
 }
 
 #[async_trait]
-pub trait AuthenticationTokenGenerator {
+pub trait AuthTokenGenerator {
     async fn generate(
         self: ::std::sync::Arc<Self>, payload: AuthenticationTokenPayload,
     ) -> ::axiom::result::Fallible<::axiom::string::String>;
@@ -477,6 +488,3 @@ pub trait PasswordHasher {
         (self.hash(password).await? == digest).into_ok()
     }
 }
-
-#[async_trait]
-pub trait Notifier {}

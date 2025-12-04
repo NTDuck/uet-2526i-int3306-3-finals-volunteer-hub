@@ -46,7 +46,11 @@ pub struct ViewEventVolunteersVolunteer {
 
     pub username: ::axiom::string::String,
     pub email: ::axiom::string::String,
+
     pub full_name: ::axiom::string::String,
+    
+    #[builder(required)]
+    pub avatar_url: ::core::option::Option<::axiom::string::String>,
 }
 
 #[::bon::bon]
@@ -66,6 +70,7 @@ impl ViewEventVolunteersVolunteer {
             .username(volunteer.username)
             .email(volunteer.email)
             .full_name(volunteer.full_name)
+            .avatar_url(volunteer.avatar_url)
             .build()
             .into_ok()
     }
@@ -78,6 +83,7 @@ impl ViewEventVolunteersVolunteer {
 #[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
 pub enum ViewEventVolunteersUserStatus {
     Created,
+    Updated,
     Suspended,
     Unsuspended,
 }
@@ -85,7 +91,8 @@ pub enum ViewEventVolunteersUserStatus {
 impl ::core::convert::From<::domain::UserStatus> for ViewEventVolunteersUserStatus {
     fn from(value: ::domain::UserStatus) -> Self {
         match value {
-            ::domain::UserStatus::Created => Self::Created,
+            ::domain::UserStatus::Created { .. } => Self::Created,
+            ::domain::UserStatus::Updated { .. } => Self::Updated,
             ::domain::UserStatus::Suspended { .. } => Self::Suspended,
             ::domain::UserStatus::Unsuspended { .. } => Self::Unsuspended,
         }
@@ -132,7 +139,7 @@ pub enum ViewEventVolunteersErrResponse {
     #[error("User not found")]
     UserNotFound,
 
-    #[error("User with role `{user_role}` not authorized: must be {}", super::utils::fmt::join_with_comma_ad_hoc(.allowed_user_roles))]
+    #[error("User with role `{user_role}` not authorized: must be {}", super::fmt::join_with_comma_ad_hoc(.allowed_user_roles))]
     UserUnauthorized {
         user_role: ViewEventVolunteersUserRole,
         allowed_user_roles: ::std::vec::Vec<ViewEventVolunteersUserRole>,

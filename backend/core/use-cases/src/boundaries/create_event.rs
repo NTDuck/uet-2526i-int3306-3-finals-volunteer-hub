@@ -20,6 +20,8 @@ pub struct CreateEventRequest {
     pub event_description: ::axiom::string::String,
     pub event_categories: ::std::vec::Vec<::axiom::string::String>,
     pub event_location: ::axiom::string::String,
+
+    pub event_image: ::std::boxed::Box<[u8]>,
 }
 
 #[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
@@ -43,7 +45,7 @@ pub enum CreateEventErrResponse {
     #[error("User not found")]
     UserNotFound,
 
-    #[error("User with role `{user_role}` not authorized: must be {}", super::utils::fmt::join_with_comma_ad_hoc(.allowed_user_roles))]
+    #[error("User with role `{user_role}` not authorized: must be {}", super::fmt::join_with_comma_ad_hoc(.allowed_user_roles))]
     UserUnauthorized {
         user_role: CreateEventUserRole,
         allowed_user_roles: ::std::vec::Vec<CreateEventUserRole>,
@@ -62,7 +64,7 @@ pub enum CreateEventErrResponse {
         event_description: ::axiom::string::String,
     },
 
-    #[error("Invalid event categories `{}`: {hint}", super::utils::fmt::join_with_comma(.event_categories), hint = ::domain::EventCategory::hint())]
+    #[error("Invalid event categories `{}`: {hint}", super::fmt::join_with_comma(.event_categories), hint = ::domain::EventCategory::hint())]
     EventCategoriesInvalid {
         event_categories: ::std::vec::Vec<::axiom::string::String>,
     },
@@ -71,6 +73,9 @@ pub enum CreateEventErrResponse {
     EventLocationInvalid {
         event_location: ::axiom::string::String,
     },
+
+    #[error("Invalid event image")]
+    EventImageInvalid,
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::strum::Display)]

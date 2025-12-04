@@ -11,42 +11,42 @@ pub struct ModerateEventRegistrationInteractor {
 
     uuid_codec: ::std::sync::Arc<dyn UuidCodec + ::core::marker::Send + ::core::marker::Sync>,
     auth_token_generator:
-        ::std::sync::Arc<dyn AuthenticationTokenGenerator + ::core::marker::Send + ::core::marker::Sync>,
+        ::std::sync::Arc<dyn AuthTokenGenerator + ::core::marker::Send + ::core::marker::Sync>,
 }
 
 #[async_trait]
 impl ModerateEventRegistrationBoundary for ModerateEventRegistrationInteractor {
     async fn apply(
-        self: ::std::sync::Arc<Self>, request: ModerateEventRegistrationRequest,
-    ) -> ::axiom::result::Fallible<ModerateEventRegistrationResponse> {
+        self: ::std::sync::Arc<Self>, request: Request,
+    ) -> ::axiom::result::Fallible<Response> {
         let actor_id = match ::std::sync::Arc::clone(&self.auth_token_generator)
             .get_payload(request.token)
             .await?
         {
             ::core::option::Option::None =>
-                return ::axiom::err!(ModerateEventRegistration @ AuthenticationTokenInvalid),
+                return super::err!(AuthenticationTokenInvalid),
             ::core::option::Option::Some(AuthenticationTokenPayload {
                 user_id,
                 user_role: ::domain::UserRole::EventManager,
                 expiry_timestamp,
             }) => {
                 if expiry_timestamp < ::axiom::time::Timestamp::now() {
-                    return ::axiom::err!(ModerateEventRegistration @ AuthenticationTokenExpired);
+                    return super::err!(AuthenticationTokenExpired);
                 }
 
                 match ::std::sync::Arc::clone(&self.user_repository).get_by_id(user_id).await? {
-                    ::core::option::Option::Some(user) => {
-                        if ::core::matches!(user.statuses.last(), ::domain::UserStatus::Suspended { .. }) {
-                            return ::axiom::err!(ModerateEventRegistration @ UserSuspended);
+                    ::core::option::Option::Some(::domain::User { statuses, .. }) => {
+                        if ::core::matches!(statuses[..], [.., ::domain::UserStatus::Suspended { .. }]) {
+                            return super::err!(UserSuspended);
                         }
                     },
-                    ::core::option::Option::None => return ::axiom::err!(ModerateEventRegistration @ UserNotFound),
+                    ::core::option::Option::None => return super::err!(UserNotFound),
                 }
 
                 user_id
             },
             ::core::option::Option::Some(AuthenticationTokenPayload { user_role, .. }) =>
-                return ::axiom::err!(ModerateEventRegistration @ UserUnauthorized { user_role: user_role.into(), allowed_user_roles: ::std::vec![ModerateEventRegistrationUserRole::EventManager] }),
+                return super::err!(UserUnauthorized { user_role: user_role.into(), allowed_user_roles: ::std::vec![UserRole::EventManager] }),
         };
 
         let event_registration_id = ::std::sync::Arc::clone(&self.uuid_codec)
@@ -58,23 +58,23 @@ impl ModerateEventRegistrationBoundary for ModerateEventRegistrationInteractor {
                 .get_by_id(event_registration_id)
                 .await?
         else {
-            return ::axiom::err!(ModerateEventRegistration @ EventRegistrationNotFound);
+            return super::err!(EventRegistrationNotFound);
         };
 
         let event_registration_status = *event_registration.statuses.last();
 
         match request.event_registration_status {
-            ModerateEventRegistrationNewEventRegistrationStatus::Accepted => {
+            NewEventRegistrationStatus::Accepted => {
                 if !::core::matches!(
                     event_registration_status,
                     ::domain::EventRegistrationStatus::Pending { .. }
                         | ::domain::EventRegistrationStatus::Declined { .. }
                 ) {
-                    return ::axiom::err!(ModerateEventRegistration @ EventRegistrationStatusNotEligible {
+                    return super::err!(EventRegistrationStatusNotEligible {
                         event_registration_status: event_registration_status.into(),
                         allowed_event_registration_statuses: ::std::vec![
-                            ModerateEventRegistrationEventRegistrationStatus::Pending,
-                            ModerateEventRegistrationEventRegistrationStatus::Declined,
+                            EventRegistrationStatus::Pending,
+                            EventRegistrationStatus::Declined,
                         ],
                     });
                 }
@@ -85,17 +85,17 @@ impl ModerateEventRegistrationBoundary for ModerateEventRegistrationInteractor {
                 });
             },
 
-            ModerateEventRegistrationNewEventRegistrationStatus::Declined => {
+            NewEventRegistrationStatus::Declined => {
                 if !::core::matches!(
                     event_registration_status,
                     ::domain::EventRegistrationStatus::Pending { .. }
                         | ::domain::EventRegistrationStatus::Accepted { .. }
                 ) {
-                    return ::axiom::err!(ModerateEventRegistration @ EventRegistrationStatusNotEligible {
+                    return super::err!(EventRegistrationStatusNotEligible {
                         event_registration_status: event_registration_status.into(),
                         allowed_event_registration_statuses: ::std::vec![
-                            ModerateEventRegistrationEventRegistrationStatus::Pending,
-                            ModerateEventRegistrationEventRegistrationStatus::Accepted,
+                            EventRegistrationStatus::Pending,
+                            EventRegistrationStatus::Accepted,
                         ],
                     });
                 }
@@ -106,17 +106,17 @@ impl ModerateEventRegistrationBoundary for ModerateEventRegistrationInteractor {
                 });
             },
 
-            ModerateEventRegistrationNewEventRegistrationStatus::Completed => {
+            NewEventRegistrationStatus::Completed => {
                 if !::core::matches!(
                     event_registration_status,
                     ::domain::EventRegistrationStatus::Accepted { .. }
                         | ::domain::EventRegistrationStatus::Declined { .. }
                 ) {
-                    return ::axiom::err!(ModerateEventRegistration @ EventRegistrationStatusNotEligible {
+                    return super::err!(EventRegistrationStatusNotEligible {
                         event_registration_status: event_registration_status.into(),
                         allowed_event_registration_statuses: ::std::vec![
-                            ModerateEventRegistrationEventRegistrationStatus::Accepted,
-                            ModerateEventRegistrationEventRegistrationStatus::Declined,
+                            EventRegistrationStatus::Accepted,
+                            EventRegistrationStatus::Declined,
                         ],
                     });
                 }
@@ -132,6 +132,13 @@ impl ModerateEventRegistrationBoundary for ModerateEventRegistrationInteractor {
             .save(event_registration)
             .await?;
 
-        ::axiom::ok!(ModerateEventRegistration)
+        super::ok!(())
     }
 }
+
+type Request = ModerateEventRegistrationRequest;
+type Response = ModerateEventRegistrationResponse;
+type ErrResponse = ModerateEventRegistrationErrResponse;
+type UserRole = ModerateEventRegistrationUserRole;
+type EventRegistrationStatus = ModerateEventRegistrationEventRegistrationStatus;
+type NewEventRegistrationStatus = ModerateEventRegistrationNewEventRegistrationStatus;

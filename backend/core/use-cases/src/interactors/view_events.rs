@@ -12,34 +12,34 @@ pub struct ViewEventsInteractor {
     uuid_codec: ::std::sync::Arc<dyn UuidCodec + ::core::marker::Send + ::core::marker::Sync>,
     timestamp_codec: ::std::sync::Arc<dyn TimestampCodec + ::core::marker::Send + ::core::marker::Sync>,
     auth_token_generator:
-        ::std::sync::Arc<dyn AuthenticationTokenGenerator + ::core::marker::Send + ::core::marker::Sync>,
+        ::std::sync::Arc<dyn AuthTokenGenerator + ::core::marker::Send + ::core::marker::Sync>,
 }
 
 #[async_trait]
 impl ViewEventsBoundary for ViewEventsInteractor {
     async fn apply(
-        self: ::std::sync::Arc<Self>, request: ViewEventsRequest,
-    ) -> ::axiom::result::Fallible<ViewEventsResponse> {
+        self: ::std::sync::Arc<Self>, request: Request,
+    ) -> ::axiom::result::Fallible<Response> {
         match ::std::sync::Arc::clone(&self.auth_token_generator)
             .get_payload(request.token)
             .await?
         {
-            ::core::option::Option::None => return ::axiom::err!(ViewEvents @ AuthenticationTokenInvalid),
+            ::core::option::Option::None => return super::err!(AuthenticationTokenInvalid),
             ::core::option::Option::Some(AuthenticationTokenPayload {
                 user_id,
                 user_role: ::domain::UserRole::EventManager | ::domain::UserRole::Administrator,
                 expiry_timestamp,
             }) => {
                 if expiry_timestamp < ::axiom::time::Timestamp::now() {
-                    return ::axiom::err!(ViewEvents @ AuthenticationTokenExpired);
+                    return super::err!(AuthenticationTokenExpired);
                 }
 
                 if !::std::sync::Arc::clone(&self.user_repository).contains_id(user_id).await? {
-                    return ::axiom::err!(ViewEvents @ UserNotFound);
+                    return super::err!(UserNotFound);
                 }
             },
             ::core::option::Option::Some(AuthenticationTokenPayload { user_role, .. }) =>
-                return ::axiom::err!(ViewEvents @ UserUnauthorized { user_role: user_role.into(), allowed_user_roles: ::std::vec![ViewEventsUserRole::EventManager, ViewEventsUserRole::Administrator] }),
+                return super::err!(UserUnauthorized { user_role: user_role.into(), allowed_user_roles: ::std::vec![UserRole::EventManager, UserRole::Administrator] }),
         }
 
         let events = match request.filter {
@@ -59,13 +59,21 @@ impl ViewEventsBoundary for ViewEventsInteractor {
             .into_stream()
             .then(|event| {
                 let uuid_codec = ::std::sync::Arc::clone(&self.uuid_codec);
+                let timestamp_codec = ::std::sync::Arc::clone(&self.timestamp_codec);
 
-                async move { ViewEventsEvent::build_from(event).with_uuid_codec(uuid_codec).try_build().await }
+                async move { Event::build_from(event).with_uuid_codec(uuid_codec).with_timestamp_codec(::std::sync::Arc::clone(&timestamp_codec)).try_build().await }
             })
             .try_collect::<::std::vec::Vec<_>>()
             .await?;
 
-        let response = ViewEventsOkResponse::builder().events(events).build();
-        ::axiom::ok!(ViewEvents @ response)
+        let response = OkResponse::builder().events(events).build();
+        super::ok!(response)
     }
 }
+
+type Request = ViewEventsRequest;
+type Response = ViewEventsResponse;
+type OkResponse = ViewEventsOkResponse;
+type ErrResponse = ViewEventsErrResponse;
+type UserRole = ViewEventsUserRole;
+type Event = ViewEventsEvent;

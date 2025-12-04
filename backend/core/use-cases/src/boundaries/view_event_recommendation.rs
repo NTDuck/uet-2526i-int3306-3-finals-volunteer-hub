@@ -55,11 +55,13 @@ pub struct ViewEventRecommendationEvent {
     pub id: ::axiom::string::String,
 
     pub status: ViewEventRecommendationEventStatus,
+    pub status_last_updated_at: ::axiom::string::String,
 
     pub name: ::axiom::string::String,
-    #[builder(with = |values: ::std::vec::Vec<impl ::core::convert::Into<::axiom::string::String>>| values.into_iter().map(::core::convert::Into::into).collect())]
     pub categories: ::std::vec::Vec<::axiom::string::String>,
     pub location: ::axiom::string::String,
+    #[builder(required)]
+    pub image_url: ::core::option::Option<::axiom::string::String>,
 }
 
 #[::bon::bon]
@@ -70,13 +72,18 @@ impl ViewEventRecommendationEvent {
         #[builder(setters(name = with_uuid_codec))] uuid_codec: ::std::sync::Arc<
             dyn crate::gateways::UuidCodec + ::core::marker::Send + ::core::marker::Sync,
         >,
+        #[builder(setters(name = with_timestamp_codec))] timestamp_codec: ::std::sync::Arc<
+            dyn crate::gateways::TimestampCodec + ::core::marker::Send + ::core::marker::Sync,
+        >,
     ) -> ::axiom::result::Fallible<Self> {
         Self::builder()
-            .id(uuid_codec.format(event.id).await?)
+            .id(::std::sync::Arc::clone(&uuid_codec).format(event.id).await?)
             .status(*event.statuses.last())
+            .status_last_updated_at(::std::sync::Arc::clone(&timestamp_codec).format(event.statuses.last().at()).await?)
             .name(event.name)
-            .categories(event.categories)
+            .categories(event.categories.into_iter().map(::core::convert::Into::into).collect::<::std::vec::Vec<_>>())
             .location(event.location)
+            .image_url(event.image_url)
             .build()
             .into_ok()
     }

@@ -22,6 +22,8 @@ pub struct UpdateEventRequest {
     pub event_description: ::core::option::Option<::axiom::string::String>,
     pub event_categories: ::core::option::Option<::std::vec::Vec<::axiom::string::String>>,
     pub event_location: ::core::option::Option<::axiom::string::String>,
+
+    pub event_image: ::core::option::Option<::std::boxed::Box<[u8]>>,
 }
 
 #[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
@@ -45,7 +47,7 @@ pub enum UpdateEventErrResponse {
     #[error("User not found")]
     UserNotFound,
 
-    #[error("User with role `{user_role}` not authorized: must be {}", super::utils::fmt::join_with_comma_ad_hoc(.allowed_user_roles))]
+    #[error("User with role `{user_role}` not authorized: must be {}", super::fmt::join_with_comma_ad_hoc(.allowed_user_roles))]
     UserUnauthorized {
         user_role: UpdateEventUserRole,
         allowed_user_roles: ::std::vec::Vec<UpdateEventUserRole>,
@@ -64,7 +66,7 @@ pub enum UpdateEventErrResponse {
         event_description: ::axiom::string::String,
     },
 
-    #[error("Invalid event categories `{}`: {hint}", super::utils::fmt::join_with_comma(.event_categories), hint = ::domain::EventCategory::hint())]
+    #[error("Invalid event categories `{}`: {hint}", super::fmt::join_with_comma(.event_categories), hint = ::domain::EventCategory::hint())]
     EventCategoriesInvalid {
         event_categories: ::std::vec::Vec<::axiom::string::String>,
     },
@@ -74,10 +76,13 @@ pub enum UpdateEventErrResponse {
         event_location: ::axiom::string::String,
     },
 
+    #[error("Invalid event image")]
+    EventImageInvalid,
+
     #[error("Event not found")]
     EventNotFound,
 
-    #[error("Event with status `{event_status}` not eligible: must be {}", super::utils::fmt::join_with_comma_ad_hoc(.allowed_event_statuses))]
+    #[error("Event with status `{event_status}` not eligible: must be {}", super::fmt::join_with_comma_ad_hoc(.allowed_event_statuses))]
     EventStatusNotEligible {
         event_status: UpdateEventEventStatus,
         allowed_event_statuses: ::std::vec::Vec<UpdateEventEventStatus>,

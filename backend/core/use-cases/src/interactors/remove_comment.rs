@@ -12,41 +12,41 @@ pub struct RemoveEventPostCommentInteractor {
 
     uuid_codec: ::std::sync::Arc<dyn UuidCodec + ::core::marker::Send + ::core::marker::Sync>,
     auth_token_generator:
-        ::std::sync::Arc<dyn AuthenticationTokenGenerator + ::core::marker::Send + ::core::marker::Sync>,
+        ::std::sync::Arc<dyn AuthTokenGenerator + ::core::marker::Send + ::core::marker::Sync>,
 }
 
 #[async_trait]
 impl RemoveEventPostCommentBoundary for RemoveEventPostCommentInteractor {
     async fn apply(
-        self: ::std::sync::Arc<Self>, request: RemoveEventPostCommentRequest,
-    ) -> ::axiom::result::Fallible<RemoveEventPostCommentResponse> {
+        self: ::std::sync::Arc<Self>, request: Request,
+    ) -> ::axiom::result::Fallible<Response> {
         let actor_id = match ::std::sync::Arc::clone(&self.auth_token_generator)
             .get_payload(request.token)
             .await?
         {
-            ::core::option::Option::None => return ::axiom::err!(RemoveEventPostComment @ AuthenticationTokenInvalid),
+            ::core::option::Option::None => return super::err!(AuthenticationTokenInvalid),
             ::core::option::Option::Some(AuthenticationTokenPayload {
                 user_id,
                 user_role: ::domain::UserRole::Volunteer | ::domain::UserRole::EventManager,
                 expiry_timestamp,
             }) => {
                 if expiry_timestamp < ::axiom::time::Timestamp::now() {
-                    return ::axiom::err!(RemoveEventPostComment @ AuthenticationTokenExpired);
+                    return super::err!(AuthenticationTokenExpired);
                 }
 
                 match ::std::sync::Arc::clone(&self.user_repository).get_by_id(user_id).await? {
-                    ::core::option::Option::Some(::domain::User { ref statuses, .. }) => {
-                        if ::core::matches!(statuses.last(), ::domain::UserStatus::Suspended { .. }) {
-                            return ::axiom::err!(RemoveEventPostComment @ UserSuspended);
+                    ::core::option::Option::Some(::domain::User { statuses, .. }) => {
+                        if ::core::matches!(statuses[..], [.., ::domain::UserStatus::Suspended { .. }]) {
+                            return super::err!(UserSuspended);
                         }
                     },
-                    ::core::option::Option::None => return ::axiom::err!(RemoveEventPostComment @ UserNotFound),
+                    ::core::option::Option::None => return super::err!(UserNotFound),
                 }
 
                 user_id
             },
             ::core::option::Option::Some(AuthenticationTokenPayload { user_role, .. }) =>
-                return ::axiom::err!(RemoveEventPostComment @ UserUnauthorized { user_role: user_role.into(), allowed_user_roles: ::std::vec![RemoveEventPostCommentUserRole::Volunteer, RemoveEventPostCommentUserRole::EventManager] }),
+                return super::err!(UserUnauthorized { user_role: user_role.into(), allowed_user_roles: ::std::vec![UserRole::Volunteer, UserRole::EventManager] }),
         };
 
         let comment_id = ::std::sync::Arc::clone(&self.uuid_codec).parse(request.comment_id).await?;
@@ -54,11 +54,11 @@ impl RemoveEventPostCommentBoundary for RemoveEventPostCommentInteractor {
         let ::core::option::Option::Some(comment) =
             ::std::sync::Arc::clone(&self.comment_repository).get_by_id(comment_id).await?
         else {
-            return ::axiom::err!(RemoveEventPostComment @ CommentNotFound);
+            return super::err!(CommentNotFound);
         };
 
         if comment.author_id != actor_id {
-            return ::axiom::err!(RemoveEventPostComment @ OwnershipMismatch);
+            return super::err!(OwnershipMismatch);
         }
 
         ::std::sync::Arc::clone(&self.comment_repository).remove(comment_id).await?;
@@ -74,6 +74,11 @@ impl RemoveEventPostCommentBoundary for RemoveEventPostCommentInteractor {
             .untrack_reacted(event_id, actor_id)
             .await?;
 
-        ::axiom::ok!(RemoveEventPostComment)
+        super::ok!(())
     }
 }
+
+type Request = RemoveEventPostCommentRequest;
+type Response = RemoveEventPostCommentResponse;
+type ErrResponse = RemoveEventPostCommentErrResponse;
+type UserRole = RemoveEventPostCommentUserRole;

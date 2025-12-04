@@ -215,17 +215,20 @@ $ deno task preview-sveltekit-minimal
   > [./backend/core/use-cases/src/interactors/view_event_recommendation.rs](./backend/core/use-cases/src/interactors/view_event_recommendation.rs)
 
 - view events
+- view self profile
+- update self profile
+- view user
+- view event
+- view published event
+
+TODO
 
 ## TODO
 - Increase parallelism via e.g. `buffer_unordered(...)` for streams, `rayon`
 
-- pattern matching (statuses.last()...) => [.., last]
-- add timestamp/created_at, avatar
-- try to remove unsafe
-
 - impl noti
-- impl rcm
-- ensure ordering
+- transposable into axiom trait
+- reorder axiom & cargo by alphabet
 
 - in hot loops, if perf, use smallvec in lieu of vec
 - opt (column-only repo)

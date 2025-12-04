@@ -83,7 +83,7 @@ pub enum ExportEventsErrResponse {
     #[error("User not found")]
     UserNotFound,
 
-    #[error("User with role `{user_role}` not authorized: must be {}", super::utils::fmt::join_with_comma_ad_hoc(.allowed_user_roles))]
+    #[error("User with role `{user_role}` not authorized: must be {}", super::fmt::join_with_comma_ad_hoc(.allowed_user_roles))]
     UserUnauthorized {
         user_role: ExportEventsUserRole,
         allowed_user_roles: ::std::vec::Vec<ExportEventsUserRole>,

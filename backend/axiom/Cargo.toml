@@ -11,6 +11,7 @@ axiom-derive = { path = "../axiom-derive" }
 
 async-trait = { workspace = true }
 anyhow = { workspace = true }
+bytes = { workspace = true }
 chrono = { workspace = true }
 futures = { workspace = true }
 once_cell = { workspace = true }
