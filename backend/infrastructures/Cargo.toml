@@ -17,6 +17,7 @@ chrono = { workspace = true }
 futures = { workspace = true }
 serde = { workspace = true }
 thiserror = { workspace = true }
+rayon = { workspace = true }
 
 argon2 = { version = "0.6.0-rc.1", features = ["std", "parallel", "zeroize"] }
 jwt = { version = "0.16.0" }

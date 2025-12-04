@@ -6,11 +6,11 @@ pub trait EventRepository {
     async fn remove(self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid) -> ::axiom::result::Fallible;
 
     async fn get_by_id(
-        self: ::std::sync::Arc<Self>, id: ::domain::Uuid,
+        self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid,
     ) -> ::axiom::result::Fallible<::core::option::Option<::domain::Event>>;
 
-    async fn contains_id(self: ::std::sync::Arc<Self>, id: ::domain::Uuid) -> ::axiom::result::Fallible<bool> {
-        ::axiom::result::Fallible::Ok(self.get_by_id(id).await?.is_some())
+    async fn contains_id(self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid) -> ::axiom::result::Fallible<bool> {
+        self.get_by_id(event_id).await?.is_some().into_ok()
     }
 
     async fn search(
@@ -31,7 +31,7 @@ pub struct EventRepositorySearchFilter {
     pub timestamps: ::core::ops::Range<::core::option::Option<::axiom::time::Timestamp>>,
 }
 
-#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::core::cmp::Eq, ::core::cmp::PartialEq, ::core::hash::Hash)]
 pub enum EventRepositorySearchFilterEventStatus {
     Created,
     Updated,
@@ -41,6 +41,17 @@ pub enum EventRepositorySearchFilterEventStatus {
 
 impl ::core::convert::From<::domain::EventStatus> for EventRepositorySearchFilterEventStatus {
     fn from(value: ::domain::EventStatus) -> Self {
+        match value {
+            ::domain::EventStatus::Created { .. } => Self::Created,
+            ::domain::EventStatus::Updated { .. } => Self::Updated,
+            ::domain::EventStatus::Approved { .. } => Self::Approved,
+            ::domain::EventStatus::Rejected { .. } => Self::Rejected,
+        }
+    }
+}
+
+impl ::core::convert::From<&::domain::EventStatus> for EventRepositorySearchFilterEventStatus {
+    fn from(value: &::domain::EventStatus) -> Self {
         match value {
             ::domain::EventStatus::Created { .. } => Self::Created,
             ::domain::EventStatus::Updated { .. } => Self::Updated,

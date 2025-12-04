@@ -1,9 +1,104 @@
 use ::axiom::prelude::*;
 use ::use_cases::gateways::*;
+use ::rayon::prelude::*;
+
+/// Since implementations of `::domain::Uuid` preserves order, consider using `::std::vec::Vec<_>` for performance gains.
 
 #[derive(::bon::Builder)]
 pub struct InMemoryEventRepository {
-    
+    #[builder(default, with = |value: ::std::collections::BTreeMap<::core::cmp::Reverse<::domain::Uuid>, ::domain::Event>| ::tokio::sync::Mutex::new(value))]
+    events_by_ids:
+        ::tokio::sync::Mutex<::std::collections::BTreeMap<::core::cmp::Reverse<::domain::Uuid>, ::domain::Event>>,
+}
+
+#[async_trait]
+impl EventRepository for InMemoryEventRepository {
+    async fn save(self: ::std::sync::Arc<Self>, event: ::domain::Event) -> ::axiom::result::Fallible {
+        self.events_by_ids.lock().await.insert(::core::cmp::Reverse(event.id), event);
+
+        ::axiom::result::Fallible::Ok(())
+    }
+
+    async fn remove(self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid) -> ::axiom::result::Fallible {
+        self.events_by_ids.lock().await.remove(&::core::cmp::Reverse(event_id));
+
+        ::axiom::result::Fallible::Ok(())
+    }
+
+    async fn get_by_id(
+        self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid,
+    ) -> ::axiom::result::Fallible<::core::option::Option<::domain::Event>> {
+        self.events_by_ids.lock().await.get(&::core::cmp::Reverse(event_id)).cloned().into_ok()
+    }
+
+    async fn contains_id(self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid) -> ::axiom::result::Fallible<bool> {
+        self.events_by_ids.lock().await.contains_key(&::core::cmp::Reverse(event_id)).into_ok()
+    }
+
+    async fn search(
+        self: ::std::sync::Arc<Self>, filter: EventRepositorySearchFilter,
+    ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::Event>> {
+        let filter = move |event: &&::domain::Event| -> bool {
+            if let ::core::option::Option::Some(ref query) = filter.query {
+                if event.name.is_subsequence(&query) || event.description.is_subsequence(&query) || event.categories.iter().any(|category| category.is_subsequence(&query)) || event.location.is_subsequence(&query) {
+                    return true;
+                }
+            }
+
+            if let ::core::option::Option::Some(ref filter_statuses) = filter.statuses {
+                if filter_statuses.contains(&event.statuses.last().into()) {
+                    return true;
+                }
+            }
+
+            let event_timestamp = event.statuses.last().at();
+
+            match filter.timestamps {
+                ::core::ops::Range { start: ::core::option::Option::Some(start), end: ::core::option::Option::Some(end) } => 
+                    event_timestamp >= start && event_timestamp <= end,
+                ::core::ops::Range { start: ::core::option::Option::Some(start), end: ::core::option::Option::None } => 
+                    event_timestamp <= start,
+                ::core::ops::Range { start: ::core::option::Option::None, end: ::core::option::Option::Some(end) } => 
+                    event_timestamp >= end,
+                _ => false,
+            }
+        };
+
+        self.events_by_ids.lock().await.iter()
+            .map(|(_, event)| event)
+            .filter(filter)
+            .cloned()
+            .collect::<::std::vec::Vec<_>>()
+            .into_ok()
+    }
+
+    async fn view(self: ::std::sync::Arc<Self>) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::Event>> {
+        self.events_by_ids.lock().await.iter()
+            .map(|(_, event)| event)
+            .cloned()
+            .collect::<::std::vec::Vec<_>>()
+            .into_ok()
+    }
+}
+
+pub trait StringSliceExt {
+    fn is_subsequence(&self, pattern: &str) -> bool;
+}
+
+impl StringSliceExt for str {
+    fn is_subsequence(&self, pattern: &str) -> bool
+    {
+        let mut it = self.chars();
+
+        for pat_chr in pattern.chars() {
+            match it.find(|&hey_chr| hey_chr == pat_chr) {
+                ::core::option::Option::Some(_) => continue,
+                ::core::option::Option::None => return false,
+            }
+        }
+
+        true
+    }
 }
 
 #[derive(::bon::Builder)]
@@ -29,7 +124,7 @@ impl UserRepository for InMemoryUserRepository {
         self.users_by_usernames.lock().await.insert(user.username.clone(), user.clone());
         self.users_by_emails.lock().await.insert(user.email.clone(), user.clone());
 
-        ::axiom::result::Fallible::Ok(())
+        ().into_ok()
     }
 
     async fn get_by_id(
