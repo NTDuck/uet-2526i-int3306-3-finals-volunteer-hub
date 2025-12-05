@@ -47,7 +47,7 @@ impl ViewEventHistoryBoundary for ViewEventHistoryInteractor {
         };
 
         let events = ::std::sync::Arc::clone(&self.event_registration_repository)
-            .view_by_user_id(actor_id)
+            .view_by_volunteer_id(actor_id)
             .await?
             .into_stream()
             .map(|event_registration| (event_registration.event_id, *event_registration.statuses.last()))

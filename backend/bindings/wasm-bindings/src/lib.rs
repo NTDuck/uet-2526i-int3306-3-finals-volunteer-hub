@@ -1,167 +1,167 @@
-use ::infrastructures::*;
-use ::use_cases::boundaries::*;
-use ::use_cases::gateways::*;
-use ::use_cases::interactors::*;
-use ::wasm_bindgen::prelude::*;
+// use ::infrastructures::*;
+// use ::use_cases::boundaries::*;
+// use ::use_cases::gateways::*;
+// use ::use_cases::interactors::*;
+// use ::wasm_bindgen::prelude::*;
 
-/// A `Promise<<...>OkResponse>` returned by a non-static method is either
-/// fulfilled with `<...>OkResponse` or rejected with `<...>ErrResponse[]`. A
-/// `<...>ErrResponse` satisfies `{ error: <...>, message: <...>, data: { ... }
-/// }`.
-#[wasm_bindgen]
-#[derive(::bon::Builder)]
-pub struct Application {
-    #[wasm_bindgen(skip)]
-    sign_in_boundary: ::std::sync::Arc<dyn SignInBoundary + ::core::marker::Send + ::core::marker::Sync>,
+// /// A `Promise<<...>OkResponse>` returned by a non-static method is either
+// /// fulfilled with `<...>OkResponse` or rejected with `<...>ErrResponse[]`. A
+// /// `<...>ErrResponse` satisfies `{ error: <...>, message: <...>, data: { ... }
+// /// }`.
+// #[wasm_bindgen]
+// #[derive(::bon::Builder)]
+// pub struct Application {
+//     #[wasm_bindgen(skip)]
+//     sign_in_boundary: ::std::sync::Arc<dyn SignInBoundary + ::core::marker::Send + ::core::marker::Sync>,
 
-    #[wasm_bindgen(skip)]
-    sign_up_boundary: ::std::sync::Arc<dyn SignUpBoundary + ::core::marker::Send + ::core::marker::Sync>,
-}
+//     #[wasm_bindgen(skip)]
+//     sign_up_boundary: ::std::sync::Arc<dyn SignUpBoundary + ::core::marker::Send + ::core::marker::Sync>,
+// }
 
-#[wasm_bindgen]
-impl Application {
-    #[wasm_bindgen(js_name = withProfile)]
-    pub async fn with_profile(profile: Profile) -> Promise<Self> {
-        Gateways::try_from(profile)
-            .map(::core::convert::Into::<Self>::into)
-            .inspect_err(|error| ::tracing::error!("{error}")) // Saves hours of debugging
-            .into_promise()
-    }
+// #[wasm_bindgen]
+// impl Application {
+//     #[wasm_bindgen(js_name = withProfile)]
+//     pub async fn with_profile(profile: Profile) -> Promise<Self> {
+//         Gateways::try_from(profile)
+//             .map(::core::convert::Into::<Self>::into)
+//             .inspect_err(|error| ::tracing::error!("{error}")) // Saves hours of debugging
+//             .into_promise()
+//     }
 
-    #[wasm_bindgen(js_name = signIn)]
-    pub async fn sign_in(&self, request: SignInRequest) -> Promise<SignInOkResponse> {
-        ::std::sync::Arc::clone(&self.sign_in_boundary)
-            .apply(request)
-            .await
-            .into_promise()
-    }
+//     #[wasm_bindgen(js_name = signIn)]
+//     pub async fn sign_in(&self, request: SignInRequest) -> Promise<SignInOkResponse> {
+//         ::std::sync::Arc::clone(&self.sign_in_boundary)
+//             .apply(request)
+//             .await
+//             .into_promise()
+//     }
 
-    #[wasm_bindgen(js_name = signUp)]
-    pub async fn sign_up(&self, request: SignUpRequest) -> Promise<SignUpOkResponse> {
-        ::std::sync::Arc::clone(&self.sign_up_boundary)
-            .apply(request)
-            .await
-            .into_promise()
-    }
-}
+//     #[wasm_bindgen(js_name = signUp)]
+//     pub async fn sign_up(&self, request: SignUpRequest) -> Promise<SignUpOkResponse> {
+//         ::std::sync::Arc::clone(&self.sign_up_boundary)
+//             .apply(request)
+//             .await
+//             .into_promise()
+//     }
+// }
 
-#[rustfmt::skip]
-impl ::core::convert::From<Gateways> for Application {
-    fn from(gateways: Gateways) -> Self {
-        Application::builder()
-            .sign_in_boundary(::std::sync::Arc::new(SignInInteractor::builder()
-                .user_repository(::std::sync::Arc::clone(&gateways.user_repository))
-                .auth_token_generator(::std::sync::Arc::clone(&gateways.auth_token_generator))
-                .password_hasher(::std::sync::Arc::clone(&gateways.password_hasher))
-                .build()))
-            .sign_up_boundary(::std::sync::Arc::new(SignUpInteractor::builder()
-                .user_repository(::std::sync::Arc::clone(&gateways.user_repository))
-                .uuid_generator(::std::sync::Arc::clone(&gateways.uuid_generator))
-                .password_hasher(::std::sync::Arc::clone(&gateways.password_hasher))
-                .build()))
-            .build()
-    }
-}
+// #[rustfmt::skip]
+// impl ::core::convert::From<Gateways> for Application {
+//     fn from(gateways: Gateways) -> Self {
+//         Application::builder()
+//             .sign_in_boundary(::std::sync::Arc::new(SignInInteractor::builder()
+//                 .user_repository(::std::sync::Arc::clone(&gateways.user_repository))
+//                 .auth_token_generator(::std::sync::Arc::clone(&gateways.auth_token_generator))
+//                 .password_hasher(::std::sync::Arc::clone(&gateways.password_hasher))
+//                 .build()))
+//             .sign_up_boundary(::std::sync::Arc::new(SignUpInteractor::builder()
+//                 .user_repository(::std::sync::Arc::clone(&gateways.user_repository))
+//                 .uuid_generator(::std::sync::Arc::clone(&gateways.uuid_generator))
+//                 .password_hasher(::std::sync::Arc::clone(&gateways.password_hasher))
+//                 .build()))
+//             .build()
+//     }
+// }
 
-#[derive(::bon::Builder)]
-struct Gateways {
-    user_repository: ::std::sync::Arc<dyn UserRepository + ::core::marker::Send + ::core::marker::Sync>,
+// #[derive(::bon::Builder)]
+// struct Gateways {
+//     user_repository: ::std::sync::Arc<dyn UserRepository + ::core::marker::Send + ::core::marker::Sync>,
 
-    uuid_generator: ::std::sync::Arc<dyn UuidGenerator + ::core::marker::Send + ::core::marker::Sync>,
-    auth_token_generator:
-        ::std::sync::Arc<dyn AuthTokenGenerator + ::core::marker::Send + ::core::marker::Sync>,
-    password_hasher: ::std::sync::Arc<dyn PasswordHasher + ::core::marker::Send + ::core::marker::Sync>,
-}
+//     uuid_generator: ::std::sync::Arc<dyn UuidGenerator + ::core::marker::Send + ::core::marker::Sync>,
+//     auth_token_generator:
+//         ::std::sync::Arc<dyn AuthTokenGenerator + ::core::marker::Send + ::core::marker::Sync>,
+//     password_hasher: ::std::sync::Arc<dyn PasswordHasher + ::core::marker::Send + ::core::marker::Sync>,
+// }
 
-impl ::core::convert::TryFrom<Profile> for Gateways {
-    type Error = ::axiom::result::Error;
+// impl ::core::convert::TryFrom<Profile> for Gateways {
+//     type Error = ::axiom::result::Error;
 
-    fn try_from(_profile: Profile) -> ::core::result::Result<Self, Self::Error> {
-        use ::hmac::Mac as _;
+//     fn try_from(_profile: Profile) -> ::core::result::Result<Self, Self::Error> {
+//         use ::hmac::Mac as _;
 
-        ::console_error_panic_hook::set_once();
-        ::tracing_wasm::try_set_as_global_default()?;
+//         ::console_error_panic_hook::set_once();
+//         ::tracing_wasm::try_set_as_global_default()?;
 
-        let gateways = Self::builder()
-            .user_repository(::std::sync::Arc::new(InMemoryUserRepository::builder().build()))
-            .uuid_generator(::std::sync::Arc::new(UuidV7Generator::builder().build()))
-            .auth_token_generator(::std::sync::Arc::new(
-                JsonWebTokenGenerator::builder()
-                    .key(::hmac::Hmac::<::sha2::Sha256>::new_from_slice(::core::env!("JWT_SECRET_KEY").as_bytes())?)
-                    .build(),
-            ))
-            .password_hasher(::std::sync::Arc::new(
-                Argon2PasswordHasher::builder()
-                    .context(::argon2::Argon2::new_with_secret(
-                        ::core::env!("ARGON2_SECRET_KEY").as_bytes(),
-                        ::argon2::Algorithm::Argon2id,
-                        ::argon2::Version::V0x13,
-                        ::argon2::Params::default(),
-                    )?)
-                    .build(),
-            ))
-            .build();
+//         let gateways = Self::builder()
+//             .user_repository(::std::sync::Arc::new(InMemoryUserRepository::builder().build()))
+//             .uuid_generator(::std::sync::Arc::new(UuidV7Generator::builder().build()))
+//             .auth_token_generator(::std::sync::Arc::new(
+//                 JsonWebTokenGenerator::builder()
+//                     .key(::hmac::Hmac::<::sha2::Sha256>::new_from_slice(::core::env!("JWT_SECRET_KEY").as_bytes())?)
+//                     .build(),
+//             ))
+//             .password_hasher(::std::sync::Arc::new(
+//                 Argon2PasswordHasher::builder()
+//                     .context(::argon2::Argon2::new_with_secret(
+//                         ::core::env!("ARGON2_SECRET_KEY").as_bytes(),
+//                         ::argon2::Algorithm::Argon2id,
+//                         ::argon2::Version::V0x13,
+//                         ::argon2::Params::default(),
+//                     )?)
+//                     .build(),
+//             ))
+//             .build();
 
-        ::wasm_bindgen_futures::spawn_local(async {
-            use ::futures::StreamExt as _;
+//         ::wasm_bindgen_futures::spawn_local(async {
+//             use ::futures::StreamExt as _;
 
-            ::gloo::timers::future::IntervalStream::new(1000)
-                .for_each(|_| async move {
-                    ::tracing::debug!("PING");
-                })
-                .await;
-        });
+//             ::gloo::timers::future::IntervalStream::new(1000)
+//                 .for_each(|_| async move {
+//                     ::tracing::debug!("PING");
+//                 })
+//                 .await;
+//         });
 
-        ::axiom::result::Fallible::Ok(gateways)
-    }
-}
+//         ::axiom::result::Fallible::Ok(gateways)
+//     }
+// }
 
-#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
-#[derive(::serde::Deserialize)]
-#[serde(rename_all = "kebab-case")]
-#[derive(::tsify::Tsify)]
-#[tsify(from_wasm_abi)]
-pub enum Profile {
-    Dev,
-    Prod,
-}
+// #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
+// #[derive(::serde::Deserialize)]
+// #[serde(rename_all = "kebab-case")]
+// #[derive(::tsify::Tsify)]
+// #[tsify(from_wasm_abi)]
+// pub enum Profile {
+//     Dev,
+//     Prod,
+// }
 
-pub type Promise<T> = ::core::result::Result<T, ::wasm_bindgen::JsValue>;
+// pub type Promise<T> = ::core::result::Result<T, ::wasm_bindgen::JsValue>;
 
-trait IntoPromise<T = ()> {
-    fn into_promise(self) -> Promise<T>;
-}
+// trait IntoPromise<T = ()> {
+//     fn into_promise(self) -> Promise<T>;
+// }
 
-impl<T> IntoPromise<T> for ::axiom::result::Fallible<T> {
-    fn into_promise(self) -> Promise<T> {
-        use ::colored::Colorize as _;
+// impl<T> IntoPromise<T> for ::axiom::result::Fallible<T> {
+//     fn into_promise(self) -> Promise<T> {
+//         use ::colored::Colorize as _;
 
-        self.inspect_err(|error| ::tracing::debug!("{label} {error}", label = "[unexpected-error]".red()))
-            .map_err(|error| ::wasm_bindgen::JsValue::from_str(&error.to_string()))
-    }
-}
+//         self.inspect_err(|error| ::tracing::debug!("{label} {error}", label = "[unexpected-error]".red()))
+//             .map_err(|error| ::wasm_bindgen::JsValue::from_str(&error.to_string()))
+//     }
+// }
 
-impl<T, E> IntoPromise<T> for ::axiom::result::Fallible<::core::result::Result<T, ::std::vec::Vec<E>>>
-where
-    E: ::serde::Serialize,
-{
-    fn into_promise(self) -> Promise<T> {
-        use ::colored::Colorize as _;
+// impl<T, E> IntoPromise<T> for ::axiom::result::Fallible<::core::result::Result<T, ::std::vec::Vec<E>>>
+// where
+//     E: ::serde::Serialize,
+// {
+//     fn into_promise(self) -> Promise<T> {
+//         use ::colored::Colorize as _;
 
-        self
-            .inspect_err(|error| ::tracing::debug!("{label} {error}", label = "[unexpected-error]".red()))
-            .map_err(|error| ::wasm_bindgen::JsValue::from_str(&error.to_string()))
-            .and_then(|inner| {
-                inner
-                    .map_err(|errors| {
-                        errors
-                            .into_iter()
-                            .map(|error| unsafe { <::wasm_bindgen::JsValue as ::gloo::utils::format::JsValueSerdeExt>::from_serde(&error)
-                                .inspect(|error| ::tracing::debug!("{label} {error:?}", label = "[expected-error]".red()))
-                                .unwrap_unchecked() })  // We kinda know what we're doing
-                            .collect::<::std::vec::Vec<_>>()
-                    })
-                    .map_err(::core::convert::Into::into)
-            })
-    }
-}
+//         self
+//             .inspect_err(|error| ::tracing::debug!("{label} {error}", label = "[unexpected-error]".red()))
+//             .map_err(|error| ::wasm_bindgen::JsValue::from_str(&error.to_string()))
+//             .and_then(|inner| {
+//                 inner
+//                     .map_err(|errors| {
+//                         errors
+//                             .into_iter()
+//                             .map(|error| unsafe { <::wasm_bindgen::JsValue as ::gloo::utils::format::JsValueSerdeExt>::from_serde(&error)
+//                                 .inspect(|error| ::tracing::debug!("{label} {error:?}", label = "[expected-error]".red()))
+//                                 .unwrap_unchecked() })  // We kinda know what we're doing
+//                             .collect::<::std::vec::Vec<_>>()
+//                     })
+//                     .map_err(::core::convert::Into::into)
+//             })
+//     }
+// }

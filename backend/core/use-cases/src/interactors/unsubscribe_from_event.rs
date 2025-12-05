@@ -59,7 +59,7 @@ impl UnsubscribeFromEventBoundary for UnsubscribeFromEventInteractor {
                 .await?
                 .try_or_else_async(|| async {
                     ::std::sync::Arc::clone(&self.event_registration_repository)
-                        .get_by_event_and_user_id(event_or_registration_id, actor_id)
+                        .get_by_event_and_volunteer_id(event_or_registration_id, actor_id)
                         .await
                 })
                 .await?

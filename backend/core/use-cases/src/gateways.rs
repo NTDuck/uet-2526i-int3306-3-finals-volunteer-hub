@@ -123,7 +123,7 @@ pub trait EventRegistrationRepository {
         self: ::std::sync::Arc<Self>, id: ::domain::Uuid,
     ) -> ::axiom::result::Fallible<::core::option::Option<::domain::EventRegistration>>;
 
-    async fn get_by_event_and_user_id(
+    async fn get_by_event_and_volunteer_id(
         self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid, user_id: ::domain::Uuid,
     ) -> ::axiom::result::Fallible<::core::option::Option<::domain::EventRegistration>>;
 
@@ -131,8 +131,8 @@ pub trait EventRegistrationRepository {
         self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid,
     ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::EventRegistration>>;
 
-    async fn view_by_user_id(
-        self: ::std::sync::Arc<Self>, user_id: ::domain::Uuid,
+    async fn view_by_volunteer_id(
+        self: ::std::sync::Arc<Self>, volunteer_id: ::domain::Uuid,
     ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::EventRegistration>>;
 }
 
@@ -144,10 +144,6 @@ pub trait EventPostRepository {
     async fn get_by_id(
         self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid,
     ) -> ::axiom::result::Fallible<::core::option::Option<::domain::EventPost>>;
-
-    async fn contains_id(self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid) -> ::axiom::result::Fallible<bool> {
-        self.get_by_id(post_id).await?.is_some().into_ok()
-    }
 
     async fn view_by_event_id(
         self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid,
@@ -213,7 +209,7 @@ pub trait UserRepository {
     async fn save(self: ::std::sync::Arc<Self>, user: ::domain::User) -> ::axiom::result::Fallible;
 
     async fn get_by_id(
-        self: ::std::sync::Arc<Self>, id: ::domain::Uuid,
+        self: ::std::sync::Arc<Self>, user_id: ::domain::Uuid,
     ) -> ::axiom::result::Fallible<::core::option::Option<::domain::User>>;
     async fn get_by_username(
         self: ::std::sync::Arc<Self>, username: ::domain::Username,
@@ -222,8 +218,8 @@ pub trait UserRepository {
         self: ::std::sync::Arc<Self>, email: ::domain::Email,
     ) -> ::axiom::result::Fallible<::core::option::Option<::domain::User>>;
 
-    async fn contains_id(self: ::std::sync::Arc<Self>, id: ::domain::Uuid) -> ::axiom::result::Fallible<bool> {
-        self.get_by_id(id).await?.is_some().into_ok()
+    async fn contains_id(self: ::std::sync::Arc<Self>, user_id: ::domain::Uuid) -> ::axiom::result::Fallible<bool> {
+        self.get_by_id(user_id).await?.is_some().into_ok()
     }
 
     async fn contains_username(
@@ -254,7 +250,7 @@ pub struct UserRepositorySearchFilter {
     pub statuses: ::core::option::Option<::std::vec::Vec<UserRepositoryViewFilterUserStatus>>,
 }
 
-#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::core::cmp::Eq, ::core::cmp::PartialEq, ::core::hash::Hash)]
 pub enum UserRepositoryViewFilterUserStatus {
     Created,
     Updated,
@@ -273,7 +269,18 @@ impl ::core::convert::From<::domain::UserStatus> for UserRepositoryViewFilterUse
     }
 }
 
-#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
+impl ::core::convert::From<&::domain::UserStatus> for UserRepositoryViewFilterUserStatus {
+    fn from(value: &::domain::UserStatus) -> Self {
+        match value {
+            ::domain::UserStatus::Created { .. } => Self::Created,
+            ::domain::UserStatus::Updated { .. } => Self::Updated,
+            ::domain::UserStatus::Suspended { .. } => Self::Suspended,
+            ::domain::UserStatus::Unsuspended { .. } => Self::Unsuspended,
+        }
+    }
+}
+
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::core::cmp::Eq, ::core::cmp::PartialEq, ::core::hash::Hash)]
 pub enum UserRepositoryViewFilterUserRole {
     Volunteer,
     EventManager,
