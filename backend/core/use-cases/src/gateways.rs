@@ -323,7 +323,7 @@ pub trait MediaRepository {
 
     async fn save(self: ::std::sync::Arc<Self>, bytes: ::axiom::bytes::Bytes) -> ::axiom::result::Fallible<::axiom::string::String>;
 
-    async fn remove(self: ::std::sync::Arc<Self>, url: ::axiom::string::String) -> ::axiom::result::Fallible<()>;
+    async fn remove(self: ::std::sync::Arc<Self>, url: ::axiom::string::String) -> ::axiom::result::Fallible;
 }
 
 #[async_trait]

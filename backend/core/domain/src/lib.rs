@@ -290,3 +290,15 @@ impl ::core::ops::Deref for Uuid {
         &self.0
     }
 }
+
+impl ::core::convert::From<[u8; 16]> for Uuid {
+    fn from(value: [u8; 16]) -> Self {
+        Self(value)
+    }
+}
+
+impl ::core::convert::From<Uuid> for [u8; 16] {
+    fn from(value: Uuid) -> Self {
+        value.0
+    }
+}

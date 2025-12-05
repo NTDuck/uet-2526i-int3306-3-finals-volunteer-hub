@@ -102,6 +102,10 @@ impl EventRepository for InMemoryEventRepository {
     }
 }
 
+/* EVENT RECOMMENDER */
+
+/* EVENT EXPORTER */
+
 #[derive(::bon::Builder)]
 pub struct InMemoryEventRegistrationRepository {
     #[builder(default, with = |value: ::std::collections::BTreeMap<::core::cmp::Reverse<::domain::Uuid>, ::domain::EventRegistration>| ::tokio::sync::RwLock::new(value))]
@@ -433,6 +437,29 @@ impl UserRepository for InMemoryUserRepository {
     }
 }
 
+/* USER EXPORTER */
+
+#[derive(::bon::Builder)]
+pub struct MockMediaRepository {
+    #[builder(default = "https://i.kym-cdn.com/photos/images/original/003/136/289/782.jpg", into)]
+    url: ::axiom::string::String,
+}
+
+#[async_trait]
+impl MediaRepository for MockMediaRepository {
+    async fn verify(self: ::std::sync::Arc<Self>, _bytes: ::axiom::bytes::Bytes) -> ::axiom::result::Fallible<bool> {
+        true.into_ok()
+    }
+
+    async fn save(self: ::std::sync::Arc<Self>, _bytes: ::axiom::bytes::Bytes) -> ::axiom::result::Fallible<::axiom::string::String> {
+        self.url.clone().into_ok()
+    }
+
+    async fn remove(self: ::std::sync::Arc<Self>, _url: ::axiom::string::String) -> ::axiom::result::Fallible {
+        ::axiom::result::Fallible::Ok(())
+    }
+}
+
 pub struct UuidV7Generator;
 
 #[::bon::bon]
@@ -446,44 +473,8 @@ impl UuidV7Generator {
 #[async_trait]
 impl UuidGenerator for UuidV7Generator {
     async fn generate(self: ::std::sync::Arc<Self>) -> ::axiom::result::Fallible<::domain::Uuid> {
-        let uuid = ::uuid::Uuid::now_v7();
-
-        let uuid = ::domain::Uuid::builder().value(uuid.into_bytes()).build();
-
-        ::axiom::result::Fallible::Ok(uuid)
+        ::uuid::Uuid::now_v7().into_bytes().into_t::<::domain::Uuid>().into_ok()
     }
-}
-
-trait UuidExt {
-    fn into_timestamp(self) -> ::core::result::Result<::axiom::time::Timestamp, UuidIntoTimestampError>;
-}
-
-impl UuidExt for ::uuid::Uuid {
-    fn into_timestamp(self) -> ::core::result::Result<::axiom::time::Timestamp, UuidIntoTimestampError> {
-        match self.get_timestamp() {
-            ::core::option::Option::Some(timestamp) => {
-                let (seconds, nanoseconds) = timestamp.to_unix();
-
-                ::axiom::time::Timestamp::from_timestamp(seconds as i64, nanoseconds)
-                    .ok_or(UuidIntoTimestampError::OutOfRange)
-            },
-
-            ::core::option::Option::None =>
-                ::core::result::Result::Err(UuidIntoTimestampError::IncompatibleUuidVersion {
-                    version: self.get_version_num(),
-                }),
-        }
-    }
-}
-
-#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::thiserror::Error)]
-enum UuidIntoTimestampError {
-    #[error("Incompatible UUID version (expected v1, v6, or v7, found v{version})")]
-    IncompatibleUuidVersion {
-        version: usize,
-    },
-    #[error("Out-of-range number of seconds and/or invalid nanosecond")]
-    OutOfRange,
 }
 
 pub struct LowerUrnUuidCodec;
@@ -501,21 +492,40 @@ impl UuidCodec for LowerUrnUuidCodec {
     async fn format(
         self: ::std::sync::Arc<Self>, uuid: ::domain::Uuid,
     ) -> ::axiom::result::Fallible<::axiom::string::String> {
-        let uuid = ::uuid::Uuid::from_bytes(*uuid);
-
         let mut buffer = [0u8; 45];
-        let urn = uuid.as_urn().encode_lower(&mut buffer).to_string().into();
 
-        ::axiom::result::Fallible::Ok(urn)
+        ::uuid::Uuid::from_bytes(*uuid).as_urn().encode_lower(&mut buffer).to_string().into_t::<::axiom::string::String>().into_ok()
     }
 
     async fn parse(
         self: ::std::sync::Arc<Self>, urn: ::axiom::string::String,
     ) -> ::axiom::result::Fallible<::domain::Uuid> {
-        let uuid = ::uuid::Uuid::parse_str(&urn)?;
-        let uuid = ::domain::Uuid::builder().value(uuid.into_bytes()).build();
+        ::uuid::Uuid::parse_str(&urn)?.into_bytes().into_t::<::domain::Uuid>().into_ok()
+    }
+}
 
-        ::axiom::result::Fallible::Ok(uuid)
+pub struct Rfc2822TimestampCodec;
+
+#[::bon::bon]
+impl Rfc2822TimestampCodec {
+    #[builder(builder_type(vis = "pub"))]
+    fn new() -> Self {
+        Self
+    }
+}
+
+#[async_trait]
+impl TimestampCodec for Rfc2822TimestampCodec {
+    async fn format(
+        self: ::std::sync::Arc<Self>, timestamp: ::axiom::time::Timestamp,
+    ) -> ::axiom::result::Fallible<::axiom::string::String> {
+        timestamp.to_rfc2822().into_t::<::axiom::string::String>().into_ok()
+    }
+
+    async fn parse(
+        self: ::std::sync::Arc<Self>, timestamp: ::axiom::string::String,
+    ) -> ::axiom::result::Fallible<::axiom::time::Timestamp> {
+        ::chrono::DateTime::parse_from_rfc2822(&timestamp)?.with_timezone(&::chrono::Utc).into_t::<::axiom::time::Timestamp>().into_ok()
     }
 }
 

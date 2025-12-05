@@ -3,6 +3,7 @@ pub use ::axiom_derive::*;
 pub mod prelude {
     pub use ::async_trait::async_trait;
 
+    pub use crate::convert::IntoType as _;
     pub use crate::iter::IntoIteratorExt as _;
     pub use crate::iter::IteratorExt as _;
     pub use crate::option::IntoOptionExt as _;
@@ -14,6 +15,27 @@ pub mod prelude {
 
 pub mod bytes {
     pub type Bytes = ::bytes::Bytes;
+}
+
+pub mod convert {
+    pub trait IntoType {
+        fn into_t<T>(self) -> T
+        where
+            T: ::core::convert::From<Self>,
+            Self: ::core::marker::Sized;
+    }
+
+    impl<T> IntoType for T
+    where
+        T: ::core::marker::Sized,
+    {
+        fn into_t<U>(self) -> U
+        where
+            U: ::core::convert::From<T>,
+        {
+            U::from(self)
+        }
+    }
 }
 
 pub mod option {
