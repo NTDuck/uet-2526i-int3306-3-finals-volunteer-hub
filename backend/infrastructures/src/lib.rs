@@ -102,7 +102,231 @@ impl EventRepository for InMemoryEventRepository {
     }
 }
 
-/* EVENT RECOMMENDER */
+// TODO: Implement cache & daemon
+// TODO: Switch to `BinaryHeap`
+#[derive(::bon::Builder)]
+pub struct InMemoryExponentialDecayEventRecommender {
+    pub limit: ::core::primitive::u64,
+    pub λ: ::core::primitive::f64,
+
+    #[builder(default, with = |value: ::std::collections::HashMap<::domain::Uuid, ::axiom::time::Timestamp, self::hash::BuildHasher>| ::tokio::sync::RwLock::new(value))]
+    pub approved_timestamps_by_event_ids: ::tokio::sync::RwLock<::std::collections::HashMap<::domain::Uuid, ::axiom::time::Timestamp, self::hash::BuildHasher>>,
+
+    #[builder(default, with = |value: ::std::collections::HashMap<::domain::Uuid, ::std::vec::Vec<(::domain::Uuid, ::axiom::time::Timestamp)>, self::hash::BuildHasher>| ::tokio::sync::RwLock::new(value))]
+    pub posted_user_ids_and_timestamps_by_event_ids: ::tokio::sync::RwLock<::std::collections::HashMap<::domain::Uuid, ::std::vec::Vec<(::domain::Uuid, ::axiom::time::Timestamp)>, self::hash::BuildHasher>>,
+
+    #[builder(default, with = |value: ::std::collections::HashMap<::domain::Uuid, ::std::vec::Vec<(::domain::Uuid, ::axiom::time::Timestamp)>, self::hash::BuildHasher>| ::tokio::sync::RwLock::new(value))]
+    pub subscribed_user_ids_and_timestamps_by_event_ids: ::tokio::sync::RwLock<::std::collections::HashMap<::domain::Uuid, ::std::vec::Vec<(::domain::Uuid, ::axiom::time::Timestamp)>, self::hash::BuildHasher>>,
+
+    #[builder(default, with = |value: ::std::collections::HashMap<::domain::Uuid, ::std::vec::Vec<(::domain::Uuid, ::axiom::time::Timestamp)>, self::hash::BuildHasher>| ::tokio::sync::RwLock::new(value))]
+    pub reacted_user_ids_and_timestamps_by_event_ids: ::tokio::sync::RwLock<::std::collections::HashMap<::domain::Uuid, ::std::vec::Vec<(::domain::Uuid, ::axiom::time::Timestamp)>, self::hash::BuildHasher>>,
+
+    #[builder(default, with = |value: ::std::collections::HashMap<::domain::Uuid, ::std::vec::Vec<(::domain::Uuid, ::axiom::time::Timestamp)>, self::hash::BuildHasher>| ::tokio::sync::RwLock::new(value))]
+    pub commented_user_ids_and_timestamps_by_event_ids: ::tokio::sync::RwLock<::std::collections::HashMap<::domain::Uuid, ::std::vec::Vec<(::domain::Uuid, ::axiom::time::Timestamp)>, self::hash::BuildHasher>>,
+}
+
+#[async_trait]
+impl EventRecommender for InMemoryExponentialDecayEventRecommender {
+    async fn track_approved(self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid) -> ::axiom::result::Fallible {
+        self.approved_timestamps_by_event_ids.write().await.insert(event_id, ::axiom::time::Timestamp::now());
+
+        ::axiom::result::Fallible::Ok(())
+    }
+
+    async fn untrack_approved(self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid) -> ::axiom::result::Fallible {
+        self.approved_timestamps_by_event_ids.write().await.remove(&event_id);
+
+        ::axiom::result::Fallible::Ok(())
+    }
+
+    async fn track_posted(
+        self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid, user_id: ::domain::Uuid,
+    ) -> ::axiom::result::Fallible {
+        self.posted_user_ids_and_timestamps_by_event_ids.write().await
+            .entry(event_id)
+            .or_default()
+            .push((user_id, ::axiom::time::Timestamp::now()));
+
+        ::axiom::result::Fallible::Ok(())
+    }
+
+    async fn untrack_posted(
+        self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid, user_id_: ::domain::Uuid,
+    ) -> ::axiom::result::Fallible {
+        if let ::std::collections::hash_map::Entry::Occupied(mut entry) = self.posted_user_ids_and_timestamps_by_event_ids.write().await.entry(event_id) {
+            entry.get_mut().retain(|(user_id, _)| *user_id != user_id_);
+            if entry.get().is_empty() { entry.remove(); }
+        }
+
+        ::axiom::result::Fallible::Ok(())
+    }
+
+    async fn track_subscribed(
+        self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid, user_id: ::domain::Uuid,
+    ) -> ::axiom::result::Fallible {
+        self.subscribed_user_ids_and_timestamps_by_event_ids.write().await
+            .entry(event_id)
+            .or_default()
+            .push((user_id, ::axiom::time::Timestamp::now()));
+
+        ::axiom::result::Fallible::Ok(())
+    }
+
+    async fn track_reacted(
+        self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid, user_id: ::domain::Uuid,
+    ) -> ::axiom::result::Fallible {
+        self.reacted_user_ids_and_timestamps_by_event_ids.write().await
+            .entry(event_id)
+            .or_default()
+            .push((user_id, ::axiom::time::Timestamp::now()));
+
+        ::axiom::result::Fallible::Ok(())
+    }
+
+    async fn track_commented(
+        self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid, user_id: ::domain::Uuid,
+    ) -> ::axiom::result::Fallible {
+        self.commented_user_ids_and_timestamps_by_event_ids.write().await
+            .entry(event_id)
+            .or_default()
+            .push((user_id, ::axiom::time::Timestamp::now()));
+
+        ::axiom::result::Fallible::Ok(())
+    }
+
+    async fn untrack_subscribed(
+        self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid, user_id_: ::domain::Uuid,
+    ) -> ::axiom::result::Fallible {
+        if let ::std::collections::hash_map::Entry::Occupied(mut entry) = self.subscribed_user_ids_and_timestamps_by_event_ids.write().await.entry(event_id) {
+            entry.get_mut().retain(|(user_id, _)| *user_id != user_id_);
+            if entry.get().is_empty() { entry.remove(); }
+        }
+
+        ::axiom::result::Fallible::Ok(())
+    }
+
+    async fn untrack_reacted(
+        self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid, user_id_: ::domain::Uuid,
+    ) -> ::axiom::result::Fallible {
+        if let ::std::collections::hash_map::Entry::Occupied(mut entry) = self.reacted_user_ids_and_timestamps_by_event_ids.write().await.entry(event_id) {
+            entry.get_mut().retain(|(user_id, _)| *user_id != user_id_);
+            if entry.get().is_empty() { entry.remove(); }
+        }
+
+        ::axiom::result::Fallible::Ok(())
+    }
+
+    async fn untrack_commented(
+        self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid, user_id_: ::domain::Uuid,
+    ) -> ::axiom::result::Fallible {
+        if let ::std::collections::hash_map::Entry::Occupied(mut entry) = self.commented_user_ids_and_timestamps_by_event_ids.write().await.entry(event_id) {
+            entry.get_mut().retain(|(user_id, _)| *user_id != user_id_);
+            if entry.get().is_empty() { entry.remove(); }
+        }
+
+        ::axiom::result::Fallible::Ok(())
+    }
+
+    async fn view_recently_approved_ids(
+        self: ::std::sync::Arc<Self>,
+    ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::Uuid>> {
+        let mut event_ids_and_scores = self.approved_timestamps_by_event_ids.read().await
+            .iter()
+            .map(|(&event_id, &timestamp)| (event_id, self.score(timestamp)))
+            .collect::<::std::vec::Vec<_>>();
+
+        event_ids_and_scores.sort_by(|(_, lhs_score), (_, rhs_score)| rhs_score.total_cmp(lhs_score));
+
+        event_ids_and_scores
+            .into_iter()
+            .map(|(event_id, _)| event_id)
+            .take(self.limit as ::core::primitive::usize)
+            .collect::<::std::vec::Vec<_>>()
+            .into_ok()
+    }
+
+    async fn view_recently_posted_ids(
+        self: ::std::sync::Arc<Self>,
+    ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::Uuid>> {
+        let mut scores_by_event_ids = ::std::collections::HashMap::<_, _, self::hash::BuildHasher>::with_hasher(::core::default::Default::default());
+
+        self.posted_user_ids_and_timestamps_by_event_ids.read().await.iter()
+            .map(|(&event_id, user_ids_and_timestamps)| (event_id, user_ids_and_timestamps.iter().map(|(_, timestamp)| self.score(*timestamp)).sum::<::core::primitive::f64>()))
+            .for_each(|(event_id, scores_)| {
+                scores_by_event_ids.entry(event_id).and_modify(|scores| *scores += scores_).or_insert(scores_);
+            });
+
+        let mut event_ids_and_scores = scores_by_event_ids.into_iter().collect::<::std::vec::Vec<_>>();
+
+        event_ids_and_scores.sort_by(|(_, lhs_score), (_, rhs_score)| rhs_score.total_cmp(lhs_score));
+
+        event_ids_and_scores
+            .into_iter()
+            .map(|(event_id, _)| event_id)
+            .take(self.limit as ::core::primitive::usize)
+            .collect::<::std::vec::Vec<_>>()
+            .into_ok()
+    }
+
+    async fn view_trending_ids(self: ::std::sync::Arc<Self>)
+        -> ::axiom::result::Fallible<::std::vec::Vec<::domain::Uuid>> {
+        let mut scores_by_event_ids = ::std::collections::HashMap::<_, _, self::hash::BuildHasher>::with_hasher(::core::default::Default::default());
+
+        self.posted_user_ids_and_timestamps_by_event_ids.read().await.iter()
+            .chain(self.subscribed_user_ids_and_timestamps_by_event_ids.read().await.iter())
+            .chain(self.reacted_user_ids_and_timestamps_by_event_ids.read().await.iter())
+            .chain(self.commented_user_ids_and_timestamps_by_event_ids.read().await.iter())
+            .map(|(&event_id, user_ids_and_timestamps)| (event_id, user_ids_and_timestamps.iter().map(|(_, timestamp)| self.score(*timestamp)).sum::<::core::primitive::f64>()))
+            .for_each(|(event_id, scores_)| {
+                scores_by_event_ids.entry(event_id).and_modify(|scores| *scores += scores_).or_insert(scores_);
+            });
+
+        let mut event_ids_and_scores = scores_by_event_ids.into_iter().collect::<::std::vec::Vec<_>>();
+
+        event_ids_and_scores.sort_by(|(_, lhs_score), (_, rhs_score)| rhs_score.total_cmp(lhs_score));
+
+        event_ids_and_scores
+            .into_iter()
+            .map(|(event_id, _)| event_id)
+            .take(self.limit as ::core::primitive::usize)
+            .collect::<::std::vec::Vec<_>>()
+            .into_ok()
+    }
+
+    async fn view_personalized_ids(
+        self: ::std::sync::Arc<Self>, user_id_: ::domain::Uuid,
+    ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::Uuid>> {
+        let mut scores_by_event_ids = ::std::collections::HashMap::<_, _, self::hash::BuildHasher>::with_hasher(::core::default::Default::default());
+
+        self.posted_user_ids_and_timestamps_by_event_ids.read().await.iter()
+            .chain(self.subscribed_user_ids_and_timestamps_by_event_ids.read().await.iter())
+            .chain(self.reacted_user_ids_and_timestamps_by_event_ids.read().await.iter())
+            .chain(self.commented_user_ids_and_timestamps_by_event_ids.read().await.iter())
+            .map(|(&event_id, user_ids_and_timestamps)| (event_id, user_ids_and_timestamps.iter().filter(|(user_id, _)| *user_id == user_id_).map(|(_, timestamp)| self.score(*timestamp)).sum::<::core::primitive::f64>()))
+            .for_each(|(event_id, scores_)| {
+                scores_by_event_ids.entry(event_id).and_modify(|scores| *scores += scores_).or_insert(scores_);
+            });
+
+        let mut event_ids_and_scores = scores_by_event_ids.into_iter().collect::<::std::vec::Vec<_>>();
+
+        event_ids_and_scores.sort_by(|(_, lhs_score), (_, rhs_score)| rhs_score.total_cmp(lhs_score));
+
+        event_ids_and_scores
+            .into_iter()
+            .map(|(event_id, _)| event_id)
+            .take(self.limit as ::core::primitive::usize)
+            .collect::<::std::vec::Vec<_>>()
+            .into_ok()
+    }
+}
+
+impl InMemoryExponentialDecayEventRecommender {
+    fn score(&self, timestamp: ::axiom::time::Timestamp) -> ::core::primitive::f64 {
+        let secs = ::axiom::time::Timestamp::now().signed_duration_since(timestamp).num_seconds() as ::core::primitive::f64;
+
+        (-self.λ * secs).exp()
+    }
+}
 
 /* EVENT EXPORTER */
 
@@ -250,11 +474,11 @@ impl EventPostReactionRepository for InMemoryEventPostReactionRepository {
             .into_ok()
     }
 
-    async fn count_by_post_id(self: ::std::sync::Arc<Self>, post_id_: ::domain::Uuid) -> ::axiom::result::Fallible<u64> {
+    async fn count_by_post_id(self: ::std::sync::Arc<Self>, post_id_: ::domain::Uuid) -> ::axiom::result::Fallible<::core::primitive::u64> {
         (
             self.reactions_by_ids.read().await.values()
             .filter(|&&::domain::EventPostReaction { post_id, .. }| post_id == post_id_)
-            .count() as u64
+            .count() as ::core::primitive::u64
         )
             .into_ok()
     }
@@ -315,11 +539,11 @@ impl EventPostCommentRepository for InMemoryEventPostCommentRepository {
             .into_ok()
     }
 
-    async fn count_by_post_id(self: ::std::sync::Arc<Self>, post_id_: ::domain::Uuid) -> ::axiom::result::Fallible<u64> {
+    async fn count_by_post_id(self: ::std::sync::Arc<Self>, post_id_: ::domain::Uuid) -> ::axiom::result::Fallible<::core::primitive::u64> {
         (
             self.comments_by_ids.read().await.values()
             .filter(|&&::domain::EventPostComment { post_id, .. }| post_id == post_id_)
-            .count() as u64
+            .count() as ::core::primitive::u64
         )
             .into_ok()
     }

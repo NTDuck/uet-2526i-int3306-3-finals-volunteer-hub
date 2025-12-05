@@ -49,8 +49,8 @@ pub struct ViewEventChannelEventPost {
     #[builder(required)]
     pub image_url: ::core::option::Option<::axiom::string::String>,
 
-    pub reaction_count: u64,
-    pub comment_count: u64,
+    pub reaction_count: ::core::primitive::u64,
+    pub comment_count: ::core::primitive::u64,
 
     pub author: ::core::option::Option<ViewEventChannelUser>,
     pub is_reacted_by_actor: bool,

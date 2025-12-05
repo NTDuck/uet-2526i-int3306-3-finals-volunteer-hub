@@ -6,6 +6,7 @@ use crate::gateways::*;
 
 #[derive(::bon::Builder)]
 pub struct ViewEventRecommendationInteractor {
+    event_repository: ::std::sync::Arc<dyn EventRepository + ::core::marker::Send + ::core::marker::Sync>,
     event_recommender: ::std::sync::Arc<dyn EventRecommender + ::core::marker::Send + ::core::marker::Sync>,
     user_repository: ::std::sync::Arc<dyn UserRepository + ::core::marker::Send + ::core::marker::Sync>,
 
@@ -38,24 +39,32 @@ impl ViewEventRecommendationBoundary for ViewEventRecommendationInteractor {
             },
         };
 
-        let events = match request.r#type {
+        let events_ids = match request.r#type {
             RecommendationType::RecentlyPublished =>
                 ::std::sync::Arc::clone(&self.event_recommender)
-                    .view_recently_approved()
+                    .view_recently_approved_ids()
                     .await?,
             RecommendationType::RecentlyPosted =>
-                ::std::sync::Arc::clone(&self.event_recommender).view_recently_posted().await?,
+                ::std::sync::Arc::clone(&self.event_recommender).view_recently_posted_ids().await?,
             RecommendationType::Trending =>
-                ::std::sync::Arc::clone(&self.event_recommender).view_trending().await?,
+                ::std::sync::Arc::clone(&self.event_recommender).view_trending_ids().await?,
             RecommendationType::Personalized =>
                 ::std::sync::Arc::clone(&self.event_recommender)
-                    .view_personalized(actor_id)
+                    .view_personalized_ids(actor_id)
                     .await?,
         };
 
-        let events = events
+        let events = events_ids
             .into_stream()
-            .then(|event| {
+            .then(|event_id| {
+                let event_repository = ::std::sync::Arc::clone(&self.event_repository);
+
+                async move {
+                    ::std::sync::Arc::clone(&event_repository).get_by_id(event_id).await
+                }
+            })
+            .filter_map(|transposable| async move { transposable.transpose() })
+            .and_then(|event| {
                 let uuid_codec = ::std::sync::Arc::clone(&self.uuid_codec);
                 let timestamp_codec = ::std::sync::Arc::clone(&self.timestamp_codec);
 

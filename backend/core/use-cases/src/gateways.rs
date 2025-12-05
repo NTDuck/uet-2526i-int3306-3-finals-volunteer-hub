@@ -92,20 +92,20 @@ pub trait EventRecommender {
         self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid, user_id: ::domain::Uuid,
     ) -> ::axiom::result::Fallible;
 
-    async fn view_recently_approved(
+    async fn view_recently_approved_ids(
         self: ::std::sync::Arc<Self>,
-    ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::Event>>;
+    ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::Uuid>>;
 
-    async fn view_recently_posted(
+    async fn view_recently_posted_ids(
         self: ::std::sync::Arc<Self>,
-    ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::Event>>;
+    ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::Uuid>>;
 
-    async fn view_trending(self: ::std::sync::Arc<Self>)
-        -> ::axiom::result::Fallible<::std::vec::Vec<::domain::Event>>;
+    async fn view_trending_ids(self: ::std::sync::Arc<Self>)
+        -> ::axiom::result::Fallible<::std::vec::Vec<::domain::Uuid>>;
 
-    async fn view_personalized(
+    async fn view_personalized_ids(
         self: ::std::sync::Arc<Self>, user_id: ::domain::Uuid,
-    ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::Event>>;
+    ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::Uuid>>;
 }
 
 #[async_trait]
@@ -173,8 +173,8 @@ pub trait EventPostReactionRepository {
         self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid,
     ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::EventPostReaction>>;
 
-    async fn count_by_post_id(self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid) -> ::axiom::result::Fallible<u64> {
-        (self.view_by_post_id(post_id).await?.len() as u64).into_ok()
+    async fn count_by_post_id(self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid) -> ::axiom::result::Fallible<::core::primitive::u64> {
+        (self.view_by_post_id(post_id).await?.len() as ::core::primitive::u64).into_ok()
     }
 }
 
@@ -199,8 +199,8 @@ pub trait EventPostCommentRepository {
         self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid,
     ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::EventPostComment>>;
 
-    async fn count_by_post_id(self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid) -> ::axiom::result::Fallible<u64> {
-        (self.view_by_post_id(post_id).await?.len() as u64).into_ok()
+    async fn count_by_post_id(self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid) -> ::axiom::result::Fallible<::core::primitive::u64> {
+        (self.view_by_post_id(post_id).await?.len() as ::core::primitive::u64).into_ok()
     }
 }
 
