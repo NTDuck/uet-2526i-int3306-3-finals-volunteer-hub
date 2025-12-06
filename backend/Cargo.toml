@@ -5,7 +5,7 @@ members = [
     "./core/domain",
     "./core/use-cases",
     "./infrastructures",
-    "./bindings/*", "axiom-derive",
+    "./bindings/*",
 ]
 exclude = [
     "./bindings/output",
