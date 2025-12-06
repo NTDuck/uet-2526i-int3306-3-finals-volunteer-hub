@@ -127,8 +127,7 @@ impl Application {
     ) -> Promise<CreateEventPostCommentOkResponse> {
         Self::proxy()
             .intercept(|request| ::std::sync::Arc::clone(&self.create_comment_boundary).apply(request))
-            .with_request(request)
-            .apply()
+            .apply(request)
             .await
     }
 
@@ -136,8 +135,7 @@ impl Application {
     pub async fn create_event(&self, request: CreateEventRequest) -> Promise<CreateEventOkResponse> {
         Self::proxy()
             .intercept(|request| ::std::sync::Arc::clone(&self.create_event_boundary).apply(request))
-            .with_request(request)
-            .apply()
+            .apply(request)
             .await
     }
 
@@ -145,8 +143,7 @@ impl Application {
     pub async fn create_post(&self, request: CreateEventPostRequest) -> Promise<CreateEventPostOkResponse> {
         Self::proxy()
             .intercept(|request| ::std::sync::Arc::clone(&self.create_post_boundary).apply(request))
-            .with_request(request)
-            .apply()
+            .apply(request)
             .await
     }
 
@@ -156,8 +153,7 @@ impl Application {
     ) -> Promise<CreateEventPostReactionOkResponse> {
         Self::proxy()
             .intercept(|request| ::std::sync::Arc::clone(&self.create_reaction_boundary).apply(request))
-            .with_request(request)
-            .apply()
+            .apply(request)
             .await
     }
 
@@ -165,8 +161,7 @@ impl Application {
     pub async fn export_events(&self, request: ExportEventsRequest) -> Promise<ExportEventsOkResponse> {
         Self::proxy()
             .intercept(|request| ::std::sync::Arc::clone(&self.export_events_boundary).apply(request))
-            .with_request(request)
-            .apply()
+            .apply(request)
             .await
     }
 
@@ -174,8 +169,7 @@ impl Application {
     pub async fn export_volunteers(&self, request: ExportVolunteersRequest) -> Promise<ExportVolunteersOkResponse> {
         Self::proxy()
             .intercept(|request| ::std::sync::Arc::clone(&self.export_volunteers_boundary).apply(request))
-            .with_request(request)
-            .apply()
+            .apply(request)
             .await
     }
 
@@ -183,8 +177,7 @@ impl Application {
     pub async fn moderate_event(&self, request: ModerateEventRequest) -> Promise<ModerateEventOkResponse> {
         Self::proxy()
             .intercept(|request| ::std::sync::Arc::clone(&self.moderate_event_boundary).apply(request))
-            .with_request(request)
-            .apply()
+            .apply(request)
             .await
     }
 
@@ -194,8 +187,7 @@ impl Application {
     ) -> Promise<ModerateEventRegistrationOkResponse> {
         Self::proxy()
             .intercept(|request| ::std::sync::Arc::clone(&self.moderate_event_registration_boundary).apply(request))
-            .with_request(request)
-            .apply()
+            .apply(request)
             .await
     }
 
@@ -203,8 +195,7 @@ impl Application {
     pub async fn moderate_user(&self, request: ModerateUserRequest) -> Promise<ModerateUserOkResponse> {
         Self::proxy()
             .intercept(|request| ::std::sync::Arc::clone(&self.moderate_user_boundary).apply(request))
-            .with_request(request)
-            .apply()
+            .apply(request)
             .await
     }
 
@@ -214,8 +205,7 @@ impl Application {
     ) -> Promise<RemoveEventPostCommentOkResponse> {
         Self::proxy()
             .intercept(|request| ::std::sync::Arc::clone(&self.remove_comment_boundary).apply(request))
-            .with_request(request)
-            .apply()
+            .apply(request)
             .await
     }
 
@@ -223,8 +213,7 @@ impl Application {
     pub async fn remove_event(&self, request: RemoveEventRequest) -> Promise<RemoveEventOkResponse> {
         Self::proxy()
             .intercept(|request| ::std::sync::Arc::clone(&self.remove_event_boundary).apply(request))
-            .with_request(request)
-            .apply()
+            .apply(request)
             .await
     }
 
@@ -232,8 +221,7 @@ impl Application {
     pub async fn remove_post(&self, request: RemoveEventPostRequest) -> Promise<RemoveEventPostOkResponse> {
         Self::proxy()
             .intercept(|request| ::std::sync::Arc::clone(&self.remove_post_boundary).apply(request))
-            .with_request(request)
-            .apply()
+            .apply(request)
             .await
     }
 
@@ -243,8 +231,7 @@ impl Application {
     ) -> Promise<RemoveEventPostReactionOkResponse> {
         Self::proxy()
             .intercept(|request| ::std::sync::Arc::clone(&self.remove_reaction_boundary).apply(request))
-            .with_request(request)
-            .apply()
+            .apply(request)
             .await
     }
 
@@ -252,8 +239,7 @@ impl Application {
     pub async fn sign_in(&self, request: SignInRequest) -> Promise<SignInOkResponse> {
         Self::proxy()
             .intercept(|request| ::std::sync::Arc::clone(&self.sign_in_boundary).apply(request))
-            .with_request(request)
-            .apply()
+            .apply(request)
             .await
     }
 
@@ -261,8 +247,7 @@ impl Application {
     pub async fn sign_up(&self, request: SignUpRequest) -> Promise<SignUpOkResponse> {
         Self::proxy()
             .intercept(|request| ::std::sync::Arc::clone(&self.sign_up_boundary).apply(request))
-            .with_request(request)
-            .apply()
+            .apply(request)
             .await
     }
 
@@ -270,8 +255,7 @@ impl Application {
     pub async fn subscribe_to_event(&self, request: SubscribeToEventRequest) -> Promise<SubscribeToEventOkResponse> {
         Self::proxy()
             .intercept(|request| ::std::sync::Arc::clone(&self.subscribe_to_event_boundary).apply(request))
-            .with_request(request)
-            .apply()
+            .apply(request)
             .await
     }
 
@@ -281,8 +265,7 @@ impl Application {
     ) -> Promise<UnsubscribeFromEventOkResponse> {
         Self::proxy()
             .intercept(|request| ::std::sync::Arc::clone(&self.unsubscribe_from_event_boundary).apply(request))
-            .with_request(request)
-            .apply()
+            .apply(request)
             .await
     }
 
@@ -292,8 +275,7 @@ impl Application {
     ) -> Promise<UpdateEventPostCommentOkResponse> {
         Self::proxy()
             .intercept(|request| ::std::sync::Arc::clone(&self.update_comment_boundary).apply(request))
-            .with_request(request)
-            .apply()
+            .apply(request)
             .await
     }
 
@@ -301,8 +283,7 @@ impl Application {
     pub async fn update_event(&self, request: UpdateEventRequest) -> Promise<UpdateEventOkResponse> {
         Self::proxy()
             .intercept(|request| ::std::sync::Arc::clone(&self.update_event_boundary).apply(request))
-            .with_request(request)
-            .apply()
+            .apply(request)
             .await
     }
 
@@ -310,8 +291,7 @@ impl Application {
     pub async fn update_post(&self, request: UpdateEventPostRequest) -> Promise<UpdateEventPostOkResponse> {
         Self::proxy()
             .intercept(|request| ::std::sync::Arc::clone(&self.update_post_boundary).apply(request))
-            .with_request(request)
-            .apply()
+            .apply(request)
             .await
     }
 
@@ -319,8 +299,7 @@ impl Application {
     pub async fn view_event_channel(&self, request: ViewEventChannelRequest) -> Promise<ViewEventChannelOkResponse> {
         Self::proxy()
             .intercept(|request| ::std::sync::Arc::clone(&self.view_event_channel_boundary).apply(request))
-            .with_request(request)
-            .apply()
+            .apply(request)
             .await
     }
 
@@ -328,8 +307,7 @@ impl Application {
     pub async fn view_event_history(&self, request: ViewEventHistoryRequest) -> Promise<ViewEventHistoryOkResponse> {
         Self::proxy()
             .intercept(|request| ::std::sync::Arc::clone(&self.view_event_history_boundary).apply(request))
-            .with_request(request)
-            .apply()
+            .apply(request)
             .await
     }
 
@@ -339,8 +317,7 @@ impl Application {
     ) -> Promise<ViewEventRecommendationOkResponse> {
         Self::proxy()
             .intercept(|request| ::std::sync::Arc::clone(&self.view_event_recommendation_boundary).apply(request))
-            .with_request(request)
-            .apply()
+            .apply(request)
             .await
     }
 
@@ -350,8 +327,7 @@ impl Application {
     ) -> Promise<ViewEventVolunteersOkResponse> {
         Self::proxy()
             .intercept(|request| ::std::sync::Arc::clone(&self.view_event_volunteers_boundary).apply(request))
-            .with_request(request)
-            .apply()
+            .apply(request)
             .await
     }
 
@@ -359,8 +335,7 @@ impl Application {
     pub async fn view_events(&self, request: ViewEventsRequest) -> Promise<ViewEventsOkResponse> {
         Self::proxy()
             .intercept(|request| ::std::sync::Arc::clone(&self.view_events_boundary).apply(request))
-            .with_request(request)
-            .apply()
+            .apply(request)
             .await
     }
 
@@ -368,8 +343,7 @@ impl Application {
     pub async fn view_post(&self, request: ViewEventPostRequest) -> Promise<ViewEventPostOkResponse> {
         Self::proxy()
             .intercept(|request| ::std::sync::Arc::clone(&self.view_post_boundary).apply(request))
-            .with_request(request)
-            .apply()
+            .apply(request)
             .await
     }
 
@@ -379,8 +353,7 @@ impl Application {
     ) -> Promise<ViewPublishedEventsOkResponse> {
         Self::proxy()
             .intercept(|request| ::std::sync::Arc::clone(&self.view_published_events_boundary).apply(request))
-            .with_request(request)
-            .apply()
+            .apply(request)
             .await
     }
 
@@ -388,8 +361,7 @@ impl Application {
     pub async fn view_users(&self, request: ViewUsersRequest) -> Promise<ViewUsersOkResponse> {
         Self::proxy()
             .intercept(|request| ::std::sync::Arc::clone(&self.view_users_boundary).apply(request))
-            .with_request(request)
-            .apply()
+            .apply(request)
             .await
     }
 }
@@ -398,7 +370,7 @@ impl Application {
 impl Application {
     #[builder(finish_fn(name = apply))]
     async fn proxy<F, Fut, Request, OkResponse, ErrResponse>(
-        #[builder(setters(name = intercept))] f: F, #[builder(setters(name = with_request))] request: Request,
+        #[builder(finish_fn)] request: Request, #[builder(setters(name = intercept))] f: F,
     ) -> Promise<OkResponse>
     where
         F: ::core::ops::FnOnce(Request) -> Fut,

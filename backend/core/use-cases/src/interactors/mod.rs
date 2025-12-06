@@ -1,3 +1,5 @@
+#![allow(clippy::option_map_unit_fn)]
+
 mod create_comment;
 mod create_event;
 mod create_post;
