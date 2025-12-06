@@ -18,6 +18,8 @@ futures = { workspace = true }
 serde = { workspace = true }
 thiserror = { workspace = true }
 rayon = { workspace = true }
+serde_json = "1.0.45"
+csv = "1.4.0"
 
 ahash = { version = "0.8.12", optional = true }
 fxhash = { version = "0.2.1", optional = true }
@@ -30,13 +32,13 @@ tokio = { version = "1.47.1", features = ["sync"] }
 uuid = { version = "1.18.1", features = ["v7"] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-# Using `uuid` on `wasm32-unknown-unknown` requires
-# a source of randomness from [`js`, `rng-getrandom`, `rng-rand`]
-uuid = { version = "1.18.1", features = ["v7", "js"] }
 # `getrandom` is a transitive dependency of `argon2`
 # Using `getrandom` on `wasm32-unknown-unknown` requires
 # explicitly enabling feature flag `wasm_js`
 getrandom = { version = "*", features = ["wasm_js"]}
+# Using `uuid` on `wasm32-unknown-unknown` requires
+# a source of randomness from [`js`, `rng-getrandom`, `rng-rand`]
+uuid = { version = "1.18.1", features = ["v7", "js"] }
 
 [features]
 default = ["ahash"]

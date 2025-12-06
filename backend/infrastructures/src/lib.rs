@@ -328,7 +328,36 @@ impl InMemoryExponentialDecayEventRecommender {
     }
 }
 
-/* EVENT EXPORTER */
+#[derive(::bon::Builder)]
+pub struct GenericEventExporter {
+    event_repository: ::std::sync::Arc<dyn EventRepository + ::core::marker::Send + ::core::marker::Sync>,
+}
+
+#[async_trait]
+impl EventExporter for GenericEventExporter {
+    async fn export_as_csv(self: ::std::sync::Arc<Self>) -> ::axiom::result::Fallible<::axiom::bytes::Bytes> {
+        let mut writer = ::csv::Writer::from_writer(::std::vec::Vec::new());
+
+        writer.write_record(["id", "statuses", "name", "description", "categories", "location", "image-url"])?;
+
+        ::std::sync::Arc::clone(&self.event_repository).view().await?
+            .into_iter()
+            .map(::core::convert::Into::<self::serde::Event>::into)
+            .try_for_each(|event| writer.serialize(event))?;
+
+        writer.flush()?;
+
+        writer.into_inner()?.into_t::<::axiom::bytes::Bytes>().into_ok()
+    }
+
+    async fn export_as_json(self: ::std::sync::Arc<Self>) -> ::axiom::result::Fallible<::axiom::bytes::Bytes> {
+        let events = ::std::sync::Arc::clone(&self.event_repository).view().await?
+            .into_iter()
+            .map(::core::convert::Into::<self::serde::Event>::into).collect::<::std::vec::Vec<_>>();
+
+        ::serde_json::to_string(&events)?.into_t::<::axiom::bytes::Bytes>().into_ok()
+    }
+}
 
 #[derive(::bon::Builder)]
 pub struct InMemoryEventRegistrationRepository {
@@ -661,7 +690,36 @@ impl UserRepository for InMemoryUserRepository {
     }
 }
 
-/* USER EXPORTER */
+#[derive(::bon::Builder)]
+pub struct GenericUserExporter {
+    user_repository: ::std::sync::Arc<dyn UserRepository + ::core::marker::Send + ::core::marker::Sync>,
+}
+
+#[async_trait]
+impl UserExporter for GenericUserExporter {
+    async fn export_volunteers_as_csv(self: ::std::sync::Arc<Self>) -> ::axiom::result::Fallible<::axiom::bytes::Bytes> {
+        let mut writer = ::csv::Writer::from_writer(::std::vec::Vec::new());
+
+        writer.write_record(["id", "role", "statuses", "username", "email", "full-name", "avatar-url"])?;
+
+        ::std::sync::Arc::clone(&self.user_repository).view().await?
+            .into_iter()
+            .map(::core::convert::Into::<self::serde::User>::into)
+            .try_for_each(|user| writer.serialize(user))?;
+
+        writer.flush()?;
+
+        writer.into_inner()?.into_t::<::axiom::bytes::Bytes>().into_ok()
+    }
+
+    async fn export_volunteers_as_json(self: ::std::sync::Arc<Self>) -> ::axiom::result::Fallible<::axiom::bytes::Bytes> {
+        let users = ::std::sync::Arc::clone(&self.user_repository).view().await?
+            .into_iter()
+            .map(::core::convert::Into::<self::serde::User>::into).collect::<::std::vec::Vec<_>>();
+
+        ::serde_json::to_string(&users)?.into_t::<::axiom::bytes::Bytes>().into_ok()
+    }
+}
 
 #[derive(::bon::Builder)]
 pub struct MockMediaRepository {
@@ -768,102 +826,13 @@ where
     ) -> ::axiom::result::Fallible<::axiom::string::String> {
         use ::jwt::SignWithKey as _;
 
-        payload.into_t::<AuthTokenPayloadSerdeImpl>().sign_with_key(&self.key)?.into_t::<::axiom::string::String>().into_ok()
+        payload.into_t::<self::serde::AuthTokenPayload>().sign_with_key(&self.key)?.into_t::<::axiom::string::String>().into_ok()
     }
 
     async fn get_payload(
         self: ::std::sync::Arc<Self>, token: ::axiom::string::String,
     ) -> ::axiom::result::Fallible<::core::option::Option<::use_cases::gateways::AuthTokenPayload>> {
-        ::jwt::VerifyWithKey::<AuthTokenPayloadSerdeImpl>::verify_with_key(&*token, &self.key).ok().map(::core::convert::Into::into).into_ok()
-    }
-}
-
-#[derive(::serde::Serialize, ::serde::Deserialize, ::bon::Builder)]
-#[serde(rename_all = "camelCase")]
-#[builder(on(_, into))]
-struct AuthTokenPayloadSerdeImpl {
-    user_id: AuthTokenPayloadSerdeImplUuid,
-    user_role: AuthTokenPayloadSerdeImplUserRole,
-    expiry_timestamp: ::axiom::time::Timestamp,
-}
-
-impl ::core::convert::From<AuthTokenPayloadSerdeImpl> for AuthTokenPayload {
-    fn from(value: AuthTokenPayloadSerdeImpl) -> Self {
-        Self::builder()
-            .user_id(value.user_id)
-            .user_role(value.user_role)
-            .expiry_timestamp(value.expiry_timestamp)
-            .build()
-    }
-}
-
-impl ::core::convert::From<AuthTokenPayload> for AuthTokenPayloadSerdeImpl {
-    fn from(value: AuthTokenPayload) -> Self {
-        Self::builder()
-            .user_id(value.user_id)
-            .user_role(value.user_role)
-            .expiry_timestamp(value.expiry_timestamp)
-            .build()
-    }
-}
-
-#[derive(::serde::Serialize, ::serde::Deserialize)]
-#[serde(transparent)]
-struct AuthTokenPayloadSerdeImplUuid([u8; 16]);
-
-#[::bon::bon]
-impl AuthTokenPayloadSerdeImplUuid {
-    #[builder]
-    pub fn new(value: [u8; 16]) -> Self {
-        Self(value)
-    }
-}
-
-impl ::core::ops::Deref for AuthTokenPayloadSerdeImplUuid {
-    type Target = [u8; 16];
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl ::core::convert::From<::domain::Uuid> for AuthTokenPayloadSerdeImplUuid {
-    fn from(value: ::domain::Uuid) -> Self {
-        Self::builder().value(*value).build()
-    }
-}
-
-impl ::core::convert::From<AuthTokenPayloadSerdeImplUuid> for ::domain::Uuid {
-    fn from(value: AuthTokenPayloadSerdeImplUuid) -> Self {
-        Self::builder().value(*value).build()
-    }
-}
-
-#[derive(::serde::Serialize, ::serde::Deserialize)]
-#[serde(untagged, rename_all = "kebab-case")]
-enum AuthTokenPayloadSerdeImplUserRole {
-    Volunteer,
-    EventManager,
-    Administrator,
-}
-
-impl ::core::convert::From<::domain::UserRole> for AuthTokenPayloadSerdeImplUserRole {
-    fn from(value: ::domain::UserRole) -> Self {
-        match value {
-            ::domain::UserRole::Volunteer => Self::Volunteer,
-            ::domain::UserRole::EventManager => Self::EventManager,
-            ::domain::UserRole::Administrator => Self::Administrator,
-        }
-    }
-}
-
-impl ::core::convert::From<AuthTokenPayloadSerdeImplUserRole> for ::domain::UserRole {
-    fn from(value: AuthTokenPayloadSerdeImplUserRole) -> Self {
-        match value {
-            AuthTokenPayloadSerdeImplUserRole::Volunteer => Self::Volunteer,
-            AuthTokenPayloadSerdeImplUserRole::EventManager => Self::EventManager,
-            AuthTokenPayloadSerdeImplUserRole::Administrator => Self::Administrator,
-        }
+        ::jwt::VerifyWithKey::<self::serde::AuthTokenPayload>::verify_with_key(&*token, &self.key).ok().map(::core::convert::Into::into).into_ok()
     }
 }
 
@@ -913,6 +882,314 @@ mod hash {
 
     #[cfg(feature = "seahash")]
     pub type BuildHasher = ::std::hash::BuildHasherDefault<::seahash::SeaHasher>;
+}
+
+mod serde {
+    #[derive(::serde::Serialize, ::serde::Deserialize, ::bon::Builder)]
+    #[serde(rename_all = "camelCase")]
+    #[builder(on(_, into))]
+    pub struct AuthTokenPayload {
+        user_id: Uuid,
+        user_role: UserRole,
+        expiry_timestamp: ::axiom::time::Timestamp,
+    }
+
+    impl ::core::convert::From<AuthTokenPayload> for ::use_cases::gateways::AuthTokenPayload {
+        fn from(value: AuthTokenPayload) -> Self {
+            Self::builder()
+                .user_id(value.user_id)
+                .user_role(value.user_role)
+                .expiry_timestamp(value.expiry_timestamp)
+                .build()
+        }
+    }
+
+    impl ::core::convert::From<::use_cases::gateways::AuthTokenPayload> for AuthTokenPayload {
+        fn from(value: ::use_cases::gateways::AuthTokenPayload) -> Self {
+            Self::builder()
+                .user_id(value.user_id)
+                .user_role(value.user_role)
+                .expiry_timestamp(value.expiry_timestamp)
+                .build()
+        }
+    }
+
+    #[derive(::serde::Serialize, ::bon::Builder)]
+    #[serde(rename_all = "camelCase")]
+    #[builder(on(_, into))]
+    pub struct Event {
+        pub id: Uuid,
+
+        pub statuses: ::std::vec::Vec<EventStatus>,
+
+        pub name: ::axiom::string::String,
+        pub description: ::axiom::string::String,
+        pub categories: ::std::vec::Vec<::axiom::string::String>,
+        pub location: ::axiom::string::String,
+
+        pub image_url: ::axiom::string::String,
+    }
+
+    impl ::core::convert::From<::domain::Event> for Event {
+        fn from(value: ::domain::Event) -> Self {
+            Self::builder()
+                .id(value.id)
+                .statuses(value.statuses.into_iter().map(::core::convert::Into::into).collect::<::std::vec::Vec<_>>())
+                .name(value.name)
+                .description(value.description)
+                .categories(value.categories.into_iter().map(::core::convert::Into::into).collect::<::std::vec::Vec<_>>())
+                .location(value.location)
+                .image_url(value.image_url)
+                .build()
+        }
+    }
+
+    #[derive(::serde::Serialize, ::serde::Deserialize)]
+    #[serde(rename_all = "kebab-case", rename_all_fields = "kebab-case")]
+    pub enum EventStatus {
+        Created {
+            created_by_manager_id: Uuid,
+            created_at: ::axiom::time::Timestamp,
+        },
+        Updated {
+            updated_by_manager_id: Uuid,
+            updated_at: ::axiom::time::Timestamp,
+        },
+        Approved {
+            approved_by_administrator_id: Uuid,
+            approved_at: ::axiom::time::Timestamp,
+        },
+        Rejected {
+            rejected_by_administrator_id: Uuid,
+            rejected_at: ::axiom::time::Timestamp,
+        },
+    }
+
+    impl ::core::convert::From<::domain::EventStatus> for EventStatus {
+        fn from(value: ::domain::EventStatus) -> Self {
+            match value {
+                ::domain::EventStatus::Created {
+                    created_by_manager_id,
+                    created_at,
+                } => Self::Created {
+                    created_by_manager_id: created_by_manager_id.into(),
+                    created_at,
+                },
+                ::domain::EventStatus::Updated {
+                    updated_by_manager_id,
+                    updated_at,
+                } => Self::Updated {
+                    updated_by_manager_id: updated_by_manager_id.into(),
+                    updated_at,
+                },
+                ::domain::EventStatus::Approved {
+                    approved_by_administrator_id,
+                    approved_at,
+                } => Self::Approved {
+                    approved_by_administrator_id: approved_by_administrator_id.into(),
+                    approved_at,
+                },
+                ::domain::EventStatus::Rejected {
+                    rejected_by_administrator_id,
+                    rejected_at,
+                } => Self::Rejected {
+                    rejected_by_administrator_id: rejected_by_administrator_id.into(),
+                    rejected_at,
+                },
+            }
+        }
+    }
+
+    impl ::core::convert::From<EventStatus> for ::domain::EventStatus {
+        fn from(value: EventStatus) -> Self {
+            match value {
+                EventStatus::Created {
+                    created_by_manager_id,
+                    created_at,
+                } => Self::Created {
+                    created_by_manager_id: created_by_manager_id.into(),
+                    created_at,
+                },
+                EventStatus::Updated {
+                    updated_by_manager_id,
+                    updated_at,
+                } => Self::Updated {
+                    updated_by_manager_id: updated_by_manager_id.into(),
+                    updated_at,
+                },
+                EventStatus::Approved {
+                    approved_by_administrator_id,
+                    approved_at,
+                } => Self::Approved {
+                    approved_by_administrator_id: approved_by_administrator_id.into(),
+                    approved_at,
+                },
+                EventStatus::Rejected {
+                    rejected_by_administrator_id,
+                    rejected_at,
+                } => Self::Rejected {
+                    rejected_by_administrator_id: rejected_by_administrator_id.into(),
+                    rejected_at,
+                },
+            }
+        }
+    }
+
+    #[derive(::serde::Serialize, ::bon::Builder)]
+    #[serde(rename_all = "camelCase")]
+    #[builder(on(_, into))]
+    pub struct User {
+        pub id: Uuid,
+
+        pub role: UserRole,
+        pub statuses: ::std::vec::Vec<UserStatus>,
+
+        pub username: ::axiom::string::String,
+        pub email: ::axiom::string::String,
+        pub full_name: ::axiom::string::String,
+
+        #[builder(required)]
+        pub avatar_url: ::core::option::Option<::axiom::string::String>,
+    }
+
+    impl ::core::convert::From<::domain::User> for User {
+        fn from(value: ::domain::User) -> Self {
+            Self::builder()
+                .id(value.id)
+                .role(value.role)
+                .statuses(value.statuses.into_iter().map(::core::convert::Into::into).collect::<::std::vec::Vec<_>>())
+                .username(value.username)
+                .email(value.email)
+                .full_name(value.full_name)
+                .avatar_url(value.avatar_url)
+                .build()
+        }
+    }
+
+    #[derive(::serde::Serialize, ::serde::Deserialize)]
+    #[serde(untagged, rename_all = "kebab-case")]
+    pub enum UserRole {
+        Volunteer,
+        EventManager,
+        Administrator,
+    }
+
+    impl ::core::convert::From<::domain::UserRole> for UserRole {
+        fn from(value: ::domain::UserRole) -> Self {
+            match value {
+                ::domain::UserRole::Volunteer => Self::Volunteer,
+                ::domain::UserRole::EventManager => Self::EventManager,
+                ::domain::UserRole::Administrator => Self::Administrator,
+            }
+        }
+    }
+
+    impl ::core::convert::From<UserRole> for ::domain::UserRole {
+        fn from(value: UserRole) -> Self {
+            match value {
+                UserRole::Volunteer => Self::Volunteer,
+                UserRole::EventManager => Self::EventManager,
+                UserRole::Administrator => Self::Administrator,
+            }
+        }
+    }
+
+    #[derive(::serde::Serialize, ::serde::Deserialize)]
+    #[serde(rename_all = "kebab-case", rename_all_fields = "kebab-case")]
+    pub enum UserStatus {
+        Created {
+            created_at: ::axiom::time::Timestamp,
+        },
+        Updated {
+            updated_at: ::axiom::time::Timestamp,
+        },
+        Suspended {
+            suspended_by_administrator_id: Uuid,
+            suspended_at: ::axiom::time::Timestamp,
+        },
+        Unsuspended {
+            unsuspended_by_administrator_id: Uuid,
+            unsuspended_at: ::axiom::time::Timestamp,
+        },
+    }
+
+    impl ::core::convert::From<::domain::UserStatus> for UserStatus {
+        fn from(value: ::domain::UserStatus) -> Self {
+            match value {
+                ::domain::UserStatus::Created { created_at } => Self::Created { created_at },
+                ::domain::UserStatus::Updated { updated_at } => Self::Updated { updated_at },
+                ::domain::UserStatus::Suspended {
+                    suspended_by_administrator_id,
+                    suspended_at,
+                } => Self::Suspended {
+                    suspended_by_administrator_id: suspended_by_administrator_id.into(),
+                    suspended_at,
+                },
+                ::domain::UserStatus::Unsuspended {
+                    unsuspended_by_administrator_id,
+                    unsuspended_at,
+                } => Self::Unsuspended {
+                    unsuspended_by_administrator_id: unsuspended_by_administrator_id.into(),
+                    unsuspended_at,
+                },
+            }
+        }
+    }
+
+    impl ::core::convert::From<UserStatus> for ::domain::UserStatus {
+        fn from(value: UserStatus) -> Self {
+            match value {
+                UserStatus::Created { created_at } => Self::Created { created_at },
+                UserStatus::Updated { updated_at } => Self::Updated { updated_at },
+                UserStatus::Suspended {
+                    suspended_by_administrator_id,
+                    suspended_at,
+                } => Self::Suspended {
+                    suspended_by_administrator_id: suspended_by_administrator_id.into(),
+                    suspended_at,
+                },
+                UserStatus::Unsuspended {
+                    unsuspended_by_administrator_id,
+                    unsuspended_at,
+                } => Self::Unsuspended {
+                    unsuspended_by_administrator_id: unsuspended_by_administrator_id.into(),
+                    unsuspended_at,
+                },
+            }
+        }
+    }
+
+    #[derive(::serde::Serialize, ::serde::Deserialize)]
+    #[serde(transparent)]
+    pub struct Uuid([u8; 16]);
+
+    #[::bon::bon]
+    impl Uuid {
+        #[builder]
+        pub fn new(value: [u8; 16]) -> Self {
+            Self(value)
+        }
+    }
+
+    impl ::core::ops::Deref for Uuid {
+        type Target = [u8; 16];
+
+        fn deref(&self) -> &Self::Target {
+            &self.0
+        }
+    }
+
+    impl ::core::convert::From<::domain::Uuid> for Uuid {
+        fn from(value: ::domain::Uuid) -> Self {
+            Self::builder().value(*value).build()
+        }
+    }
+
+    impl ::core::convert::From<Uuid> for ::domain::Uuid {
+        fn from(value: Uuid) -> Self {
+            Self::builder().value(*value).build()
+        }
+    }
 }
 
 mod string {
