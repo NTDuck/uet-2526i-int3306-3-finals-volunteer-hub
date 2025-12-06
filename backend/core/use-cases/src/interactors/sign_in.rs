@@ -71,7 +71,7 @@ impl SignInBoundary for SignInInteractor {
             return super::errs!(errors);
         }
 
-        let auth_token_payload = AuthenticationTokenPayload::builder()
+        let auth_token_payload = AuthTokenPayload::builder()
             .user_id(user.id)
             .user_role(user.role)
             .expiry_timestamp(::axiom::time::Timestamp::now() + self.auth_token_lifetime)

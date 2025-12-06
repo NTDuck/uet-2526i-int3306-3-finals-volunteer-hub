@@ -354,30 +354,12 @@ pub trait TimestampCodec {
 #[async_trait]
 pub trait AuthTokenGenerator {
     async fn generate(
-        self: ::std::sync::Arc<Self>, payload: AuthenticationTokenPayload,
+        self: ::std::sync::Arc<Self>, payload: AuthTokenPayload,
     ) -> ::axiom::result::Fallible<::axiom::string::String>;
 
     async fn get_payload(
         self: ::std::sync::Arc<Self>, token: ::axiom::string::String,
-    ) -> ::axiom::result::Fallible<::core::option::Option<AuthenticationTokenPayload>>;
-
-    async fn get_user_id(
-        self: ::std::sync::Arc<Self>, token: ::axiom::string::String,
-    ) -> ::axiom::result::Fallible<::core::option::Option<::domain::Uuid>> {
-        self.get_payload(token).await?.map(|payload| payload.user_id).into_ok()
-    }
-
-    async fn get_user_role(
-        self: ::std::sync::Arc<Self>, token: ::axiom::string::String,
-    ) -> ::axiom::result::Fallible<::core::option::Option<::domain::UserRole>> {
-        self.get_payload(token).await?.map(|payload| payload.user_role).into_ok()
-    }
-
-    async fn get_expiry_timestamp(
-        self: ::std::sync::Arc<Self>, token: ::axiom::string::String,
-    ) -> ::axiom::result::Fallible<::core::option::Option<::axiom::time::Timestamp>> {
-        self.get_payload(token).await?.map(|payload| payload.expiry_timestamp).into_ok()
-    }
+    ) -> ::axiom::result::Fallible<::core::option::Option<AuthTokenPayload>>;
 
     async fn verify(self: ::std::sync::Arc<Self>, token: ::axiom::string::String) -> ::axiom::result::Fallible<bool> {
         self.get_payload(token).await?.is_some().into_ok()
@@ -386,112 +368,10 @@ pub trait AuthTokenGenerator {
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::bon::Builder)]
 #[builder(on(_, into))]
-#[cfg_attr(feature = "serde", derive(::serde::Serialize, ::serde::Deserialize))]
-#[cfg_attr(
-    feature = "serde",
-    serde(
-        from = "AuthenticationTokenPayloadSerdeImpl",
-        into = "AuthenticationTokenPayloadSerdeImpl",
-        rename_all = "camelCase"
-    )
-)]
-pub struct AuthenticationTokenPayload {
+pub struct AuthTokenPayload {
     pub user_id: ::domain::Uuid,
     pub user_role: ::domain::UserRole,
     pub expiry_timestamp: ::axiom::time::Timestamp,
-}
-
-#[cfg(feature = "serde")]
-#[derive(::serde::Serialize, ::serde::Deserialize, ::bon::Builder)]
-#[builder(on(_, into))]
-struct AuthenticationTokenPayloadSerdeImpl {
-    user_id: AuthenticationTokenPayloadSerdeImplUuid,
-    user_role: AuthenticationTokenPayloadSerdeImplUntaggedUserRole,
-    expiry_timestamp: ::axiom::time::Timestamp,
-}
-
-#[cfg(feature = "serde")]
-impl ::core::convert::From<AuthenticationTokenPayloadSerdeImpl> for AuthenticationTokenPayload {
-    fn from(value: AuthenticationTokenPayloadSerdeImpl) -> Self {
-        Self::builder()
-            .user_id(value.user_id)
-            .user_role(value.user_role)
-            .expiry_timestamp(value.expiry_timestamp)
-            .build()
-    }
-}
-
-#[cfg(feature = "serde")]
-impl ::core::convert::From<AuthenticationTokenPayload> for AuthenticationTokenPayloadSerdeImpl {
-    fn from(value: AuthenticationTokenPayload) -> Self {
-        Self::builder()
-            .user_id(value.user_id)
-            .user_role(value.user_role)
-            .expiry_timestamp(value.expiry_timestamp)
-            .build()
-    }
-}
-
-#[cfg(feature = "serde")]
-#[derive(::serde::Serialize, ::serde::Deserialize)]
-#[serde(transparent)]
-struct AuthenticationTokenPayloadSerdeImplUuid([u8; 16]);
-
-#[::bon::bon]
-impl AuthenticationTokenPayloadSerdeImplUuid {
-    #[builder]
-    pub fn new(value: [u8; 16]) -> Self {
-        Self(value)
-    }
-}
-
-impl ::core::ops::Deref for AuthenticationTokenPayloadSerdeImplUuid {
-    type Target = [u8; 16];
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl ::core::convert::From<::domain::Uuid> for AuthenticationTokenPayloadSerdeImplUuid {
-    fn from(value: ::domain::Uuid) -> Self {
-        Self::builder().value(*value).build()
-    }
-}
-
-impl ::core::convert::From<AuthenticationTokenPayloadSerdeImplUuid> for ::domain::Uuid {
-    fn from(value: AuthenticationTokenPayloadSerdeImplUuid) -> Self {
-        Self::builder().value(*value).build()
-    }
-}
-
-#[cfg(feature = "serde")]
-#[derive(::serde::Serialize, ::serde::Deserialize)]
-#[serde(untagged, rename_all = "kebab-case")]
-enum AuthenticationTokenPayloadSerdeImplUntaggedUserRole {
-    Volunteer,
-    EventManager,
-    Administrator,
-}
-
-impl ::core::convert::From<::domain::UserRole> for AuthenticationTokenPayloadSerdeImplUntaggedUserRole {
-    fn from(value: ::domain::UserRole) -> Self {
-        match value {
-            ::domain::UserRole::Volunteer => Self::Volunteer,
-            ::domain::UserRole::EventManager => Self::EventManager,
-            ::domain::UserRole::Administrator => Self::Administrator,
-        }
-    }
-}
-
-impl ::core::convert::From<AuthenticationTokenPayloadSerdeImplUntaggedUserRole> for ::domain::UserRole {
-    fn from(value: AuthenticationTokenPayloadSerdeImplUntaggedUserRole) -> Self {
-        match value {
-            AuthenticationTokenPayloadSerdeImplUntaggedUserRole::Volunteer => Self::Volunteer,
-            AuthenticationTokenPayloadSerdeImplUntaggedUserRole::EventManager => Self::EventManager,
-            AuthenticationTokenPayloadSerdeImplUntaggedUserRole::Administrator => Self::Administrator,
-        }
-    }
 }
 
 #[async_trait]

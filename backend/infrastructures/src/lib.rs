@@ -8,7 +8,7 @@
 
 use ::axiom::prelude::*;
 use ::use_cases::gateways::*;
-use ::rayon::prelude::*;
+// use ::rayon::prelude::*;
 
 /// Since implementations of `::domain::Uuid` preserves order, consider using `::std::vec::Vec<_>` for performance gains.
 
@@ -523,7 +523,7 @@ impl EventPostCommentRepository for InMemoryEventPostCommentRepository {
         self: ::std::sync::Arc<Self>, post_id_: ::domain::Uuid, user_id_: ::domain::Uuid,
     ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::EventPostComment>> {
         self.comments_by_post_and_user_ids.read().await.values()
-            .filter(|&&::domain::EventPostComment { post_id, author_id, .. }| post_id == post_id && author_id == user_id_)
+            .filter(|&&::domain::EventPostComment { post_id, author_id, .. }| post_id == post_id_ && author_id == user_id_)
             .cloned()
             .collect::<::std::vec::Vec<_>>()
             .into_ok()
@@ -764,21 +764,106 @@ where
     Key: ::jwt::SigningAlgorithm + ::jwt::VerifyingAlgorithm + ::core::marker::Send + ::core::marker::Sync,
 {
     async fn generate(
-        self: ::std::sync::Arc<Self>, payload: ::use_cases::gateways::AuthenticationTokenPayload,
+        self: ::std::sync::Arc<Self>, payload: ::use_cases::gateways::AuthTokenPayload,
     ) -> ::axiom::result::Fallible<::axiom::string::String> {
         use ::jwt::SignWithKey as _;
 
-        let token = payload.sign_with_key(&self.key)?;
-        ::axiom::result::Fallible::Ok(token.into())
+        payload.into_t::<AuthTokenPayloadSerdeImpl>().sign_with_key(&self.key)?.into_t::<::axiom::string::String>().into_ok()
     }
 
     async fn get_payload(
         self: ::std::sync::Arc<Self>, token: ::axiom::string::String,
-    ) -> ::axiom::result::Fallible<::core::option::Option<::use_cases::gateways::AuthenticationTokenPayload>> {
-        use ::jwt::VerifyWithKey as _;
+    ) -> ::axiom::result::Fallible<::core::option::Option<::use_cases::gateways::AuthTokenPayload>> {
+        ::jwt::VerifyWithKey::<AuthTokenPayloadSerdeImpl>::verify_with_key(&*token, &self.key).ok().map(::core::convert::Into::into).into_ok()
+    }
+}
 
-        let payload = token.verify_with_key(&self.key)?;
-        ::axiom::result::Fallible::Ok(payload)
+#[derive(::serde::Serialize, ::serde::Deserialize, ::bon::Builder)]
+#[serde(rename_all = "camelCase")]
+#[builder(on(_, into))]
+struct AuthTokenPayloadSerdeImpl {
+    user_id: AuthTokenPayloadSerdeImplUuid,
+    user_role: AuthTokenPayloadSerdeImplUserRole,
+    expiry_timestamp: ::axiom::time::Timestamp,
+}
+
+impl ::core::convert::From<AuthTokenPayloadSerdeImpl> for AuthTokenPayload {
+    fn from(value: AuthTokenPayloadSerdeImpl) -> Self {
+        Self::builder()
+            .user_id(value.user_id)
+            .user_role(value.user_role)
+            .expiry_timestamp(value.expiry_timestamp)
+            .build()
+    }
+}
+
+impl ::core::convert::From<AuthTokenPayload> for AuthTokenPayloadSerdeImpl {
+    fn from(value: AuthTokenPayload) -> Self {
+        Self::builder()
+            .user_id(value.user_id)
+            .user_role(value.user_role)
+            .expiry_timestamp(value.expiry_timestamp)
+            .build()
+    }
+}
+
+#[derive(::serde::Serialize, ::serde::Deserialize)]
+#[serde(transparent)]
+struct AuthTokenPayloadSerdeImplUuid([u8; 16]);
+
+#[::bon::bon]
+impl AuthTokenPayloadSerdeImplUuid {
+    #[builder]
+    pub fn new(value: [u8; 16]) -> Self {
+        Self(value)
+    }
+}
+
+impl ::core::ops::Deref for AuthTokenPayloadSerdeImplUuid {
+    type Target = [u8; 16];
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl ::core::convert::From<::domain::Uuid> for AuthTokenPayloadSerdeImplUuid {
+    fn from(value: ::domain::Uuid) -> Self {
+        Self::builder().value(*value).build()
+    }
+}
+
+impl ::core::convert::From<AuthTokenPayloadSerdeImplUuid> for ::domain::Uuid {
+    fn from(value: AuthTokenPayloadSerdeImplUuid) -> Self {
+        Self::builder().value(*value).build()
+    }
+}
+
+#[derive(::serde::Serialize, ::serde::Deserialize)]
+#[serde(untagged, rename_all = "kebab-case")]
+enum AuthTokenPayloadSerdeImplUserRole {
+    Volunteer,
+    EventManager,
+    Administrator,
+}
+
+impl ::core::convert::From<::domain::UserRole> for AuthTokenPayloadSerdeImplUserRole {
+    fn from(value: ::domain::UserRole) -> Self {
+        match value {
+            ::domain::UserRole::Volunteer => Self::Volunteer,
+            ::domain::UserRole::EventManager => Self::EventManager,
+            ::domain::UserRole::Administrator => Self::Administrator,
+        }
+    }
+}
+
+impl ::core::convert::From<AuthTokenPayloadSerdeImplUserRole> for ::domain::UserRole {
+    fn from(value: AuthTokenPayloadSerdeImplUserRole) -> Self {
+        match value {
+            AuthTokenPayloadSerdeImplUserRole::Volunteer => Self::Volunteer,
+            AuthTokenPayloadSerdeImplUserRole::EventManager => Self::EventManager,
+            AuthTokenPayloadSerdeImplUserRole::Administrator => Self::Administrator,
+        }
     }
 }
 
@@ -800,9 +885,7 @@ impl<'pepper> PasswordHasher for Argon2PasswordHasher<'pepper> {
         // later
         let salt =
             ::argon2::password_hash::SaltString::try_from_rng(&mut ::argon2::password_hash::rand_core::OsRng).unwrap();
-        let digest = self.context.hash_password(password.as_bytes(), &salt)?;
-
-        ::axiom::result::Fallible::Ok(digest.to_string().into())
+        self.context.hash_password(password.as_bytes(), &salt)?.to_string().into_t::<::axiom::string::String>().into_ok()
     }
 
     async fn verify(
@@ -811,8 +894,7 @@ impl<'pepper> PasswordHasher for Argon2PasswordHasher<'pepper> {
         use ::argon2::PasswordVerifier as _;
 
         let digest = ::argon2::password_hash::PasswordHash::new(&digest)?;
-
-        ::axiom::result::Fallible::Ok(self.context.verify_password(password.as_bytes(), &digest).is_ok())
+        self.context.verify_password(password.as_bytes(), &digest).is_ok().into_ok()
     }
 }
 

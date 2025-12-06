@@ -26,7 +26,7 @@ impl ViewEventRecommendationBoundary for ViewEventRecommendationInteractor {
             .await?
         {
             ::core::option::Option::None => return super::err!(AuthenticationTokenInvalid),
-            ::core::option::Option::Some(AuthenticationTokenPayload { user_id, expiry_timestamp, .. }) => {
+            ::core::option::Option::Some(AuthTokenPayload { user_id, expiry_timestamp, .. }) => {
                 if expiry_timestamp < ::axiom::time::Timestamp::now() {
                     return super::err!(AuthenticationTokenExpired);
                 }

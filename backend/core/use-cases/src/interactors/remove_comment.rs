@@ -25,7 +25,7 @@ impl RemoveEventPostCommentBoundary for RemoveEventPostCommentInteractor {
             .await?
         {
             ::core::option::Option::None => return super::err!(AuthenticationTokenInvalid),
-            ::core::option::Option::Some(AuthenticationTokenPayload {
+            ::core::option::Option::Some(AuthTokenPayload {
                 user_id,
                 user_role: ::domain::UserRole::Volunteer | ::domain::UserRole::EventManager,
                 expiry_timestamp,
@@ -45,7 +45,7 @@ impl RemoveEventPostCommentBoundary for RemoveEventPostCommentInteractor {
 
                 user_id
             },
-            ::core::option::Option::Some(AuthenticationTokenPayload { user_role, .. }) =>
+            ::core::option::Option::Some(AuthTokenPayload { user_role, .. }) =>
                 return super::err!(UserUnauthorized { user_role: user_role.into(), allowed_user_roles: ::std::vec![UserRole::Volunteer, UserRole::EventManager] }),
         };
 

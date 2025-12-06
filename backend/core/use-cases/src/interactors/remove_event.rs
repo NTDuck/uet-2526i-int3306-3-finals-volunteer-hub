@@ -23,7 +23,7 @@ impl RemoveEventBoundary for RemoveEventInteractor {
             .await?
         {
             ::core::option::Option::None => return super::err!(AuthenticationTokenInvalid),
-            ::core::option::Option::Some(AuthenticationTokenPayload {
+            ::core::option::Option::Some(AuthTokenPayload {
                 user_id,
                 user_role: ::domain::UserRole::EventManager,
                 expiry_timestamp,
@@ -41,7 +41,7 @@ impl RemoveEventBoundary for RemoveEventInteractor {
                     ::core::option::Option::None => return super::err!(UserNotFound),
                 }
             },
-            ::core::option::Option::Some(AuthenticationTokenPayload { user_role, .. }) =>
+            ::core::option::Option::Some(AuthTokenPayload { user_role, .. }) =>
                 return super::err!(UserUnauthorized { user_role: user_role.into(), allowed_user_roles: ::std::vec![UserRole::EventManager] }),
         };
 
