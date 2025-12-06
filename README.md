@@ -39,6 +39,7 @@ achieves the same thing as if we visit each conflict and select
 `Keep Current Changes`.
 
 ```cmd
+# https://trunk.io/blog/git-commit-messages-are-useless
 $ git config --global alias.nccommit "commit -a --allow-empty-message -m ''"
 
 $ git pull origin master
