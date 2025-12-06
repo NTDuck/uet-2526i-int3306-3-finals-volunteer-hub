@@ -33,7 +33,11 @@ $ deno task preview-sveltekit-minimal
 ```
 
 ## How to resolve conflicts
-Assume we're merging PR branch `indev` into `master`. The following snippet achieves the same thing as if we visit each conflict and select `Keep Current Changes`.
+
+Assume we're merging PR branch `indev` into `master`. The following snippet
+achieves the same thing as if we visit each conflict and select
+`Keep Current Changes`.
+
 ```cmd
 $ git pull origin master
 $ git checkout indev
