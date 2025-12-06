@@ -19,17 +19,29 @@ $ cd ./frontend/sveltekit-minimal && deno install
 $ deno task build-wasm
 ```
 
-Development
+### Development
 
 ```cmd
 $ deno task dev-sveltekit-minimal
 ```
 
-Production
+### Production
 
 ```cmd
 $ deno task build-sveltekit-minimal
 $ deno task preview-sveltekit-minimal
+```
+
+## How to resolve conflicts
+Assume we're merging PR branch `indev` into `master`. The following snippet achieves the same thing as if we visit each conflict and select `Keep Current Changes`.
+```cmd
+$ git pull origin master
+$ git checkout indev
+$ git merge master --squash
+$ git checkout --ours .
+$ git add .
+$ git nccommit
+$ git push -u origin indev
 ```
 
 ## Use cases
