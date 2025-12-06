@@ -80,7 +80,6 @@ dependencies = [
  "bytes",
  "chrono",
  "futures",
- "once_cell",
  "regex",
 ]
 
@@ -92,7 +91,6 @@ dependencies = [
  "heck",
  "proc-macro2",
  "quote",
- "strum",
  "syn",
 ]
 
@@ -418,12 +416,6 @@ dependencies = [
  "thiserror 2.0.17",
  "vec1",
 ]
-
-[[package]]
-name = "dotenvy"
-version = "0.15.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1aaf95b3e5c8f23aa320147307562d361db0ae0d51242340f558153b4eb2439b"
 
 [[package]]
 name = "either"
@@ -971,12 +963,6 @@ dependencies = [
  "rand_core",
  "subtle",
 ]
-
-[[package]]
-name = "paste"
-version = "1.0.15"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "57c0d7b74b563b49d38dae00a0c37d4d6de9b432382b2892f0574ddcae73fd0a"
 
 [[package]]
 name = "percent-encoding"
@@ -1601,12 +1587,10 @@ dependencies = [
  "colored",
  "console_error_panic_hook",
  "domain",
- "dotenvy",
  "futures",
  "gloo",
  "hmac",
  "infrastructures",
- "paste",
  "serde",
  "serde-wasm-bindgen",
  "sha2",

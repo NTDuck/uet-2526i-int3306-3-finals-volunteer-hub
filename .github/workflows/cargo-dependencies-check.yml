@@ -26,10 +26,26 @@ jobs:
           toolchain: ${{ matrix.channel }}
           override: true
 
-      - uses: aig787/cargo-udeps-action@v1
+      # The following does not work due to `aig787/cargo-udeps-action@v1` not respecting `working-directory`
+
+      # - uses: aig787/cargo-udeps-action@v1
+      #   with:
+      #     version: "latest"
+      #     args: "--all-targets"
+
+      - uses: actions/cache@v4
         with:
-          version: "latest"
-          args: "--all-targets"
+          path: ~/.cargo/bin
+          key: cargo-binaries-${{ runner.os }}
+          restore-keys: cargo-binaries-
+
+      - run: |
+          if ! command -v cargo-udeps >/dev/null; then
+            cargo install cargo-udeps --locked
+          fi
+
+      - working-directory: ./backend
+        run: cargo udeps --all-targets
 
   cargo-deny:
     needs:
