@@ -7,14 +7,21 @@ pub struct Event {
 
     pub name: EventName,
     pub description: EventDescription,
-    pub categories: ::vec1::Vec1<EventCategory>,
+    pub categories: ::std::vec::Vec<EventCategory>,
     pub location: EventLocation,
+
+    pub image_url: ::axiom::string::String,
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
 pub enum EventStatus {
     Created {
         created_by_manager_id: Uuid,
+        created_at: ::axiom::time::Timestamp,
+    },
+    Updated {
+        updated_by_manager_id: Uuid,
+        updated_at: ::axiom::time::Timestamp,
     },
     Approved {
         approved_by_administrator_id: Uuid,
@@ -24,6 +31,17 @@ pub enum EventStatus {
         rejected_by_administrator_id: Uuid,
         rejected_at: ::axiom::time::Timestamp,
     },
+}
+
+impl EventStatus {
+    pub const fn at(&self) -> ::axiom::time::Timestamp {
+        match self {
+            EventStatus::Created { created_at, .. } => *created_at,
+            EventStatus::Updated { updated_at, .. } => *updated_at,
+            EventStatus::Approved { approved_at, .. } => *approved_at,
+            EventStatus::Rejected { rejected_at, .. } => *rejected_at,
+        }
+    }
 }
 
 #[repr(transparent)]
@@ -51,12 +69,69 @@ pub struct EventLocation(::axiom::string::String);
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
 #[builder(on(_, into))]
-pub struct EventPost {
+pub struct EventRegistration {
     pub id: Uuid,
+    pub event_id: Uuid,
     pub volunteer_id: Uuid,
 
+    pub statuses: ::vec1::Vec1<EventRegistrationStatus>,
+}
+
+/// Possible lifecycles
+/// 1. `Pending` (volunteer subscribes to event) -> `Accepted` (event manager
+///    accepts registration) -> `Completed` (event manager updates registration
+///    status after event completion)
+/// 2. `Pending` (volunteer subscribes to event) -> `Declined` (event manager
+///    declines registration)
+/// 3. `Pending` (volunteer subscribes to event) -> `Withdrawn` (volunteer
+///    unsubscribes from event)
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
+pub enum EventRegistrationStatus {
+    Pending {
+        pending_at: ::axiom::time::Timestamp,
+    },
+    Withdrawn {
+        withdrawn_at: ::axiom::time::Timestamp,
+    },
+    Accepted {
+        accepted_by_manager_id: Uuid,
+        accepted_at: ::axiom::time::Timestamp,
+    },
+    Declined {
+        declined_by_manager_id: Uuid,
+        declined_at: ::axiom::time::Timestamp,
+    },
+    Completed {
+        completed_by_manager_id: Uuid,
+        completed_at: ::axiom::time::Timestamp,
+    },
+}
+
+impl EventRegistrationStatus {
+    pub const fn at(&self) -> ::axiom::time::Timestamp {
+        match self {
+            EventRegistrationStatus::Pending { pending_at } => *pending_at,
+            EventRegistrationStatus::Withdrawn { withdrawn_at } => *withdrawn_at,
+            EventRegistrationStatus::Accepted { accepted_at, .. } => *accepted_at,
+            EventRegistrationStatus::Declined { declined_at, .. } => *declined_at,
+            EventRegistrationStatus::Completed { completed_at, .. } => *completed_at,
+        }
+    }
+}
+
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
+#[builder(on(_, into))]
+pub struct EventPost {
+    pub id: Uuid,
+    pub event_id: Uuid,
+    pub author_id: Uuid,
+
+    pub last_updated_at: ::axiom::time::Timestamp,
     pub title: EventPostTitle,
     pub content: EventPostContent,
+
+    #[builder(required)]
+    pub image_url: ::core::option::Option<::axiom::string::String>,
 }
 
 #[repr(transparent)]
@@ -74,7 +149,7 @@ pub struct EventPostContent(::axiom::string::String);
 pub struct EventPostReaction {
     pub id: Uuid,
     pub post_id: Uuid,
-    pub volunteer_id: Uuid,
+    pub author_id: Uuid,
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
@@ -82,9 +157,15 @@ pub struct EventPostReaction {
 pub struct EventPostComment {
     pub id: Uuid,
     pub post_id: Uuid,
-    pub volunteer_id: Uuid,
+    pub author_id: Uuid,
 
-    pub content: EventPostCommentContent,
+    pub last_updated_at: ::axiom::time::Timestamp,
+
+    #[builder(required)]
+    pub content: ::core::option::Option<EventPostCommentContent>,
+
+    #[builder(required)]
+    pub image_url: ::core::option::Option<::axiom::string::String>,
 }
 
 #[repr(transparent)]
@@ -105,6 +186,9 @@ pub struct User {
     pub password: PasswordDigest,
 
     pub full_name: FullName,
+
+    #[builder(required)]
+    pub avatar_url: ::core::option::Option<::axiom::string::String>,
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
@@ -116,7 +200,12 @@ pub enum UserRole {
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
 pub enum UserStatus {
-    Created,
+    Created {
+        created_at: ::axiom::time::Timestamp,
+    },
+    Updated {
+        updated_at: ::axiom::time::Timestamp,
+    },
     Suspended {
         suspended_by_administrator_id: Uuid,
         suspended_at: ::axiom::time::Timestamp,
@@ -174,46 +263,6 @@ pub type PasswordDigest = ::axiom::string::String;
 )]
 pub struct FullName(::axiom::string::String);
 
-#[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
-#[builder(on(_, into))]
-pub struct EventRegistration {
-    pub id: Uuid,
-    pub event_id: Uuid,
-    pub volunteer_id: Uuid,
-
-    pub statuses: ::vec1::Vec1<EventRegistrationStatus>,
-}
-
-/// Possible lifecycles
-/// 1. `Pending` (volunteer subscribes to event) -> `Accepted` (event manager
-///    accepts registration) -> `Completed` (event manager updates registration
-///    status after event completion)
-/// 2. `Pending` (volunteer subscribes to event) -> `Declined` (event manager
-///    declines registration)
-/// 3. `Pending` (volunteer subscribes to event) -> `Withdrawn` (volunteer
-///    unsubscribes from event)
-#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
-pub enum EventRegistrationStatus {
-    Pending {
-        pending_at: ::axiom::time::Timestamp,
-    },
-    Withdrawn {
-        withdrawn_at: ::axiom::time::Timestamp,
-    },
-    Accepted {
-        accepted_by_manager_id: Uuid,
-        accepted_at: ::axiom::time::Timestamp,
-    },
-    Declined {
-        declined_by_manager_id: Uuid,
-        declined_at: ::axiom::time::Timestamp,
-    },
-    Completed {
-        completed_by_manager_id: Uuid,
-        completed_at: ::axiom::time::Timestamp,
-    },
-}
-
 #[derive(
     ::core::fmt::Debug,
     ::core::clone::Clone,
@@ -239,5 +288,17 @@ impl ::core::ops::Deref for Uuid {
 
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+impl ::core::convert::From<[u8; 16]> for Uuid {
+    fn from(value: [u8; 16]) -> Self {
+        Self(value)
+    }
+}
+
+impl ::core::convert::From<Uuid> for [u8; 16] {
+    fn from(value: Uuid) -> Self {
+        value.0
     }
 }

@@ -10,8 +10,10 @@ publish.workspace = true
 axiom-derive = { path = "../axiom-derive" }
 
 anyhow = { workspace = true }
+async-trait = { workspace = true }
+bytes = { workspace = true }
 chrono = { workspace = true }
-once_cell = { workspace = true }
+futures = { workspace = true }
 regex = { workspace = true }
 
 [lints]

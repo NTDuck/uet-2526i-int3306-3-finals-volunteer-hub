@@ -13,18 +13,15 @@ wasm-bindings = ["dep:tsify", "dep:wasm-bindgen"]
 axiom = { path = "../../axiom" }
 domain = { path = "../domain" }
 
-erased-serde = "0.4.9"
-
-serde_json = "*"
-vec1 = { workspace = true }
 async-trait = { workspace = true }
 bon = { workspace = true }
 futures = { workspace = true }
 serde = { workspace = true, optional = true }
 strum = { workspace = true }
-tsify = { version = "0.5.5", features = ["js"], default-features = false, optional = true }
-wasm-bindgen = { version = "=0.2.102", optional = true }  # jsr:@deno/wasmbuild@0.19.3
 thiserror = { workspace = true }
+tsify = { version = "0.5.5", features = ["js"], default-features = false, optional = true }
+vec1 = { workspace = true }
+wasm-bindgen = { version = "=0.2.102", optional = true }  # jsr:@deno/wasmbuild@0.19.3
 
 [lints]
 workspace = true

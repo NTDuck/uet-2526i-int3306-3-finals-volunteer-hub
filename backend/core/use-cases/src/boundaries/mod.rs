@@ -22,6 +22,7 @@ mod view_event_channel;
 mod view_event_history;
 mod view_event_recommendation;
 mod view_event_volunteers;
+mod view_events;
 mod view_post;
 mod view_published_events;
 mod view_users;
@@ -50,6 +51,34 @@ pub use self::view_event_channel::*;
 pub use self::view_event_history::*;
 pub use self::view_event_recommendation::*;
 pub use self::view_event_volunteers::*;
+pub use self::view_events::*;
 pub use self::view_post::*;
 pub use self::view_published_events::*;
 pub use self::view_users::*;
+
+pub(in crate::boundaries) mod fmt {
+    pub fn join_with_comma<T: ::core::fmt::Display>(values: &[T]) -> ::axiom::string::String {
+        values
+            .iter()
+            .map(|value| ::std::format!("`{value}`"))
+            .collect::<::std::vec::Vec<_>>()
+            .join(", ")
+            .into()
+    }
+
+    pub fn join_with_comma_ad_hoc<T: ::core::fmt::Display>(values: &[T]) -> ::axiom::string::String {
+        match values {
+            [] => ::core::default::Default::default(),
+            [first] => ::std::format!("`{first}`").into(),
+            [first, last] => ::std::format!("`{first}` or `{last}`").into(),
+            [firsts @ .., last] => {
+                let firsts = firsts
+                    .iter()
+                    .map(|value| ::std::format!("`{value}`"))
+                    .collect::<::std::vec::Vec<_>>()
+                    .join(", ");
+                ::std::format!("{firsts}, or `{last}`").into()
+            },
+        }
+    }
+}

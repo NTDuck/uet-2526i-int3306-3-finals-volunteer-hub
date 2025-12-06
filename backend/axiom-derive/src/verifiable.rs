@@ -49,23 +49,23 @@ impl ::quote::ToTokens for DeriveInput {
 
         tokens.extend(::quote::quote! {
             impl #impl_generics #ident #ty_generics #where_clause {
-                #vis fn new(value: ::axiom::aliases::string::String) -> ::core::result::Result<Self, #error_ident> {
+                #vis fn new(value: ::axiom::string::String) -> ::core::result::Result<Self, #error_ident> {
                     Self::builder().value(value).build()
                 }
 
-                #vis const fn hint() -> ::axiom::aliases::string::String {
-                    ::axiom::aliases::string::String::Borrowed(#hint)
+                #vis const fn hint() -> ::axiom::string::String {
+                    ::axiom::string::String::Borrowed(#hint)
                 }
             }
 
             #[::bon::bon]
             impl #impl_generics #ident #ty_generics #where_clause {
-                #[builder(on(::axiom::aliases::string::String, into))]
-                #vis fn new(value: ::axiom::aliases::string::String) -> ::core::result::Result<Self, #error_ident> {
+                #[builder(on(::axiom::string::String, into))]
+                #vis fn new(value: ::axiom::string::String) -> ::core::result::Result<Self, #error_ident> {
                     let value = normalize(value);
                     return validate(value).map(Self);
 
-                    fn normalize(value: ::axiom::aliases::string::String) -> ::axiom::aliases::string::String {
+                    fn normalize(value: ::axiom::string::String) -> ::axiom::string::String {
                         let trimmed = value.trim();
 
                         if trimmed.len() == value.len() && !trimmed.chars().any(|char| char.is_control())
@@ -79,8 +79,8 @@ impl ::quote::ToTokens for DeriveInput {
                         }
                     }
 
-                    fn validate(value: ::axiom::aliases::string::String) -> ::core::result::Result<::axiom::aliases::string::String, #error_ident> {
-                        let regex = ::axiom::macros::regex!(#regex);
+                    fn validate(value: ::axiom::string::String) -> ::core::result::Result<::axiom::string::String, #error_ident> {
+                        let regex = ::axiom::string::regex!(#regex);
 
                         if !regex.is_match(&value) {
                             ::core::result::Result::Err(#error_ident::InvalidFormat { value })
@@ -92,23 +92,23 @@ impl ::quote::ToTokens for DeriveInput {
             }
 
             impl #impl_generics ::core::ops::Deref for #ident #ty_generics #where_clause {
-                type Target = ::axiom::aliases::string::String;
+                type Target = ::axiom::string::String;
 
                 fn deref(&self) -> &Self::Target {
                     &self.0
                 }
             }
 
-            impl #impl_generics ::core::convert::Into<::axiom::aliases::string::String> for #ident #ty_generics #where_clause {
-                fn into(self) -> ::axiom::aliases::string::String {
+            impl #impl_generics ::core::convert::Into<::axiom::string::String> for #ident #ty_generics #where_clause {
+                fn into(self) -> ::axiom::string::String {
                     self.0
                 }
             }
 
-            impl #impl_generics ::core::convert::TryFrom<::axiom::aliases::string::String> for #ident #ty_generics #where_clause {
+            impl #impl_generics ::core::convert::TryFrom<::axiom::string::String> for #ident #ty_generics #where_clause {
                 type Error = #error_ident;
 
-                fn try_from(value: ::axiom::aliases::string::String) -> ::core::result::Result<Self, Self::Error> {
+                fn try_from(value: ::axiom::string::String) -> ::core::result::Result<Self, Self::Error> {
                     Self::builder().value(value).build()
                 }
             }
@@ -116,17 +116,17 @@ impl ::quote::ToTokens for DeriveInput {
             #[derive(::core::fmt::Debug, ::core::clone::Clone, ::thiserror::Error)]
             #vis enum #error_ident {
                 #[error(#error_msg)]
-                InvalidFormat { value: ::axiom::aliases::string::String },
+                InvalidFormat { value: ::axiom::string::String },
             }
 
             impl #error_ident {
-                #vis const fn hint() -> ::axiom::aliases::string::String {
+                #vis const fn hint() -> ::axiom::string::String {
                     #ident::hint()
                 }
             }
 
-            impl ::core::convert::Into<::axiom::aliases::string::String> for #error_ident {
-                fn into(self) -> ::axiom::aliases::string::String {
+            impl ::core::convert::Into<::axiom::string::String> for #error_ident {
+                fn into(self) -> ::axiom::string::String {
                     match self {
                         Self::InvalidFormat { value } => value,
                     }

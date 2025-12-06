@@ -1,4 +1,4 @@
-use ::async_trait::async_trait;
+use ::axiom::prelude::*;
 
 #[async_trait]
 pub trait RemoveEventPostReactionBoundary {
@@ -15,7 +15,8 @@ pub trait RemoveEventPostReactionBoundary {
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi))]
 pub struct RemoveEventPostReactionRequest {
     pub token: ::axiom::string::String,
-    pub post_id: ::axiom::string::String,
+
+    pub reaction_or_post_id: ::axiom::string::String,
 }
 
 #[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
@@ -31,12 +32,19 @@ pub type RemoveEventPostReactionOkResponse = ();
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
 pub enum RemoveEventPostReactionErrResponse {
-    #[error("Invalid or expired authentication token")]
+    #[error("Invalid authentication token")]
     AuthenticationTokenInvalid,
 
-    #[error("User with role `{user_role}` not authorized: must be `{first_expected_user_role}` or `{second_expected_user_role}`", first_expected_user_role = RemoveEventPostReactionUserRole::Volunteer, second_expected_user_role = RemoveEventPostReactionUserRole::EventManager)]
+    #[error("Authentication token expired")]
+    AuthenticationTokenExpired,
+
+    #[error("User not found")]
+    UserNotFound,
+
+    #[error("User with role `{user_role}` not authorized: must be {}", super::fmt::join_with_comma_ad_hoc(.allowed_user_roles))]
     UserUnauthorized {
         user_role: RemoveEventPostReactionUserRole,
+        allowed_user_roles: ::std::vec::Vec<RemoveEventPostReactionUserRole>,
     },
 
     #[error("User temporarily suspended")]
@@ -47,6 +55,9 @@ pub enum RemoveEventPostReactionErrResponse {
 
     #[error("Reaction not found")]
     ReactionNotFound,
+
+    #[error("Reaction not owned by user")]
+    OwnershipMismatch,
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::strum::Display)]

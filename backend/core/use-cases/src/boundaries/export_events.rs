@@ -1,4 +1,4 @@
-use ::async_trait::async_trait;
+use ::axiom::prelude::*;
 
 #[async_trait]
 pub trait ExportEventsBoundary {
@@ -15,6 +15,7 @@ pub trait ExportEventsBoundary {
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi))]
 pub struct ExportEventsRequest {
     pub token: ::axiom::string::String,
+
     pub format: ExportEventsExportFormat,
 }
 
@@ -24,8 +25,8 @@ pub struct ExportEventsRequest {
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi, into_wasm_abi))]
 pub enum ExportEventsExportFormat {
-    CSV,
-    JSON,
+    Csv,
+    Json,
 }
 
 #[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
@@ -51,6 +52,7 @@ pub struct ExportEventsOkResponse {
 #[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
 pub enum ExportEventsEventStatus {
     Created,
+    Updated,
     Approved,
     Rejected,
 }
@@ -59,6 +61,7 @@ impl ::core::convert::From<::domain::EventStatus> for ExportEventsEventStatus {
     fn from(value: ::domain::EventStatus) -> Self {
         match value {
             ::domain::EventStatus::Created { .. } => Self::Created,
+            ::domain::EventStatus::Updated { .. } => Self::Updated,
             ::domain::EventStatus::Approved { .. } => Self::Approved,
             ::domain::EventStatus::Rejected { .. } => Self::Rejected,
         }
@@ -71,12 +74,19 @@ impl ::core::convert::From<::domain::EventStatus> for ExportEventsEventStatus {
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
 pub enum ExportEventsErrResponse {
-    #[error("Invalid or expired authentication token")]
+    #[error("Invalid authentication token")]
     AuthenticationTokenInvalid,
 
-    #[error("User with role `{user_role}` not authorized: must be `{expected_user_role}`", expected_user_role = ExportEventsUserRole::Administrator)]
+    #[error("Authentication token expired")]
+    AuthenticationTokenExpired,
+
+    #[error("User not found")]
+    UserNotFound,
+
+    #[error("User with role `{user_role}` not authorized: must be {}", super::fmt::join_with_comma_ad_hoc(.allowed_user_roles))]
     UserUnauthorized {
         user_role: ExportEventsUserRole,
+        allowed_user_roles: ::std::vec::Vec<ExportEventsUserRole>,
     },
 }
 

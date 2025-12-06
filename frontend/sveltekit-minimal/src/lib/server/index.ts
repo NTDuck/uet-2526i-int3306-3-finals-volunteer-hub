@@ -1,16 +1,12 @@
 import { Application, type Profile } from "@volunteer-hub";
 
 const profile = "dev" satisfies Profile;
-let app: Application | null = null;
 
-export async function getApp(): Promise<Application> {
-  if (app === null) {
-    try {
-      app = await Application.withProfile(profile);
-    } catch (error) {
-      throw new Error(`\`Application.withProfile()\` failed: ${error}`);
-    }
+// https://developer.mozilla.org/en-US/docs/Glossary/IIFE
+export const app = await (async function () {
+  try {
+    return await Application.withProfile(profile);
+  } catch (error) {
+    throw new Error(`\`Application.withProfile()\` failed: ${error}`);
   }
-
-  return app;
-}
+})() satisfies Application;

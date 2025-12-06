@@ -1,4 +1,4 @@
-use ::async_trait::async_trait;
+use ::axiom::prelude::*;
 
 #[async_trait]
 pub trait ModerateEventBoundary {
@@ -17,7 +17,7 @@ pub struct ModerateEventRequest {
     pub token: ::axiom::string::String,
 
     pub event_id: ::axiom::string::String,
-    pub event_status: ModerateEventEventStatus,
+    pub event_status: ModerateEventNewEventStatus,
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
@@ -25,7 +25,7 @@ pub struct ModerateEventRequest {
 #[cfg_attr(feature = "serde", serde(rename_all = "kebab-case"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi))]
-pub enum ModerateEventEventStatus {
+pub enum ModerateEventNewEventStatus {
     Approved,
     Rejected,
 }
@@ -37,28 +37,35 @@ pub type ModerateEventResponse =
 #[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
 pub type ModerateEventOkResponse = ();
 
-#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
+#[derive(::core::fmt::Debug, ::core::clone::Clone)]
 #[cfg_attr(feature = "serde", derive(::axiom::Erratum))]
 #[cfg_attr(feature = "serde", erratum(rename_all = "kebab-case", rename_all_fields = "camelCase"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
 pub enum ModerateEventErrResponse {
-    #[error("Invalid or expired authentication token")]
+    #[error("Invalid authentication token")]
     AuthenticationTokenInvalid,
 
-    #[error("User with role `{user_role}` not authorized: must be `{expected_user_role}`", expected_user_role = ModerateEventUserRole::Administrator)]
+    #[error("Authentication token expired")]
+    AuthenticationTokenExpired,
+
+    #[error("User not found")]
+    UserNotFound,
+
+    #[error("User with role `{user_role}` not authorized: must be {}", super::fmt::join_with_comma_ad_hoc(.allowed_user_roles))]
     UserUnauthorized {
         user_role: ModerateEventUserRole,
+        allowed_user_roles: ::std::vec::Vec<ModerateEventUserRole>,
     },
 
     #[error("Event not found")]
     EventNotFound,
 
-    #[error("Event already approved")]
-    EventAlreadyApproved,
-
-    #[error("Event already completed")]
-    EventAlreadyCompleted,
+    #[error("Event registration with status `{event_status}` not eligible: must be {}", super::fmt::join_with_comma_ad_hoc(.allowed_event_statuses))]
+    EventStatusNotEligible {
+        event_status: ModerateEventEventStatus,
+        allowed_event_statuses: ::std::vec::Vec<ModerateEventEventStatus>,
+    },
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::strum::Display)]
@@ -88,6 +95,29 @@ impl ::core::convert::From<ModerateEventUserRole> for ::domain::UserRole {
             ModerateEventUserRole::Volunteer => Self::Volunteer,
             ModerateEventUserRole::EventManager => Self::EventManager,
             ModerateEventUserRole::Administrator => Self::Administrator,
+        }
+    }
+}
+
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::strum::Display)]
+#[cfg_attr(feature = "serde", derive(::serde::Serialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "kebab-case"))]
+#[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
+#[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
+pub enum ModerateEventEventStatus {
+    Created,
+    Updated,
+    Approved,
+    Rejected,
+}
+
+impl ::core::convert::From<::domain::EventStatus> for ModerateEventEventStatus {
+    fn from(value: ::domain::EventStatus) -> Self {
+        match value {
+            ::domain::EventStatus::Created { .. } => Self::Created,
+            ::domain::EventStatus::Updated { .. } => Self::Updated,
+            ::domain::EventStatus::Approved { .. } => Self::Approved,
+            ::domain::EventStatus::Rejected { .. } => Self::Rejected,
         }
     }
 }

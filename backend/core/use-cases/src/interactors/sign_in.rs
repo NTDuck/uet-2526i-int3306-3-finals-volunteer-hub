@@ -1,87 +1,83 @@
-use ::async_trait::async_trait;
+use ::axiom::prelude::*;
 
 use crate::boundaries::*;
 use crate::gateways::*;
 
 #[derive(::bon::Builder)]
 pub struct SignInInteractor {
+    #[builder(default = ::axiom::time::Interval::hours(1))]
+    auth_token_lifetime: ::axiom::time::Interval,
+
     user_repository: ::std::sync::Arc<dyn UserRepository + ::core::marker::Send + ::core::marker::Sync>,
 
-    auth_token_generator:
-        ::std::sync::Arc<dyn AuthenticationTokenGenerator + ::core::marker::Send + ::core::marker::Sync>,
+    auth_token_generator: ::std::sync::Arc<dyn AuthTokenGenerator + ::core::marker::Send + ::core::marker::Sync>,
     password_hasher: ::std::sync::Arc<dyn PasswordHasher + ::core::marker::Send + ::core::marker::Sync>,
 }
 
 #[async_trait]
 impl SignInBoundary for SignInInteractor {
-    async fn apply(self: ::std::sync::Arc<Self>, request: SignInRequest) -> ::axiom::result::Fallible<SignInResponse> {
-        use ::axiom::option::OptionExt as _;
-        use ::axiom::time::TimestampExt as _;
-
+    async fn apply(self: ::std::sync::Arc<Self>, request: Request) -> ::axiom::result::Fallible<Response> {
         let mut errors = ::std::vec::Vec::new();
 
-        // Rust's type inference fails here
-        let user: ::core::option::Option<::domain::User> = if let ::core::result::Result::Ok(username) =
+        let user = if let ::core::result::Result::Ok(username) =
             ::domain::Username::try_from(request.username_or_email.clone())
         {
-            ::std::sync::Arc::clone(&self.user_repository)
-                .get_by_username(username)
-                .await?
-                .some()
-                .map_err(|_| {
-                    errors.push(SignInErrResponse::UsernameNotFound {
-                        username: request.username_or_email.clone(),
-                    })
-                })
-                .ok()
+            let user = ::std::sync::Arc::clone(&self.user_repository).get_by_username(username).await?;
+
+            if ::core::matches!(user, ::core::option::Option::None) {
+                errors.push(ErrResponse::UsernameNotFound {
+                    username: request.username_or_email.clone(),
+                });
+            }
+
+            user
         } else if let ::core::result::Result::Ok(email) = ::domain::Email::try_from(request.username_or_email.clone()) {
-            ::std::sync::Arc::clone(&self.user_repository)
-                .get_by_email(email)
-                .await?
-                .some()
-                .map_err(|_| errors.push(SignInErrResponse::EmailNotFound { email: request.username_or_email.clone() }))
-                .ok()
+            let user = ::std::sync::Arc::clone(&self.user_repository).get_by_email(email).await?;
+
+            if ::core::matches!(user, ::core::option::Option::None) {
+                errors.push(ErrResponse::EmailNotFound { email: request.username_or_email });
+            }
+
+            user
         } else {
-            errors.push(SignInErrResponse::UsernameOrEmailInvalid {
+            errors.push(ErrResponse::UsernameOrEmailInvalid {
                 username_or_email: request.username_or_email.clone(),
             });
+
             ::core::option::Option::None
         };
 
         let password = ::domain::Password::try_from(request.password.clone())
-            .map_err(|_| errors.push(SignInErrResponse::PasswordInvalid))
-            .ok();
+            .map_err(|_| errors.push(ErrResponse::PasswordInvalid));
 
-        let (::core::option::Option::Some(user), ::core::option::Option::Some(password)) = (user, password) else {
-            return ::axiom::result::Fallible::Ok(SignInResponse::Err(errors));
+        let (::core::option::Option::Some(user), ::core::result::Result::Ok(password)) = (user, password) else {
+            return super::errs!(errors);
         };
 
-        let password_matches = ::std::sync::Arc::clone(&self.password_hasher)
+        if !::std::sync::Arc::clone(&self.password_hasher)
             .verify(password, user.password)
-            .await?;
-
-        if !password_matches {
-            errors.push(SignInErrResponse::PasswordMismatch);
-            return ::axiom::result::Fallible::Ok(SignInResponse::Err(errors));
+            .await?
+        {
+            errors.push(ErrResponse::PasswordMismatch);
+            return super::errs!(errors);
         }
 
-        let auth_token_payload = crate::gateways::AuthenticationTokenPayload::builder()
+        let auth_token_payload = AuthTokenPayload::builder()
             .user_id(user.id)
             .user_role(user.role)
-            .expiry_timestamp(::axiom::time::Timestamp::now() + Self::AUTH_TOKEN_LIFETIME)
+            .expiry_timestamp(::axiom::time::Timestamp::now() + self.auth_token_lifetime)
             .build();
 
-        // Rust's type inference fails here
-        let auth_token: ::axiom::string::String = ::std::sync::Arc::clone(&self.auth_token_generator)
+        let auth_token = ::std::sync::Arc::clone(&self.auth_token_generator)
             .generate(auth_token_payload)
             .await?;
 
-        let response = SignInOkResponse::builder().token(auth_token).user_role(user.role).build();
-
-        ::axiom::result::Fallible::Ok(SignInResponse::Ok(response))
+        let response = OkResponse::builder().token(auth_token).user_role(user.role).build();
+        super::ok!(response)
     }
 }
 
-impl SignInInteractor {
-    const AUTH_TOKEN_LIFETIME: ::axiom::time::Interval = ::axiom::time::Interval::hours(1);
-}
+type Request = SignInRequest;
+type Response = SignInResponse;
+type OkResponse = SignInOkResponse;
+type ErrResponse = SignInErrResponse;

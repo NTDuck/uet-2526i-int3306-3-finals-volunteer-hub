@@ -19,17 +19,36 @@ $ cd ./frontend/sveltekit-minimal && deno install
 $ deno task build-wasm
 ```
 
-Development
+### Development
 
 ```cmd
 $ deno task dev-sveltekit-minimal
 ```
 
-Production
+### Production
 
 ```cmd
 $ deno task build-sveltekit-minimal
 $ deno task preview-sveltekit-minimal
+```
+
+## How to please Github
+
+Assume we're merging PR branch `indev` into `master`. The following snippet
+achieves the same thing as if we visit each conflict and select
+`Keep Current Changes`.
+
+```cmd
+# https://trunk.io/blog/git-commit-messages-are-useless
+$ git config --global alias.nccommit "commit -a --allow-empty-message -m ''"
+
+$ git pull origin master
+$ git checkout indev
+$ git merge master
+$ git checkout --ours .
+$ git add .
+$ git nccommit
+$ git push -u origin indev
 ```
 
 ## Use cases
@@ -213,3 +232,15 @@ $ deno task preview-sveltekit-minimal
   > [./backend/core/use-cases/src/boundaries/view_event_recommendation.rs](./backend/core/use-cases/src/boundaries/view_event_recommendation.rs)
   > |
   > [./backend/core/use-cases/src/interactors/view_event_recommendation.rs](./backend/core/use-cases/src/interactors/view_event_recommendation.rs)
+
+## TODO
+
+- Implement the following use cases: `view_self_profile`, `update_self_profile`,
+  `view_user`, `view_event`, `view_published_event`
+- Increase parallelism via e.g. `buffer_unordered(...)` for streams, `rayon`
+- Replace `.filter_map(|transposable| async move { transposable.transpose() })`
+  with `.transpose()` via an `axiom` trait
+- Implement push notification
+- Improve performance by collecting into `::smallvec::SmallVec` instead of
+  `::std::vec::Vec` in hot loops
+- Improve performance by querying specific column(s)

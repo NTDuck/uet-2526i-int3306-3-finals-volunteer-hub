@@ -1,4 +1,4 @@
-use ::async_trait::async_trait;
+use ::axiom::prelude::*;
 
 #[async_trait]
 pub trait ViewEventHistoryBoundary {
@@ -40,31 +40,49 @@ pub struct ViewEventHistoryOkResponse {
 pub struct ViewEventHistoryEvent {
     pub id: ::axiom::string::String,
 
-    pub status: ViewEventHistoryEventStatus,
     pub registration_status: ViewEventHistoryEventRegistrationStatus,
+    pub registration_status_last_updated_at: ::axiom::string::String,
 
     pub name: ::axiom::string::String,
     pub categories: ::std::vec::Vec<::axiom::string::String>,
+    pub location: ::axiom::string::String,
+    #[builder(required)]
+    pub image_url: ::core::option::Option<::axiom::string::String>,
 }
 
-#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::strum::Display)]
-#[cfg_attr(feature = "serde", derive(::serde::Serialize))]
-#[cfg_attr(feature = "serde", serde(rename_all = "kebab-case"))]
-#[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
-#[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
-pub enum ViewEventHistoryEventStatus {
-    Created,
-    Approved,
-    Rejected,
-}
-
-impl ::core::convert::From<::domain::EventStatus> for ViewEventHistoryEventStatus {
-    fn from(value: ::domain::EventStatus) -> Self {
-        match value {
-            ::domain::EventStatus::Created { .. } => Self::Created,
-            ::domain::EventStatus::Approved { .. } => Self::Approved,
-            ::domain::EventStatus::Rejected { .. } => Self::Rejected,
-        }
+#[::bon::bon]
+impl ViewEventHistoryEvent {
+    #[builder(finish_fn(name = try_build))]
+    pub async fn build_from(
+        #[builder(start_fn)] event: ::domain::Event,
+        #[builder(start_fn)] event_registration_status: ::domain::EventRegistrationStatus,
+        #[builder(setters(name = with_uuid_codec))] uuid_codec: ::std::sync::Arc<
+            dyn crate::gateways::UuidCodec + ::core::marker::Send + ::core::marker::Sync,
+        >,
+        #[builder(setters(name = with_timestamp_codec))] timestamp_codec: ::std::sync::Arc<
+            dyn crate::gateways::TimestampCodec + ::core::marker::Send + ::core::marker::Sync,
+        >,
+    ) -> ::axiom::result::Fallible<Self> {
+        Self::builder()
+            .id(::std::sync::Arc::clone(&uuid_codec).format(event.id).await?)
+            .registration_status(event_registration_status)
+            .registration_status_last_updated_at(
+                ::std::sync::Arc::clone(&timestamp_codec)
+                    .format(event_registration_status.at())
+                    .await?,
+            )
+            .name(event.name)
+            .categories(
+                event
+                    .categories
+                    .into_iter()
+                    .map(::core::convert::Into::into)
+                    .collect::<::std::vec::Vec<_>>(),
+            )
+            .location(event.location)
+            .image_url(event.image_url)
+            .build()
+            .into_ok()
     }
 }
 
@@ -93,18 +111,25 @@ impl ::core::convert::From<::domain::EventRegistrationStatus> for ViewEventHisto
     }
 }
 
-#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
+#[derive(::core::fmt::Debug, ::core::clone::Clone)]
 #[cfg_attr(feature = "serde", derive(::axiom::Erratum))]
 #[cfg_attr(feature = "serde", erratum(rename_all = "kebab-case", rename_all_fields = "camelCase"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
 pub enum ViewEventHistoryErrResponse {
-    #[error("Invalid or expired authentication token")]
+    #[error("Invalid authentication token")]
     AuthenticationTokenInvalid,
 
-    #[error("User with role `{user_role}` not authorized: must be `{expected_user_role}`", expected_user_role = ViewEventHistoryUserRole::Volunteer)]
+    #[error("Authentication token expired")]
+    AuthenticationTokenExpired,
+
+    #[error("User not found")]
+    UserNotFound,
+
+    #[error("User with role `{user_role}` not authorized: must be {}", super::fmt::join_with_comma_ad_hoc(.allowed_user_roles))]
     UserUnauthorized {
         user_role: ViewEventHistoryUserRole,
+        allowed_user_roles: ::std::vec::Vec<ViewEventHistoryUserRole>,
     },
 }
 

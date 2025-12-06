@@ -1,4 +1,4 @@
-use ::async_trait::async_trait;
+use ::axiom::prelude::*;
 
 #[async_trait]
 pub trait ViewPublishedEventsBoundary {
@@ -15,7 +15,7 @@ pub trait ViewPublishedEventsBoundary {
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi))]
 pub struct ViewPublishedEventsRequest {
     pub token: ::axiom::string::String,
-    pub filter: ViewPublishedEventsFilter,
+    pub filter: ::core::option::Option<ViewPublishedEventsFilter>,
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
@@ -25,25 +25,44 @@ pub struct ViewPublishedEventsRequest {
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi))]
 pub struct ViewPublishedEventsFilter {
-    pub name: ::core::option::Option<::axiom::string::String>,
-    pub description: ::core::option::Option<::axiom::string::String>,
-    pub category: ::core::option::Option<::axiom::string::String>,
-    pub location: ::core::option::Option<::axiom::string::String>,
+    pub query: ::core::option::Option<::axiom::string::String>,
 
-    #[builder(default)]
-    pub timestamps: ::core::ops::Range<::core::option::Option<::axiom::time::Timestamp>>,
+    pub start_timestamp: ::core::option::Option<::axiom::string::String>,
+    pub end_timestamp: ::core::option::Option<::axiom::string::String>,
 }
 
-impl ::core::convert::From<ViewPublishedEventsFilter> for crate::gateways::EventRepositoryViewFilter {
-    fn from(value: ViewPublishedEventsFilter) -> Self {
-        Self::builder()
-            .statuses(::std::vec![crate::gateways::EventRepositoryViewFilterEventStatus::Approved,])
-            .maybe_name(value.name)
-            .maybe_description(value.description)
-            .maybe_category(value.category)
-            .maybe_location(value.location)
-            .timestamps(value.timestamps)
+#[::bon::bon]
+impl ViewPublishedEventsFilter {
+    #[builder(finish_fn(name = try_build))]
+    pub async fn build_into(
+        self,
+        #[builder(setters(name = with_timestamp_codec))] timestamp_codec: ::std::sync::Arc<
+            dyn crate::gateways::TimestampCodec + ::core::marker::Send + ::core::marker::Sync,
+        >,
+    ) -> ::axiom::result::Fallible<crate::gateways::EventRepositorySearchFilter> {
+        crate::gateways::EventRepositorySearchFilter::builder()
+            .maybe_query(self.query)
+            .statuses([crate::gateways::EventRepositorySearchFilterEventStatus::Approved])
+            .timestamps(::core::ops::Range {
+                start: self
+                    .start_timestamp
+                    .map_async(|timestamp| {
+                        let timestamp_codec = ::std::sync::Arc::clone(&timestamp_codec);
+                        async move { timestamp_codec.parse(timestamp).await }
+                    })
+                    .await
+                    .transpose()?,
+                end: self
+                    .end_timestamp
+                    .map_async(|timestamp| {
+                        let timestamp_codec = ::std::sync::Arc::clone(&timestamp_codec);
+                        async move { timestamp_codec.parse(timestamp).await }
+                    })
+                    .await
+                    .transpose()?,
+            })
             .build()
+            .into_ok()
     }
 }
 
@@ -71,10 +90,47 @@ pub struct ViewPublishedEventsEvent {
     pub id: ::axiom::string::String,
 
     pub status: ViewPublishedEventsEventStatus,
+    pub status_last_updated_at: ::axiom::string::String,
 
     pub name: ::axiom::string::String,
     pub categories: ::std::vec::Vec<::axiom::string::String>,
     pub location: ::axiom::string::String,
+
+    #[builder(required)]
+    pub image_url: ::core::option::Option<::axiom::string::String>,
+}
+
+#[::bon::bon]
+impl ViewPublishedEventsEvent {
+    #[builder(finish_fn(name = try_build))]
+    pub async fn build_from(
+        #[builder(start_fn)] event: ::domain::Event,
+        #[builder(setters(name = with_uuid_codec))] uuid_codec: ::std::sync::Arc<
+            dyn crate::gateways::UuidCodec + ::core::marker::Send + ::core::marker::Sync,
+        >,
+        #[builder(setters(name = with_timestamp_codec))] timestamp_codec: ::std::sync::Arc<
+            dyn crate::gateways::TimestampCodec + ::core::marker::Send + ::core::marker::Sync,
+        >,
+    ) -> ::axiom::result::Fallible<Self> {
+        let event_status = *event.statuses.last();
+
+        Self::builder()
+            .id(::std::sync::Arc::clone(&uuid_codec).format(event.id).await?)
+            .status(event_status)
+            .status_last_updated_at(::std::sync::Arc::clone(&timestamp_codec).format(event_status.at()).await?)
+            .name(event.name)
+            .categories(
+                event
+                    .categories
+                    .into_iter()
+                    .map(::core::convert::Into::into)
+                    .collect::<::std::vec::Vec<_>>(),
+            )
+            .location(event.location)
+            .image_url(event.image_url)
+            .build()
+            .into_ok()
+    }
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::strum::Display)]
@@ -84,6 +140,7 @@ pub struct ViewPublishedEventsEvent {
 #[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
 pub enum ViewPublishedEventsEventStatus {
     Created,
+    Updated,
     Approved,
     Rejected,
 }
@@ -92,24 +149,32 @@ impl ::core::convert::From<::domain::EventStatus> for ViewPublishedEventsEventSt
     fn from(value: ::domain::EventStatus) -> Self {
         match value {
             ::domain::EventStatus::Created { .. } => Self::Created,
+            ::domain::EventStatus::Updated { .. } => Self::Updated,
             ::domain::EventStatus::Approved { .. } => Self::Approved,
             ::domain::EventStatus::Rejected { .. } => Self::Rejected,
         }
     }
 }
 
-#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
+#[derive(::core::fmt::Debug, ::core::clone::Clone)]
 #[cfg_attr(feature = "serde", derive(::axiom::Erratum))]
 #[cfg_attr(feature = "serde", erratum(rename_all = "kebab-case", rename_all_fields = "camelCase"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
 pub enum ViewPublishedEventsErrResponse {
-    #[error("Invalid or expired authentication token")]
+    #[error("Invalid authentication token")]
     AuthenticationTokenInvalid,
 
-    #[error("User with role `{user_role}` not authorized: must be `{expected_user_role}`", expected_user_role = ViewPublishedEventsUserRole::Volunteer)]
+    #[error("Authentication token expired")]
+    AuthenticationTokenExpired,
+
+    #[error("User not found")]
+    UserNotFound,
+
+    #[error("User with role `{user_role}` not authorized: must be {}", super::fmt::join_with_comma_ad_hoc(.allowed_user_roles))]
     UserUnauthorized {
         user_role: ViewPublishedEventsUserRole,
+        allowed_user_roles: ::std::vec::Vec<ViewPublishedEventsUserRole>,
     },
 }
 

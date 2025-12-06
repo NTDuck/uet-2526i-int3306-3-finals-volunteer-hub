@@ -1,4 +1,4 @@
-use ::async_trait::async_trait;
+use ::axiom::prelude::*;
 
 #[async_trait]
 pub trait ViewEventVolunteersBoundary {
@@ -41,23 +41,108 @@ pub struct ViewEventVolunteersOkResponse {
 pub struct ViewEventVolunteersVolunteer {
     pub id: ::axiom::string::String,
 
+    pub status: ViewEventVolunteersUserStatus,
+    pub registration_status: ViewEventVolunteersEventRegistrationStatus,
+
     pub username: ::axiom::string::String,
     pub email: ::axiom::string::String,
+
     pub full_name: ::axiom::string::String,
+
+    #[builder(required)]
+    pub avatar_url: ::core::option::Option<::axiom::string::String>,
 }
 
-#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
+#[::bon::bon]
+impl ViewEventVolunteersVolunteer {
+    #[builder(finish_fn(name = try_build))]
+    pub async fn build_from(
+        #[builder(start_fn)] volunteer: ::domain::User,
+        #[builder(start_fn)] event_registration_status: ::domain::EventRegistrationStatus,
+        #[builder(setters(name = with_uuid_codec))] uuid_codec: ::std::sync::Arc<
+            dyn crate::gateways::UuidCodec + ::core::marker::Send + ::core::marker::Sync,
+        >,
+    ) -> ::axiom::result::Fallible<Self> {
+        Self::builder()
+            .id(uuid_codec.format(volunteer.id).await?)
+            .status(*volunteer.statuses.last())
+            .registration_status(event_registration_status)
+            .username(volunteer.username)
+            .email(volunteer.email)
+            .full_name(volunteer.full_name)
+            .avatar_url(volunteer.avatar_url)
+            .build()
+            .into_ok()
+    }
+}
+
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::strum::Display)]
+#[cfg_attr(feature = "serde", derive(::serde::Serialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "kebab-case"))]
+#[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
+#[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
+pub enum ViewEventVolunteersUserStatus {
+    Created,
+    Updated,
+    Suspended,
+    Unsuspended,
+}
+
+impl ::core::convert::From<::domain::UserStatus> for ViewEventVolunteersUserStatus {
+    fn from(value: ::domain::UserStatus) -> Self {
+        match value {
+            ::domain::UserStatus::Created { .. } => Self::Created,
+            ::domain::UserStatus::Updated { .. } => Self::Updated,
+            ::domain::UserStatus::Suspended { .. } => Self::Suspended,
+            ::domain::UserStatus::Unsuspended { .. } => Self::Unsuspended,
+        }
+    }
+}
+
+#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::strum::Display)]
+#[cfg_attr(feature = "serde", derive(::serde::Serialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "kebab-case"))]
+#[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
+#[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
+pub enum ViewEventVolunteersEventRegistrationStatus {
+    Pending,
+    Withdrawn,
+    Accepted,
+    Declined,
+    Completed,
+}
+
+impl ::core::convert::From<::domain::EventRegistrationStatus> for ViewEventVolunteersEventRegistrationStatus {
+    fn from(value: ::domain::EventRegistrationStatus) -> Self {
+        match value {
+            ::domain::EventRegistrationStatus::Pending { .. } => Self::Pending,
+            ::domain::EventRegistrationStatus::Withdrawn { .. } => Self::Withdrawn,
+            ::domain::EventRegistrationStatus::Accepted { .. } => Self::Accepted,
+            ::domain::EventRegistrationStatus::Declined { .. } => Self::Declined,
+            ::domain::EventRegistrationStatus::Completed { .. } => Self::Completed,
+        }
+    }
+}
+
+#[derive(::core::fmt::Debug, ::core::clone::Clone)]
 #[cfg_attr(feature = "serde", derive(::axiom::Erratum))]
 #[cfg_attr(feature = "serde", erratum(rename_all = "kebab-case", rename_all_fields = "camelCase"))]
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
 pub enum ViewEventVolunteersErrResponse {
-    #[error("Invalid or expired authentication token")]
+    #[error("Invalid authentication token")]
     AuthenticationTokenInvalid,
 
-    #[error("User with role `{user_role}` not authorized: must be `{expected_user_role}`", expected_user_role = ViewEventVolunteersUserRole::EventManager)]
+    #[error("Authentication token expired")]
+    AuthenticationTokenExpired,
+
+    #[error("User not found")]
+    UserNotFound,
+
+    #[error("User with role `{user_role}` not authorized: must be {}", super::fmt::join_with_comma_ad_hoc(.allowed_user_roles))]
     UserUnauthorized {
         user_role: ViewEventVolunteersUserRole,
+        allowed_user_roles: ::std::vec::Vec<ViewEventVolunteersUserRole>,
     },
 
     #[error("Event not found")]

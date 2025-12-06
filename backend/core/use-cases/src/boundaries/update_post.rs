@@ -1,4 +1,4 @@
-use ::async_trait::async_trait;
+use ::axiom::prelude::*;
 
 #[async_trait]
 pub trait UpdateEventPostBoundary {
@@ -20,6 +20,8 @@ pub struct UpdateEventPostRequest {
 
     pub post_title: ::core::option::Option<::axiom::string::String>,
     pub post_content: ::core::option::Option<::axiom::string::String>,
+
+    pub post_image: ::core::option::Option<::std::boxed::Box<[u8]>>,
 }
 
 #[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
@@ -35,12 +37,19 @@ pub type UpdateEventPostOkResponse = ();
 #[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
 #[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
 pub enum UpdateEventPostErrResponse {
-    #[error("Invalid or expired authentication token")]
+    #[error("Invalid authentication token")]
     AuthenticationTokenInvalid,
 
-    #[error("User with role `{user_role}` not authorized: must be `{first_expected_user_role}` or `{second_expected_user_role}`", first_expected_user_role = UpdateEventPostUserRole::Volunteer, second_expected_user_role = UpdateEventPostUserRole::EventManager)]
+    #[error("Authentication token expired")]
+    AuthenticationTokenExpired,
+
+    #[error("User not found")]
+    UserNotFound,
+
+    #[error("User with role `{user_role}` not authorized: must be {}", super::fmt::join_with_comma_ad_hoc(.allowed_user_roles))]
     UserUnauthorized {
         user_role: UpdateEventPostUserRole,
+        allowed_user_roles: ::std::vec::Vec<UpdateEventPostUserRole>,
     },
 
     #[error("User temporarily suspended")]
@@ -55,6 +64,9 @@ pub enum UpdateEventPostErrResponse {
     PostContentInvalid {
         post_content: ::axiom::string::String,
     },
+
+    #[error("Invalid post image")]
+    PostImageInvalid,
 
     #[error("Post not found")]
     PostNotFound,
