@@ -9,15 +9,12 @@ pub struct RemoveEventInteractor {
     user_repository: ::std::sync::Arc<dyn UserRepository + ::core::marker::Send + ::core::marker::Sync>,
 
     uuid_codec: ::std::sync::Arc<dyn UuidCodec + ::core::marker::Send + ::core::marker::Sync>,
-    auth_token_generator:
-        ::std::sync::Arc<dyn AuthTokenGenerator + ::core::marker::Send + ::core::marker::Sync>,
+    auth_token_generator: ::std::sync::Arc<dyn AuthTokenGenerator + ::core::marker::Send + ::core::marker::Sync>,
 }
 
 #[async_trait]
 impl RemoveEventBoundary for RemoveEventInteractor {
-    async fn apply(
-        self: ::std::sync::Arc<Self>, request: Request,
-    ) -> ::axiom::result::Fallible<Response> {
+    async fn apply(self: ::std::sync::Arc<Self>, request: Request) -> ::axiom::result::Fallible<Response> {
         match ::std::sync::Arc::clone(&self.auth_token_generator)
             .get_payload(request.token)
             .await?
@@ -42,7 +39,10 @@ impl RemoveEventBoundary for RemoveEventInteractor {
                 }
             },
             ::core::option::Option::Some(AuthTokenPayload { user_role, .. }) =>
-                return super::err!(UserUnauthorized { user_role: user_role.into(), allowed_user_roles: ::std::vec![UserRole::EventManager] }),
+                return super::err!(UserUnauthorized {
+                    user_role: user_role.into(),
+                    allowed_user_roles: ::std::vec![UserRole::EventManager]
+                }),
         };
 
         let mut errors = ::std::vec::Vec::new();
@@ -61,10 +61,7 @@ impl RemoveEventBoundary for RemoveEventInteractor {
                 ) {
                     errors.push(RemoveEventErrResponse::EventStatusNotEligible {
                         event_status: event_status.into(),
-                        allowed_event_statuses: ::std::vec![
-                            EventStatus::Created,
-                            EventStatus::Updated,
-                        ],
+                        allowed_event_statuses: ::std::vec![EventStatus::Created, EventStatus::Updated,],
                     });
                 }
             },

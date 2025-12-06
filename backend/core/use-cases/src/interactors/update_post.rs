@@ -10,15 +10,12 @@ pub struct UpdateEventPostInteractor {
     media_repository: ::std::sync::Arc<dyn MediaRepository + ::core::marker::Send + ::core::marker::Sync>,
 
     uuid_codec: ::std::sync::Arc<dyn UuidCodec + ::core::marker::Send + ::core::marker::Sync>,
-    auth_token_generator:
-        ::std::sync::Arc<dyn AuthTokenGenerator + ::core::marker::Send + ::core::marker::Sync>,
+    auth_token_generator: ::std::sync::Arc<dyn AuthTokenGenerator + ::core::marker::Send + ::core::marker::Sync>,
 }
 
 #[async_trait]
 impl UpdateEventPostBoundary for UpdateEventPostInteractor {
-    async fn apply(
-        self: ::std::sync::Arc<Self>, request: Request,
-    ) -> ::axiom::result::Fallible<Response> {
+    async fn apply(self: ::std::sync::Arc<Self>, request: Request) -> ::axiom::result::Fallible<Response> {
         let actor_id = match ::std::sync::Arc::clone(&self.auth_token_generator)
             .get_payload(request.token)
             .await?
@@ -45,7 +42,10 @@ impl UpdateEventPostBoundary for UpdateEventPostInteractor {
                 user_id
             },
             ::core::option::Option::Some(AuthTokenPayload { user_role, .. }) =>
-                return super::err!(UserUnauthorized { user_role: user_role.into(), allowed_user_roles: ::std::vec![UserRole::Volunteer, UserRole::EventManager] }),
+                return super::err!(UserUnauthorized {
+                    user_role: user_role.into(),
+                    allowed_user_roles: ::std::vec![UserRole::Volunteer, UserRole::EventManager]
+                }),
         };
 
         let mut errors = ::std::vec::Vec::new();
@@ -67,22 +67,21 @@ impl UpdateEventPostBoundary for UpdateEventPostInteractor {
         let post_title = request
             .post_title
             .map(|post_title| {
-                ::domain::EventPostTitle::try_from(post_title).map_err(|error| {
-                    errors.push(ErrResponse::PostTitleInvalid { post_title: error.into() })
-                })
+                ::domain::EventPostTitle::try_from(post_title)
+                    .map_err(|error| errors.push(ErrResponse::PostTitleInvalid { post_title: error.into() }))
             })
             .transpose();
 
         let post_content = request
             .post_content
             .map(|post_content| {
-                ::domain::EventPostContent::try_from(post_content).map_err(|error| {
-                    errors.push(ErrResponse::PostContentInvalid { post_content: error.into() })
-                })
+                ::domain::EventPostContent::try_from(post_content)
+                    .map_err(|error| errors.push(ErrResponse::PostContentInvalid { post_content: error.into() }))
             })
             .transpose();
 
-        let post_image_url = request.post_image
+        let post_image_url = request
+            .post_image
             .map(::core::convert::Into::<::axiom::bytes::Bytes>::into)
             .map_async(|image| {
                 let media_repository = ::std::sync::Arc::clone(&self.media_repository);
@@ -92,7 +91,8 @@ impl UpdateEventPostBoundary for UpdateEventPostInteractor {
 
                     (image, verified).into_ok()
                 }
-            }).await
+            })
+            .await
             .transpose()?
             .map(|(image, verified)| {
                 if !verified {
@@ -104,13 +104,9 @@ impl UpdateEventPostBoundary for UpdateEventPostInteractor {
             .map_async(|image| {
                 let media_repository = ::std::sync::Arc::clone(&self.media_repository);
 
-                async move {
-                    ::std::sync::Arc::clone(&media_repository)
-                        .save(image)
-                        .await?
-                        .into_ok()
-                }
-            }).await
+                async move { ::std::sync::Arc::clone(&media_repository).save(image).await?.into_ok() }
+            })
+            .await
             .transpose()?;
 
         let (::core::result::Result::Ok(post_title), ::core::result::Result::Ok(post_content)) =
@@ -127,7 +123,9 @@ impl UpdateEventPostBoundary for UpdateEventPostInteractor {
 
         post_title.map(|post_title| post.title = post_title);
         post_content.map(|post_content| post.content = post_content);
-        post_image_url.map(::core::convert::Into::into).map(|post_image_url| post.image_url = post_image_url);
+        post_image_url
+            .map(::core::convert::Into::into)
+            .map(|post_image_url| post.image_url = post_image_url);
 
         ::std::sync::Arc::clone(&self.post_repository).save(post).await?;
 

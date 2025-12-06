@@ -19,7 +19,7 @@ pub struct SignUpRequest {
     pub password: ::axiom::string::String,
 
     pub full_name: ::axiom::string::String,
-    
+
     pub avatar: ::core::option::Option<::std::boxed::Box<[u8]>>,
 }
 

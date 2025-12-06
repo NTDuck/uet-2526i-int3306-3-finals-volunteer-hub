@@ -29,7 +29,8 @@ impl SignUpBoundary for SignUpInteractor {
         let full_name = ::domain::FullName::try_from(request.full_name)
             .map_err(|error| errors.push(ErrResponse::FullNameInvalid { full_name: error.into() }));
 
-        let avatar_url = request.avatar
+        let avatar_url = request
+            .avatar
             .map(::core::convert::Into::<::axiom::bytes::Bytes>::into)
             .map_async(|image| {
                 let media_repository = ::std::sync::Arc::clone(&self.media_repository);
@@ -39,7 +40,8 @@ impl SignUpBoundary for SignUpInteractor {
 
                     (image, verified).into_ok()
                 }
-            }).await
+            })
+            .await
             .transpose()?
             .map(|(image, verified)| {
                 if !verified {
@@ -51,13 +53,9 @@ impl SignUpBoundary for SignUpInteractor {
             .map_async(|image| {
                 let media_repository = ::std::sync::Arc::clone(&self.media_repository);
 
-                async move {
-                    ::std::sync::Arc::clone(&media_repository)
-                        .save(image)
-                        .await?
-                        .into_ok()
-                }
-            }).await
+                async move { ::std::sync::Arc::clone(&media_repository).save(image).await?.into_ok() }
+            })
+            .await
             .transpose()?;
 
         let (
@@ -90,14 +88,18 @@ impl SignUpBoundary for SignUpInteractor {
 
         let user_id = loop {
             let uuid = ::std::sync::Arc::clone(&self.uuid_generator).generate().await?;
-            if !::std::sync::Arc::clone(&self.user_repository).contains_id(uuid).await? { break uuid; }
+            if !::std::sync::Arc::clone(&self.user_repository).contains_id(uuid).await? {
+                break uuid;
+            }
         };
 
         let password = ::std::sync::Arc::clone(&self.password_hasher).hash(password).await?;
 
         let user = ::domain::User::builder()
             .id(user_id)
-            .statuses(::vec1::Vec1::new(::domain::UserStatus::Created { created_at: ::axiom::time::Timestamp::now() }))
+            .statuses(::vec1::Vec1::new(::domain::UserStatus::Created {
+                created_at: ::axiom::time::Timestamp::now(),
+            }))
             .role(request.user_role)
             .username(username)
             .email(email)

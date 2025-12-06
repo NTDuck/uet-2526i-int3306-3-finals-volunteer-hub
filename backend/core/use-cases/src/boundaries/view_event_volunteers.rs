@@ -48,7 +48,7 @@ pub struct ViewEventVolunteersVolunteer {
     pub email: ::axiom::string::String,
 
     pub full_name: ::axiom::string::String,
-    
+
     #[builder(required)]
     pub avatar_url: ::core::option::Option<::axiom::string::String>,
 }

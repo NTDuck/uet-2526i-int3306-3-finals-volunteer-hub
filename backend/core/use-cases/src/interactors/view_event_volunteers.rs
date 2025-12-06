@@ -11,15 +11,12 @@ pub struct ViewEventVolunteersInteractor {
     user_repository: ::std::sync::Arc<dyn UserRepository + ::core::marker::Send + ::core::marker::Sync>,
 
     uuid_codec: ::std::sync::Arc<dyn UuidCodec + ::core::marker::Send + ::core::marker::Sync>,
-    auth_token_generator:
-        ::std::sync::Arc<dyn AuthTokenGenerator + ::core::marker::Send + ::core::marker::Sync>,
+    auth_token_generator: ::std::sync::Arc<dyn AuthTokenGenerator + ::core::marker::Send + ::core::marker::Sync>,
 }
 
 #[async_trait]
 impl ViewEventVolunteersBoundary for ViewEventVolunteersInteractor {
-    async fn apply(
-        self: ::std::sync::Arc<Self>, request: Request,
-    ) -> ::axiom::result::Fallible<Response> {
+    async fn apply(self: ::std::sync::Arc<Self>, request: Request) -> ::axiom::result::Fallible<Response> {
         match ::std::sync::Arc::clone(&self.auth_token_generator)
             .get_payload(request.token)
             .await?
@@ -39,7 +36,10 @@ impl ViewEventVolunteersBoundary for ViewEventVolunteersInteractor {
                 }
             },
             ::core::option::Option::Some(AuthTokenPayload { user_role, .. }) =>
-                return super::err!(UserUnauthorized { user_role: user_role.into(), allowed_user_roles: ::std::vec![UserRole::EventManager] }),
+                return super::err!(UserUnauthorized {
+                    user_role: user_role.into(),
+                    allowed_user_roles: ::std::vec![UserRole::EventManager]
+                }),
         };
 
         let event_id = ::std::sync::Arc::clone(&self.uuid_codec).parse(request.event_id).await?;

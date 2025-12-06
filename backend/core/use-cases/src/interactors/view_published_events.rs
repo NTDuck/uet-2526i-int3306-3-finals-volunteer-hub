@@ -11,15 +11,12 @@ pub struct ViewPublishedEventsInteractor {
 
     uuid_codec: ::std::sync::Arc<dyn UuidCodec + ::core::marker::Send + ::core::marker::Sync>,
     timestamp_codec: ::std::sync::Arc<dyn TimestampCodec + ::core::marker::Send + ::core::marker::Sync>,
-    auth_token_generator:
-        ::std::sync::Arc<dyn AuthTokenGenerator + ::core::marker::Send + ::core::marker::Sync>,
+    auth_token_generator: ::std::sync::Arc<dyn AuthTokenGenerator + ::core::marker::Send + ::core::marker::Sync>,
 }
 
 #[async_trait]
 impl ViewPublishedEventsBoundary for ViewPublishedEventsInteractor {
-    async fn apply(
-        self: ::std::sync::Arc<Self>, request: Request,
-    ) -> ::axiom::result::Fallible<Response> {
+    async fn apply(self: ::std::sync::Arc<Self>, request: Request) -> ::axiom::result::Fallible<Response> {
         match ::std::sync::Arc::clone(&self.auth_token_generator)
             .get_payload(request.token)
             .await?
@@ -39,7 +36,10 @@ impl ViewPublishedEventsBoundary for ViewPublishedEventsInteractor {
                 }
             },
             ::core::option::Option::Some(AuthTokenPayload { user_role, .. }) =>
-                return super::err!(UserUnauthorized { user_role: user_role.into(), allowed_user_roles: ::std::vec![UserRole::Volunteer] }),
+                return super::err!(UserUnauthorized {
+                    user_role: user_role.into(),
+                    allowed_user_roles: ::std::vec![UserRole::Volunteer]
+                }),
         }
 
         let events = match request.filter {
@@ -55,7 +55,8 @@ impl ViewPublishedEventsBoundary for ViewPublishedEventsInteractor {
             },
         };
 
-        let events = events.into_stream()
+        let events = events
+            .into_stream()
             .then(|event| {
                 let uuid_codec = ::std::sync::Arc::clone(&self.uuid_codec);
                 let timestamp_codec = ::std::sync::Arc::clone(&self.timestamp_codec);

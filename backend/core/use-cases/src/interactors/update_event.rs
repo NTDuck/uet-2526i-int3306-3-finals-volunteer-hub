@@ -10,15 +10,12 @@ pub struct UpdateEventInteractor {
     media_repository: ::std::sync::Arc<dyn MediaRepository + ::core::marker::Send + ::core::marker::Sync>,
 
     uuid_codec: ::std::sync::Arc<dyn UuidCodec + ::core::marker::Send + ::core::marker::Sync>,
-    auth_token_generator:
-        ::std::sync::Arc<dyn AuthTokenGenerator + ::core::marker::Send + ::core::marker::Sync>,
+    auth_token_generator: ::std::sync::Arc<dyn AuthTokenGenerator + ::core::marker::Send + ::core::marker::Sync>,
 }
 
 #[async_trait]
 impl UpdateEventBoundary for UpdateEventInteractor {
-    async fn apply(
-        self: ::std::sync::Arc<Self>, request: Request,
-    ) -> ::axiom::result::Fallible<Response> {
+    async fn apply(self: ::std::sync::Arc<Self>, request: Request) -> ::axiom::result::Fallible<Response> {
         let actor_id = match ::std::sync::Arc::clone(&self.auth_token_generator)
             .get_payload(request.token)
             .await?
@@ -45,7 +42,10 @@ impl UpdateEventBoundary for UpdateEventInteractor {
                 user_id
             },
             ::core::option::Option::Some(AuthTokenPayload { user_role, .. }) =>
-                return super::err!(UserUnauthorized { user_role: user_role.into(), allowed_user_roles: ::std::vec![UserRole::EventManager] }),
+                return super::err!(UserUnauthorized {
+                    user_role: user_role.into(),
+                    allowed_user_roles: ::std::vec![UserRole::EventManager]
+                }),
         };
 
         let mut errors = ::std::vec::Vec::new();
@@ -113,13 +113,13 @@ impl UpdateEventBoundary for UpdateEventInteractor {
         let event_location = request
             .event_location
             .map(|event_location| {
-                ::domain::EventLocation::try_from(event_location).map_err(|error| {
-                    errors.push(ErrResponse::EventLocationInvalid { event_location: error.into() })
-                })
+                ::domain::EventLocation::try_from(event_location)
+                    .map_err(|error| errors.push(ErrResponse::EventLocationInvalid { event_location: error.into() }))
             })
             .transpose();
 
-        let event_image_url = request.event_image
+        let event_image_url = request
+            .event_image
             .map(::core::convert::Into::<::axiom::bytes::Bytes>::into)
             .map_async(|image| {
                 let media_repository = ::std::sync::Arc::clone(&self.media_repository);
@@ -129,7 +129,8 @@ impl UpdateEventBoundary for UpdateEventInteractor {
 
                     (image, verified).into_ok()
                 }
-            }).await
+            })
+            .await
             .transpose()?
             .map(|(image, verified)| {
                 if !verified {
@@ -141,13 +142,9 @@ impl UpdateEventBoundary for UpdateEventInteractor {
             .map_async(|image| {
                 let media_repository = ::std::sync::Arc::clone(&self.media_repository);
 
-                async move {
-                    ::std::sync::Arc::clone(&media_repository)
-                        .save(image)
-                        .await?
-                        .into_ok()
-                }
-            }).await
+                async move { ::std::sync::Arc::clone(&media_repository).save(image).await?.into_ok() }
+            })
+            .await
             .transpose()?;
 
         let (
@@ -174,7 +171,9 @@ impl UpdateEventBoundary for UpdateEventInteractor {
         event_description.map(|event_description| event.description = event_description);
         event_categories.map(|event_categories| event.categories = event_categories);
         event_location.map(|event_location| event.location = event_location);
-        event_image_url.map(::core::convert::Into::into).map(|event_image_url| event.image_url = event_image_url);
+        event_image_url
+            .map(::core::convert::Into::into)
+            .map(|event_image_url| event.image_url = event_image_url);
 
         ::std::sync::Arc::clone(&self.event_repository).save(event).await?;
 

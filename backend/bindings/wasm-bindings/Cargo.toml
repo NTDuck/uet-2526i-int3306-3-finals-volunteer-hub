@@ -23,6 +23,7 @@ dotenvy = { version = "0.15.7" }  # suggested in lieu of `dotenv` as of security
 tracing = { workspace = true }
 tracing-wasm = "0.2.1"
 colored = "3.0.0"
+paste = "1.0.15"
 
 # [target.'cfg(target_arch = "wasm32")'.dependencies]
 console_error_panic_hook = "0.1.7"

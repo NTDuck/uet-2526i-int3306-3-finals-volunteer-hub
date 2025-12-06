@@ -13,20 +13,17 @@ pub struct CreateEventPostCommentInteractor {
 
     uuid_generator: ::std::sync::Arc<dyn UuidGenerator + ::core::marker::Send + ::core::marker::Sync>,
     uuid_codec: ::std::sync::Arc<dyn UuidCodec + ::core::marker::Send + ::core::marker::Sync>,
-    auth_token_generator:
-        ::std::sync::Arc<dyn AuthTokenGenerator + ::core::marker::Send + ::core::marker::Sync>,
+    auth_token_generator: ::std::sync::Arc<dyn AuthTokenGenerator + ::core::marker::Send + ::core::marker::Sync>,
 }
 
 #[async_trait]
 impl CreateEventPostCommentBoundary for CreateEventPostCommentInteractor {
-    async fn apply(
-        self: ::std::sync::Arc<Self>, request: Request,
-    ) -> ::axiom::result::Fallible<Response> {
+    async fn apply(self: ::std::sync::Arc<Self>, request: Request) -> ::axiom::result::Fallible<Response> {
         let actor_id = match ::std::sync::Arc::clone(&self.auth_token_generator)
             .get_payload(request.token)
             .await?
         {
-            ::core::option::Option::None => return super::err!( AuthenticationTokenInvalid),
+            ::core::option::Option::None => return super::err!(AuthenticationTokenInvalid),
             ::core::option::Option::Some(AuthTokenPayload {
                 user_id,
                 user_role: ::domain::UserRole::Volunteer | ::domain::UserRole::EventManager,
@@ -48,23 +45,32 @@ impl CreateEventPostCommentBoundary for CreateEventPostCommentInteractor {
                 user_id
             },
             ::core::option::Option::Some(AuthTokenPayload { user_role, .. }) =>
-                return super::err!(UserUnauthorized { user_role: user_role.into(), allowed_user_roles: ::std::vec![UserRole::Volunteer, UserRole::EventManager, ], }),
+                return super::err!(UserUnauthorized {
+                    user_role: user_role.into(),
+                    allowed_user_roles: ::std::vec![UserRole::Volunteer, UserRole::EventManager,],
+                }),
         };
 
         let mut errors = ::std::vec::Vec::new();
 
-        if ::core::matches!(request, Request { comment_content: ::core::option::Option::None, comment_image: ::core::option::Option::None, .. }) {
+        if ::core::matches!(request, Request {
+            comment_content: ::core::option::Option::None,
+            comment_image: ::core::option::Option::None,
+            ..
+        }) {
             errors.push(ErrResponse::MissingRequiredFields);
         }
 
-        let comment_content = request.comment_content
-            .map(|comment_content| ::domain::EventPostCommentContent::try_from(comment_content)
-                .map_err(|error| {
-                errors.push(ErrResponse::CommentContentInvalid { comment_content: error.into() })
-            }))
+        let comment_content = request
+            .comment_content
+            .map(|comment_content| {
+                ::domain::EventPostCommentContent::try_from(comment_content)
+                    .map_err(|error| errors.push(ErrResponse::CommentContentInvalid { comment_content: error.into() }))
+            })
             .transpose();
 
-        let comment_image_url = request.comment_image
+        let comment_image_url = request
+            .comment_image
             .map(::core::convert::Into::<::axiom::bytes::Bytes>::into)
             .map_async(|image| {
                 let media_repository = ::std::sync::Arc::clone(&self.media_repository);
@@ -74,7 +80,8 @@ impl CreateEventPostCommentBoundary for CreateEventPostCommentInteractor {
 
                     (image, verified).into_ok()
                 }
-            }).await
+            })
+            .await
             .transpose()?
             .map(|(image, verified)| {
                 if !verified {
@@ -86,13 +93,9 @@ impl CreateEventPostCommentBoundary for CreateEventPostCommentInteractor {
             .map_async(|image| {
                 let media_repository = ::std::sync::Arc::clone(&self.media_repository);
 
-                async move {
-                    ::std::sync::Arc::clone(&media_repository)
-                        .save(image)
-                        .await?
-                        .into_ok()
-                }
-            }).await
+                async move { ::std::sync::Arc::clone(&media_repository).save(image).await?.into_ok() }
+            })
+            .await
             .transpose()?;
 
         let post_id = ::std::sync::Arc::clone(&self.uuid_codec).parse(request.post_id).await?;
@@ -112,7 +115,9 @@ impl CreateEventPostCommentBoundary for CreateEventPostCommentInteractor {
 
         let comment_id = loop {
             let uuid = ::std::sync::Arc::clone(&self.uuid_generator).generate().await?;
-            if !::std::sync::Arc::clone(&self.comment_repository).contains_id(uuid).await? { break uuid; }
+            if !::std::sync::Arc::clone(&self.comment_repository).contains_id(uuid).await? {
+                break uuid;
+            }
         };
 
         let comment = ::domain::EventPostComment::builder()

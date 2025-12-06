@@ -10,7 +10,8 @@ use ::axiom::prelude::*;
 use ::use_cases::gateways::*;
 // use ::rayon::prelude::*;
 
-/// Since implementations of `::domain::Uuid` preserves order, consider using `::std::vec::Vec<_>` for performance gains.
+/// Since implementations of `::domain::Uuid` preserves order, consider using
+/// `::std::vec::Vec<_>` for performance gains.
 
 #[derive(::bon::Builder)]
 pub struct InMemoryEventRepository {
@@ -36,11 +37,20 @@ impl EventRepository for InMemoryEventRepository {
     async fn get_by_id(
         self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid,
     ) -> ::axiom::result::Fallible<::core::option::Option<::domain::Event>> {
-        self.events_by_ids.read().await.get(&::core::cmp::Reverse(event_id)).cloned().into_ok()
+        self.events_by_ids
+            .read()
+            .await
+            .get(&::core::cmp::Reverse(event_id))
+            .cloned()
+            .into_ok()
     }
 
     async fn contains_id(self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid) -> ::axiom::result::Fallible<bool> {
-        self.events_by_ids.read().await.contains_key(&::core::cmp::Reverse(event_id)).into_ok()
+        self.events_by_ids
+            .read()
+            .await
+            .contains_key(&::core::cmp::Reverse(event_id))
+            .into_ok()
     }
 
     async fn search(
@@ -61,7 +71,10 @@ impl EventRepository for InMemoryEventRepository {
             }
         };
 
-        let filter_statuses = filter.statuses.as_ref().map(|statuses| statuses.iter().collect::<::std::collections::HashSet<_>>());
+        let filter_statuses = filter
+            .statuses
+            .as_ref()
+            .map(|statuses| statuses.iter().collect::<::std::collections::HashSet<_>>());
 
         let apply_filter_statuses = move |event: &&::domain::Event| {
             if let ::core::option::Option::Some(ref statuses) = filter_statuses {
@@ -75,19 +88,30 @@ impl EventRepository for InMemoryEventRepository {
             let event_timestamp = event.statuses.last().at();
 
             match filter.timestamps {
-                ::core::ops::Range { start: ::core::option::Option::Some(start), end: ::core::option::Option::Some(end) } => 
-                    event_timestamp >= start && event_timestamp <= end,
-                ::core::ops::Range { start: ::core::option::Option::Some(start), end: ::core::option::Option::None } => 
-                    event_timestamp <= start,
-                ::core::ops::Range { start: ::core::option::Option::None, end: ::core::option::Option::Some(end) } => 
-                    event_timestamp >= end,
+                ::core::ops::Range {
+                    start: ::core::option::Option::Some(start),
+                    end: ::core::option::Option::Some(end),
+                } => event_timestamp >= start && event_timestamp <= end,
+                ::core::ops::Range {
+                    start: ::core::option::Option::Some(start),
+                    end: ::core::option::Option::None,
+                } => event_timestamp <= start,
+                ::core::ops::Range {
+                    start: ::core::option::Option::None,
+                    end: ::core::option::Option::Some(end),
+                } => event_timestamp >= end,
                 _ => true,
             }
         };
 
-        let apply_filter = move |event: &&::domain::Event| apply_filter_query(event) && apply_filter_statuses(event) && apply_filter_timestamps(event);
+        let apply_filter = move |event: &&::domain::Event| {
+            apply_filter_query(event) && apply_filter_statuses(event) && apply_filter_timestamps(event)
+        };
 
-        self.events_by_ids.read().await.values()
+        self.events_by_ids
+            .read()
+            .await
+            .values()
             .filter(apply_filter)
             .cloned()
             .collect::<::std::vec::Vec<_>>()
@@ -95,7 +119,10 @@ impl EventRepository for InMemoryEventRepository {
     }
 
     async fn view(self: ::std::sync::Arc<Self>) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::Event>> {
-        self.events_by_ids.read().await.values()
+        self.events_by_ids
+            .read()
+            .await
+            .values()
             .cloned()
             .collect::<::std::vec::Vec<_>>()
             .into_ok()
@@ -110,25 +137,54 @@ pub struct InMemoryExponentialDecayEventRecommender {
     pub λ: ::core::primitive::f64,
 
     #[builder(default, with = |value: ::std::collections::HashMap<::domain::Uuid, ::axiom::time::Timestamp, self::hash::BuildHasher>| ::tokio::sync::RwLock::new(value))]
-    pub approved_timestamps_by_event_ids: ::tokio::sync::RwLock<::std::collections::HashMap<::domain::Uuid, ::axiom::time::Timestamp, self::hash::BuildHasher>>,
+    pub approved_timestamps_by_event_ids: ::tokio::sync::RwLock<
+        ::std::collections::HashMap<::domain::Uuid, ::axiom::time::Timestamp, self::hash::BuildHasher>,
+    >,
 
     #[builder(default, with = |value: ::std::collections::HashMap<::domain::Uuid, ::std::vec::Vec<(::domain::Uuid, ::axiom::time::Timestamp)>, self::hash::BuildHasher>| ::tokio::sync::RwLock::new(value))]
-    pub posted_user_ids_and_timestamps_by_event_ids: ::tokio::sync::RwLock<::std::collections::HashMap<::domain::Uuid, ::std::vec::Vec<(::domain::Uuid, ::axiom::time::Timestamp)>, self::hash::BuildHasher>>,
+    pub posted_user_ids_and_timestamps_by_event_ids: ::tokio::sync::RwLock<
+        ::std::collections::HashMap<
+            ::domain::Uuid,
+            ::std::vec::Vec<(::domain::Uuid, ::axiom::time::Timestamp)>,
+            self::hash::BuildHasher,
+        >,
+    >,
 
     #[builder(default, with = |value: ::std::collections::HashMap<::domain::Uuid, ::std::vec::Vec<(::domain::Uuid, ::axiom::time::Timestamp)>, self::hash::BuildHasher>| ::tokio::sync::RwLock::new(value))]
-    pub subscribed_user_ids_and_timestamps_by_event_ids: ::tokio::sync::RwLock<::std::collections::HashMap<::domain::Uuid, ::std::vec::Vec<(::domain::Uuid, ::axiom::time::Timestamp)>, self::hash::BuildHasher>>,
+    pub subscribed_user_ids_and_timestamps_by_event_ids: ::tokio::sync::RwLock<
+        ::std::collections::HashMap<
+            ::domain::Uuid,
+            ::std::vec::Vec<(::domain::Uuid, ::axiom::time::Timestamp)>,
+            self::hash::BuildHasher,
+        >,
+    >,
 
     #[builder(default, with = |value: ::std::collections::HashMap<::domain::Uuid, ::std::vec::Vec<(::domain::Uuid, ::axiom::time::Timestamp)>, self::hash::BuildHasher>| ::tokio::sync::RwLock::new(value))]
-    pub reacted_user_ids_and_timestamps_by_event_ids: ::tokio::sync::RwLock<::std::collections::HashMap<::domain::Uuid, ::std::vec::Vec<(::domain::Uuid, ::axiom::time::Timestamp)>, self::hash::BuildHasher>>,
+    pub reacted_user_ids_and_timestamps_by_event_ids: ::tokio::sync::RwLock<
+        ::std::collections::HashMap<
+            ::domain::Uuid,
+            ::std::vec::Vec<(::domain::Uuid, ::axiom::time::Timestamp)>,
+            self::hash::BuildHasher,
+        >,
+    >,
 
     #[builder(default, with = |value: ::std::collections::HashMap<::domain::Uuid, ::std::vec::Vec<(::domain::Uuid, ::axiom::time::Timestamp)>, self::hash::BuildHasher>| ::tokio::sync::RwLock::new(value))]
-    pub commented_user_ids_and_timestamps_by_event_ids: ::tokio::sync::RwLock<::std::collections::HashMap<::domain::Uuid, ::std::vec::Vec<(::domain::Uuid, ::axiom::time::Timestamp)>, self::hash::BuildHasher>>,
+    pub commented_user_ids_and_timestamps_by_event_ids: ::tokio::sync::RwLock<
+        ::std::collections::HashMap<
+            ::domain::Uuid,
+            ::std::vec::Vec<(::domain::Uuid, ::axiom::time::Timestamp)>,
+            self::hash::BuildHasher,
+        >,
+    >,
 }
 
 #[async_trait]
 impl EventRecommender for InMemoryExponentialDecayEventRecommender {
     async fn track_approved(self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid) -> ::axiom::result::Fallible {
-        self.approved_timestamps_by_event_ids.write().await.insert(event_id, ::axiom::time::Timestamp::now());
+        self.approved_timestamps_by_event_ids
+            .write()
+            .await
+            .insert(event_id, ::axiom::time::Timestamp::now());
 
         ::axiom::result::Fallible::Ok(())
     }
@@ -142,7 +198,9 @@ impl EventRecommender for InMemoryExponentialDecayEventRecommender {
     async fn track_posted(
         self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid, user_id: ::domain::Uuid,
     ) -> ::axiom::result::Fallible {
-        self.posted_user_ids_and_timestamps_by_event_ids.write().await
+        self.posted_user_ids_and_timestamps_by_event_ids
+            .write()
+            .await
             .entry(event_id)
             .or_default()
             .push((user_id, ::axiom::time::Timestamp::now()));
@@ -153,9 +211,13 @@ impl EventRecommender for InMemoryExponentialDecayEventRecommender {
     async fn untrack_posted(
         self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid, user_id_: ::domain::Uuid,
     ) -> ::axiom::result::Fallible {
-        if let ::std::collections::hash_map::Entry::Occupied(mut entry) = self.posted_user_ids_and_timestamps_by_event_ids.write().await.entry(event_id) {
+        if let ::std::collections::hash_map::Entry::Occupied(mut entry) =
+            self.posted_user_ids_and_timestamps_by_event_ids.write().await.entry(event_id)
+        {
             entry.get_mut().retain(|(user_id, _)| *user_id != user_id_);
-            if entry.get().is_empty() { entry.remove(); }
+            if entry.get().is_empty() {
+                entry.remove();
+            }
         }
 
         ::axiom::result::Fallible::Ok(())
@@ -164,7 +226,9 @@ impl EventRecommender for InMemoryExponentialDecayEventRecommender {
     async fn track_subscribed(
         self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid, user_id: ::domain::Uuid,
     ) -> ::axiom::result::Fallible {
-        self.subscribed_user_ids_and_timestamps_by_event_ids.write().await
+        self.subscribed_user_ids_and_timestamps_by_event_ids
+            .write()
+            .await
             .entry(event_id)
             .or_default()
             .push((user_id, ::axiom::time::Timestamp::now()));
@@ -175,7 +239,9 @@ impl EventRecommender for InMemoryExponentialDecayEventRecommender {
     async fn track_reacted(
         self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid, user_id: ::domain::Uuid,
     ) -> ::axiom::result::Fallible {
-        self.reacted_user_ids_and_timestamps_by_event_ids.write().await
+        self.reacted_user_ids_and_timestamps_by_event_ids
+            .write()
+            .await
             .entry(event_id)
             .or_default()
             .push((user_id, ::axiom::time::Timestamp::now()));
@@ -186,7 +252,9 @@ impl EventRecommender for InMemoryExponentialDecayEventRecommender {
     async fn track_commented(
         self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid, user_id: ::domain::Uuid,
     ) -> ::axiom::result::Fallible {
-        self.commented_user_ids_and_timestamps_by_event_ids.write().await
+        self.commented_user_ids_and_timestamps_by_event_ids
+            .write()
+            .await
             .entry(event_id)
             .or_default()
             .push((user_id, ::axiom::time::Timestamp::now()));
@@ -197,9 +265,16 @@ impl EventRecommender for InMemoryExponentialDecayEventRecommender {
     async fn untrack_subscribed(
         self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid, user_id_: ::domain::Uuid,
     ) -> ::axiom::result::Fallible {
-        if let ::std::collections::hash_map::Entry::Occupied(mut entry) = self.subscribed_user_ids_and_timestamps_by_event_ids.write().await.entry(event_id) {
+        if let ::std::collections::hash_map::Entry::Occupied(mut entry) = self
+            .subscribed_user_ids_and_timestamps_by_event_ids
+            .write()
+            .await
+            .entry(event_id)
+        {
             entry.get_mut().retain(|(user_id, _)| *user_id != user_id_);
-            if entry.get().is_empty() { entry.remove(); }
+            if entry.get().is_empty() {
+                entry.remove();
+            }
         }
 
         ::axiom::result::Fallible::Ok(())
@@ -208,9 +283,13 @@ impl EventRecommender for InMemoryExponentialDecayEventRecommender {
     async fn untrack_reacted(
         self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid, user_id_: ::domain::Uuid,
     ) -> ::axiom::result::Fallible {
-        if let ::std::collections::hash_map::Entry::Occupied(mut entry) = self.reacted_user_ids_and_timestamps_by_event_ids.write().await.entry(event_id) {
+        if let ::std::collections::hash_map::Entry::Occupied(mut entry) =
+            self.reacted_user_ids_and_timestamps_by_event_ids.write().await.entry(event_id)
+        {
             entry.get_mut().retain(|(user_id, _)| *user_id != user_id_);
-            if entry.get().is_empty() { entry.remove(); }
+            if entry.get().is_empty() {
+                entry.remove();
+            }
         }
 
         ::axiom::result::Fallible::Ok(())
@@ -219,9 +298,16 @@ impl EventRecommender for InMemoryExponentialDecayEventRecommender {
     async fn untrack_commented(
         self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid, user_id_: ::domain::Uuid,
     ) -> ::axiom::result::Fallible {
-        if let ::std::collections::hash_map::Entry::Occupied(mut entry) = self.commented_user_ids_and_timestamps_by_event_ids.write().await.entry(event_id) {
+        if let ::std::collections::hash_map::Entry::Occupied(mut entry) = self
+            .commented_user_ids_and_timestamps_by_event_ids
+            .write()
+            .await
+            .entry(event_id)
+        {
             entry.get_mut().retain(|(user_id, _)| *user_id != user_id_);
-            if entry.get().is_empty() { entry.remove(); }
+            if entry.get().is_empty() {
+                entry.remove();
+            }
         }
 
         ::axiom::result::Fallible::Ok(())
@@ -230,7 +316,10 @@ impl EventRecommender for InMemoryExponentialDecayEventRecommender {
     async fn view_recently_approved_ids(
         self: ::std::sync::Arc<Self>,
     ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::Uuid>> {
-        let mut event_ids_and_scores = self.approved_timestamps_by_event_ids.read().await
+        let mut event_ids_and_scores = self
+            .approved_timestamps_by_event_ids
+            .read()
+            .await
             .iter()
             .map(|(&event_id, &timestamp)| (event_id, self.score(timestamp)))
             .collect::<::std::vec::Vec<_>>();
@@ -248,12 +337,28 @@ impl EventRecommender for InMemoryExponentialDecayEventRecommender {
     async fn view_recently_posted_ids(
         self: ::std::sync::Arc<Self>,
     ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::Uuid>> {
-        let mut scores_by_event_ids = ::std::collections::HashMap::<_, _, self::hash::BuildHasher>::with_hasher(::core::default::Default::default());
+        let mut scores_by_event_ids = ::std::collections::HashMap::<_, _, self::hash::BuildHasher>::with_hasher(
+            ::core::default::Default::default(),
+        );
 
-        self.posted_user_ids_and_timestamps_by_event_ids.read().await.iter()
-            .map(|(&event_id, user_ids_and_timestamps)| (event_id, user_ids_and_timestamps.iter().map(|(_, timestamp)| self.score(*timestamp)).sum::<::core::primitive::f64>()))
+        self.posted_user_ids_and_timestamps_by_event_ids
+            .read()
+            .await
+            .iter()
+            .map(|(&event_id, user_ids_and_timestamps)| {
+                (
+                    event_id,
+                    user_ids_and_timestamps
+                        .iter()
+                        .map(|(_, timestamp)| self.score(*timestamp))
+                        .sum::<::core::primitive::f64>(),
+                )
+            })
             .for_each(|(event_id, scores_)| {
-                scores_by_event_ids.entry(event_id).and_modify(|scores| *scores += scores_).or_insert(scores_);
+                scores_by_event_ids
+                    .entry(event_id)
+                    .and_modify(|scores| *scores += scores_)
+                    .or_insert(scores_);
             });
 
         let mut event_ids_and_scores = scores_by_event_ids.into_iter().collect::<::std::vec::Vec<_>>();
@@ -268,17 +373,34 @@ impl EventRecommender for InMemoryExponentialDecayEventRecommender {
             .into_ok()
     }
 
-    async fn view_trending_ids(self: ::std::sync::Arc<Self>)
-        -> ::axiom::result::Fallible<::std::vec::Vec<::domain::Uuid>> {
-        let mut scores_by_event_ids = ::std::collections::HashMap::<_, _, self::hash::BuildHasher>::with_hasher(::core::default::Default::default());
+    async fn view_trending_ids(
+        self: ::std::sync::Arc<Self>,
+    ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::Uuid>> {
+        let mut scores_by_event_ids = ::std::collections::HashMap::<_, _, self::hash::BuildHasher>::with_hasher(
+            ::core::default::Default::default(),
+        );
 
-        self.posted_user_ids_and_timestamps_by_event_ids.read().await.iter()
+        self.posted_user_ids_and_timestamps_by_event_ids
+            .read()
+            .await
+            .iter()
             .chain(self.subscribed_user_ids_and_timestamps_by_event_ids.read().await.iter())
             .chain(self.reacted_user_ids_and_timestamps_by_event_ids.read().await.iter())
             .chain(self.commented_user_ids_and_timestamps_by_event_ids.read().await.iter())
-            .map(|(&event_id, user_ids_and_timestamps)| (event_id, user_ids_and_timestamps.iter().map(|(_, timestamp)| self.score(*timestamp)).sum::<::core::primitive::f64>()))
+            .map(|(&event_id, user_ids_and_timestamps)| {
+                (
+                    event_id,
+                    user_ids_and_timestamps
+                        .iter()
+                        .map(|(_, timestamp)| self.score(*timestamp))
+                        .sum::<::core::primitive::f64>(),
+                )
+            })
             .for_each(|(event_id, scores_)| {
-                scores_by_event_ids.entry(event_id).and_modify(|scores| *scores += scores_).or_insert(scores_);
+                scores_by_event_ids
+                    .entry(event_id)
+                    .and_modify(|scores| *scores += scores_)
+                    .or_insert(scores_);
             });
 
         let mut event_ids_and_scores = scores_by_event_ids.into_iter().collect::<::std::vec::Vec<_>>();
@@ -296,15 +418,32 @@ impl EventRecommender for InMemoryExponentialDecayEventRecommender {
     async fn view_personalized_ids(
         self: ::std::sync::Arc<Self>, user_id_: ::domain::Uuid,
     ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::Uuid>> {
-        let mut scores_by_event_ids = ::std::collections::HashMap::<_, _, self::hash::BuildHasher>::with_hasher(::core::default::Default::default());
+        let mut scores_by_event_ids = ::std::collections::HashMap::<_, _, self::hash::BuildHasher>::with_hasher(
+            ::core::default::Default::default(),
+        );
 
-        self.posted_user_ids_and_timestamps_by_event_ids.read().await.iter()
+        self.posted_user_ids_and_timestamps_by_event_ids
+            .read()
+            .await
+            .iter()
             .chain(self.subscribed_user_ids_and_timestamps_by_event_ids.read().await.iter())
             .chain(self.reacted_user_ids_and_timestamps_by_event_ids.read().await.iter())
             .chain(self.commented_user_ids_and_timestamps_by_event_ids.read().await.iter())
-            .map(|(&event_id, user_ids_and_timestamps)| (event_id, user_ids_and_timestamps.iter().filter(|(user_id, _)| *user_id == user_id_).map(|(_, timestamp)| self.score(*timestamp)).sum::<::core::primitive::f64>()))
+            .map(|(&event_id, user_ids_and_timestamps)| {
+                (
+                    event_id,
+                    user_ids_and_timestamps
+                        .iter()
+                        .filter(|(user_id, _)| *user_id == user_id_)
+                        .map(|(_, timestamp)| self.score(*timestamp))
+                        .sum::<::core::primitive::f64>(),
+                )
+            })
             .for_each(|(event_id, scores_)| {
-                scores_by_event_ids.entry(event_id).and_modify(|scores| *scores += scores_).or_insert(scores_);
+                scores_by_event_ids
+                    .entry(event_id)
+                    .and_modify(|scores| *scores += scores_)
+                    .or_insert(scores_);
             });
 
         let mut event_ids_and_scores = scores_by_event_ids.into_iter().collect::<::std::vec::Vec<_>>();
@@ -322,7 +461,8 @@ impl EventRecommender for InMemoryExponentialDecayEventRecommender {
 
 impl InMemoryExponentialDecayEventRecommender {
     fn score(&self, timestamp: ::axiom::time::Timestamp) -> ::core::primitive::f64 {
-        let secs = ::axiom::time::Timestamp::now().signed_duration_since(timestamp).num_seconds() as ::core::primitive::f64;
+        let secs =
+            ::axiom::time::Timestamp::now().signed_duration_since(timestamp).num_seconds() as ::core::primitive::f64;
 
         (-self.λ * secs).exp()
     }
@@ -340,7 +480,9 @@ impl EventExporter for GenericEventExporter {
 
         writer.write_record(["id", "statuses", "name", "description", "categories", "location", "image-url"])?;
 
-        ::std::sync::Arc::clone(&self.event_repository).view().await?
+        ::std::sync::Arc::clone(&self.event_repository)
+            .view()
+            .await?
             .into_iter()
             .map(::core::convert::Into::<self::serde::Event>::into)
             .try_for_each(|event| writer.serialize(event))?;
@@ -351,9 +493,12 @@ impl EventExporter for GenericEventExporter {
     }
 
     async fn export_as_json(self: ::std::sync::Arc<Self>) -> ::axiom::result::Fallible<::axiom::bytes::Bytes> {
-        let events = ::std::sync::Arc::clone(&self.event_repository).view().await?
+        let events = ::std::sync::Arc::clone(&self.event_repository)
+            .view()
+            .await?
             .into_iter()
-            .map(::core::convert::Into::<self::serde::Event>::into).collect::<::std::vec::Vec<_>>();
+            .map(::core::convert::Into::<self::serde::Event>::into)
+            .collect::<::std::vec::Vec<_>>();
 
         ::serde_json::to_string(&events)?.into_t::<::axiom::bytes::Bytes>().into_ok()
     }
@@ -362,18 +507,33 @@ impl EventExporter for GenericEventExporter {
 #[derive(::bon::Builder)]
 pub struct InMemoryEventRegistrationRepository {
     #[builder(default, with = |value: ::std::collections::BTreeMap<::core::cmp::Reverse<::domain::Uuid>, ::domain::EventRegistration>| ::tokio::sync::RwLock::new(value))]
-    registrations_by_ids: ::tokio::sync::RwLock<::std::collections::BTreeMap<::core::cmp::Reverse<::domain::Uuid>, ::domain::EventRegistration>>,
+    registrations_by_ids: ::tokio::sync::RwLock<
+        ::std::collections::BTreeMap<::core::cmp::Reverse<::domain::Uuid>, ::domain::EventRegistration>,
+    >,
 
     #[builder(default, with = |value: ::std::collections::HashMap<(::domain::Uuid, ::domain::Uuid), ::domain::EventRegistration, self::hash::BuildHasher>| ::tokio::sync::RwLock::new(value))]
-    registrations_by_event_and_volunteer_ids: ::tokio::sync::RwLock<::std::collections::HashMap<(::domain::Uuid, ::domain::Uuid), ::domain::EventRegistration, self::hash::BuildHasher>>,
+    registrations_by_event_and_volunteer_ids: ::tokio::sync::RwLock<
+        ::std::collections::HashMap<
+            (::domain::Uuid, ::domain::Uuid),
+            ::domain::EventRegistration,
+            self::hash::BuildHasher,
+        >,
+    >,
 }
 
 #[async_trait]
 impl EventRegistrationRepository for InMemoryEventRegistrationRepository {
-    async fn save(self: ::std::sync::Arc<Self>, registration: ::domain::EventRegistration)
-        -> ::axiom::result::Fallible {
-        self.registrations_by_ids.write().await.insert(::core::cmp::Reverse(registration.id), registration.clone());
-        self.registrations_by_event_and_volunteer_ids.write().await.insert((registration.event_id, registration.volunteer_id), registration.clone());
+    async fn save(
+        self: ::std::sync::Arc<Self>, registration: ::domain::EventRegistration,
+    ) -> ::axiom::result::Fallible {
+        self.registrations_by_ids
+            .write()
+            .await
+            .insert(::core::cmp::Reverse(registration.id), registration.clone());
+        self.registrations_by_event_and_volunteer_ids
+            .write()
+            .await
+            .insert((registration.event_id, registration.volunteer_id), registration.clone());
 
         ::axiom::result::Fallible::Ok(())
     }
@@ -381,19 +541,32 @@ impl EventRegistrationRepository for InMemoryEventRegistrationRepository {
     async fn get_by_id(
         self: ::std::sync::Arc<Self>, id: ::domain::Uuid,
     ) -> ::axiom::result::Fallible<::core::option::Option<::domain::EventRegistration>> {
-        self.registrations_by_ids.read().await.get(&::core::cmp::Reverse(id)).cloned().into_ok()
+        self.registrations_by_ids
+            .read()
+            .await
+            .get(&::core::cmp::Reverse(id))
+            .cloned()
+            .into_ok()
     }
 
     async fn get_by_event_and_volunteer_id(
         self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid, user_id: ::domain::Uuid,
     ) -> ::axiom::result::Fallible<::core::option::Option<::domain::EventRegistration>> {
-        self.registrations_by_event_and_volunteer_ids.read().await.get(&(event_id, user_id)).cloned().into_ok()
+        self.registrations_by_event_and_volunteer_ids
+            .read()
+            .await
+            .get(&(event_id, user_id))
+            .cloned()
+            .into_ok()
     }
 
     async fn view_by_event_id(
         self: ::std::sync::Arc<Self>, event_id_: ::domain::Uuid,
     ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::EventRegistration>> {
-        self.registrations_by_event_and_volunteer_ids.read().await.iter()
+        self.registrations_by_event_and_volunteer_ids
+            .read()
+            .await
+            .iter()
             .filter(|((event_id, _), _)| *event_id == event_id_)
             .map(|(_, event_registration)| event_registration)
             .cloned()
@@ -404,7 +577,10 @@ impl EventRegistrationRepository for InMemoryEventRegistrationRepository {
     async fn view_by_volunteer_id(
         self: ::std::sync::Arc<Self>, volunteer_id_: ::domain::Uuid,
     ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::EventRegistration>> {
-        self.registrations_by_event_and_volunteer_ids.read().await.iter()
+        self.registrations_by_event_and_volunteer_ids
+            .read()
+            .await
+            .iter()
             .filter(|((_, volunteer_id), _)| *volunteer_id == volunteer_id_)
             .map(|(_, event_registration)| event_registration)
             .cloned()
@@ -416,13 +592,17 @@ impl EventRegistrationRepository for InMemoryEventRegistrationRepository {
 #[derive(::bon::Builder)]
 pub struct InMemoryEventPostRepository {
     #[builder(default, with = |value: ::std::collections::BTreeMap<::core::cmp::Reverse<::domain::Uuid>, ::domain::EventPost>| ::tokio::sync::RwLock::new(value))]
-    event_posts_by_ids: ::tokio::sync::RwLock<::std::collections::BTreeMap<::core::cmp::Reverse<::domain::Uuid>, ::domain::EventPost>>,
+    event_posts_by_ids:
+        ::tokio::sync::RwLock<::std::collections::BTreeMap<::core::cmp::Reverse<::domain::Uuid>, ::domain::EventPost>>,
 }
 
 #[async_trait]
 impl EventPostRepository for InMemoryEventPostRepository {
     async fn save(self: ::std::sync::Arc<Self>, post: ::domain::EventPost) -> ::axiom::result::Fallible {
-        self.event_posts_by_ids.write().await.insert(::core::cmp::Reverse(post.id), post.clone());
+        self.event_posts_by_ids
+            .write()
+            .await
+            .insert(::core::cmp::Reverse(post.id), post.clone());
 
         ::axiom::result::Fallible::Ok(())
     }
@@ -436,13 +616,21 @@ impl EventPostRepository for InMemoryEventPostRepository {
     async fn get_by_id(
         self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid,
     ) -> ::axiom::result::Fallible<::core::option::Option<::domain::EventPost>> {
-        self.event_posts_by_ids.read().await.get(&::core::cmp::Reverse(post_id)).cloned().into_ok()
+        self.event_posts_by_ids
+            .read()
+            .await
+            .get(&::core::cmp::Reverse(post_id))
+            .cloned()
+            .into_ok()
     }
 
     async fn view_by_event_id(
         self: ::std::sync::Arc<Self>, event_id_: ::domain::Uuid,
     ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::EventPost>> {
-        self.event_posts_by_ids.read().await.values()
+        self.event_posts_by_ids
+            .read()
+            .await
+            .values()
             .filter(|&&::domain::EventPost { event_id, .. }| event_id == event_id_)
             .cloned()
             .collect::<::std::vec::Vec<_>>()
@@ -453,24 +641,41 @@ impl EventPostRepository for InMemoryEventPostRepository {
 #[derive(::bon::Builder)]
 pub struct InMemoryEventPostReactionRepository {
     #[builder(default, with = |value: ::std::collections::BTreeMap<::core::cmp::Reverse<::domain::Uuid>, ::domain::EventPostReaction>| ::tokio::sync::RwLock::new(value))]
-    reactions_by_ids: ::tokio::sync::RwLock<::std::collections::BTreeMap<::core::cmp::Reverse<::domain::Uuid>, ::domain::EventPostReaction>>,
+    reactions_by_ids: ::tokio::sync::RwLock<
+        ::std::collections::BTreeMap<::core::cmp::Reverse<::domain::Uuid>, ::domain::EventPostReaction>,
+    >,
 
     #[builder(default, with = |value: ::std::collections::HashMap<(::domain::Uuid, ::domain::Uuid), ::domain::EventPostReaction, self::hash::BuildHasher>| ::tokio::sync::RwLock::new(value))]
-    reactions_by_post_and_user_ids: ::tokio::sync::RwLock<::std::collections::HashMap<(::domain::Uuid, ::domain::Uuid), ::domain::EventPostReaction, self::hash::BuildHasher>>,
+    reactions_by_post_and_user_ids: ::tokio::sync::RwLock<
+        ::std::collections::HashMap<
+            (::domain::Uuid, ::domain::Uuid),
+            ::domain::EventPostReaction,
+            self::hash::BuildHasher,
+        >,
+    >,
 }
 
 #[async_trait]
 impl EventPostReactionRepository for InMemoryEventPostReactionRepository {
     async fn save(self: ::std::sync::Arc<Self>, reaction: ::domain::EventPostReaction) -> ::axiom::result::Fallible {
-        self.reactions_by_ids.write().await.insert(::core::cmp::Reverse(reaction.id), reaction.clone());
-        self.reactions_by_post_and_user_ids.write().await.insert((reaction.post_id, reaction.author_id), reaction.clone());
+        self.reactions_by_ids
+            .write()
+            .await
+            .insert(::core::cmp::Reverse(reaction.id), reaction.clone());
+        self.reactions_by_post_and_user_ids
+            .write()
+            .await
+            .insert((reaction.post_id, reaction.author_id), reaction.clone());
 
         ::axiom::result::Fallible::Ok(())
     }
 
     async fn remove(self: ::std::sync::Arc<Self>, reaction_id: ::domain::Uuid) -> ::axiom::result::Fallible {
         self.reactions_by_ids.write().await.remove(&::core::cmp::Reverse(reaction_id));
-        self.reactions_by_post_and_user_ids.write().await.remove(&(reaction_id, reaction_id));
+        self.reactions_by_post_and_user_ids
+            .write()
+            .await
+            .remove(&(reaction_id, reaction_id));
 
         ::axiom::result::Fallible::Ok(())
     }
@@ -478,37 +683,58 @@ impl EventPostReactionRepository for InMemoryEventPostReactionRepository {
     async fn get_by_id(
         self: ::std::sync::Arc<Self>, reaction_id: ::domain::Uuid,
     ) -> ::axiom::result::Fallible<::core::option::Option<::domain::EventPostReaction>> {
-        self.reactions_by_ids.read().await.get(&::core::cmp::Reverse(reaction_id)).cloned().into_ok()
+        self.reactions_by_ids
+            .read()
+            .await
+            .get(&::core::cmp::Reverse(reaction_id))
+            .cloned()
+            .into_ok()
     }
 
     async fn get_by_post_and_user_id(
         self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid, user_id: ::domain::Uuid,
     ) -> ::axiom::result::Fallible<::core::option::Option<::domain::EventPostReaction>> {
-        self.reactions_by_post_and_user_ids.read().await.get(&(post_id, user_id)).cloned().into_ok()
+        self.reactions_by_post_and_user_ids
+            .read()
+            .await
+            .get(&(post_id, user_id))
+            .cloned()
+            .into_ok()
     }
 
     async fn contains_post_and_user_id(
         self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid, user_id: ::domain::Uuid,
     ) -> ::axiom::result::Fallible<bool> {
-        self.reactions_by_post_and_user_ids.read().await.contains_key(&(post_id, user_id)).into_ok()
+        self.reactions_by_post_and_user_ids
+            .read()
+            .await
+            .contains_key(&(post_id, user_id))
+            .into_ok()
     }
 
     async fn view_by_post_id(
         self: ::std::sync::Arc<Self>, post_id_: ::domain::Uuid,
     ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::EventPostReaction>> {
-        self.reactions_by_ids.read().await.values()
+        self.reactions_by_ids
+            .read()
+            .await
+            .values()
             .filter(|&&::domain::EventPostReaction { post_id, .. }| post_id == post_id_)
             .cloned()
             .collect::<::std::vec::Vec<_>>()
             .into_ok()
     }
 
-    async fn count_by_post_id(self: ::std::sync::Arc<Self>, post_id_: ::domain::Uuid) -> ::axiom::result::Fallible<::core::primitive::u64> {
-        (
-            self.reactions_by_ids.read().await.values()
+    async fn count_by_post_id(
+        self: ::std::sync::Arc<Self>, post_id_: ::domain::Uuid,
+    ) -> ::axiom::result::Fallible<::core::primitive::u64> {
+        (self
+            .reactions_by_ids
+            .read()
+            .await
+            .values()
             .filter(|&&::domain::EventPostReaction { post_id, .. }| post_id == post_id_)
-            .count() as ::core::primitive::u64
-        )
+            .count() as ::core::primitive::u64)
             .into_ok()
     }
 }
@@ -516,24 +742,41 @@ impl EventPostReactionRepository for InMemoryEventPostReactionRepository {
 #[derive(::bon::Builder)]
 pub struct InMemoryEventPostCommentRepository {
     #[builder(default, with = |value: ::std::collections::BTreeMap<::core::cmp::Reverse<::domain::Uuid>, ::domain::EventPostComment>| ::tokio::sync::RwLock::new(value))]
-    comments_by_ids: ::tokio::sync::RwLock<::std::collections::BTreeMap<::core::cmp::Reverse<::domain::Uuid>, ::domain::EventPostComment>>,
+    comments_by_ids: ::tokio::sync::RwLock<
+        ::std::collections::BTreeMap<::core::cmp::Reverse<::domain::Uuid>, ::domain::EventPostComment>,
+    >,
 
     #[builder(default, with = |value: ::std::collections::HashMap<(::domain::Uuid, ::domain::Uuid), ::domain::EventPostComment, self::hash::BuildHasher>| ::tokio::sync::RwLock::new(value))]
-    comments_by_post_and_user_ids: ::tokio::sync::RwLock<::std::collections::HashMap<(::domain::Uuid, ::domain::Uuid), ::domain::EventPostComment, self::hash::BuildHasher>>,
+    comments_by_post_and_user_ids: ::tokio::sync::RwLock<
+        ::std::collections::HashMap<
+            (::domain::Uuid, ::domain::Uuid),
+            ::domain::EventPostComment,
+            self::hash::BuildHasher,
+        >,
+    >,
 }
 
 #[async_trait]
 impl EventPostCommentRepository for InMemoryEventPostCommentRepository {
     async fn save(self: ::std::sync::Arc<Self>, comment: ::domain::EventPostComment) -> ::axiom::result::Fallible {
-        self.comments_by_ids.write().await.insert(::core::cmp::Reverse(comment.id), comment.clone());
-        self.comments_by_post_and_user_ids.write().await.insert((comment.post_id, comment.author_id), comment.clone());
+        self.comments_by_ids
+            .write()
+            .await
+            .insert(::core::cmp::Reverse(comment.id), comment.clone());
+        self.comments_by_post_and_user_ids
+            .write()
+            .await
+            .insert((comment.post_id, comment.author_id), comment.clone());
 
         ::axiom::result::Fallible::Ok(())
     }
 
     async fn remove(self: ::std::sync::Arc<Self>, comment_id: ::domain::Uuid) -> ::axiom::result::Fallible {
         self.comments_by_ids.write().await.remove(&::core::cmp::Reverse(comment_id));
-        self.comments_by_post_and_user_ids.write().await.remove(&(comment_id, comment_id));
+        self.comments_by_post_and_user_ids
+            .write()
+            .await
+            .remove(&(comment_id, comment_id));
 
         ::axiom::result::Fallible::Ok(())
     }
@@ -541,18 +784,32 @@ impl EventPostCommentRepository for InMemoryEventPostCommentRepository {
     async fn get_by_id(
         self: ::std::sync::Arc<Self>, comment_id: ::domain::Uuid,
     ) -> ::axiom::result::Fallible<::core::option::Option<::domain::EventPostComment>> {
-        self.comments_by_ids.read().await.get(&::core::cmp::Reverse(comment_id)).cloned().into_ok()
+        self.comments_by_ids
+            .read()
+            .await
+            .get(&::core::cmp::Reverse(comment_id))
+            .cloned()
+            .into_ok()
     }
 
     async fn contains_id(self: ::std::sync::Arc<Self>, comment_id: ::domain::Uuid) -> ::axiom::result::Fallible<bool> {
-        self.comments_by_ids.read().await.contains_key(&::core::cmp::Reverse(comment_id)).into_ok()
+        self.comments_by_ids
+            .read()
+            .await
+            .contains_key(&::core::cmp::Reverse(comment_id))
+            .into_ok()
     }
 
     async fn view_by_post_and_user_id(
         self: ::std::sync::Arc<Self>, post_id_: ::domain::Uuid, user_id_: ::domain::Uuid,
     ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::EventPostComment>> {
-        self.comments_by_post_and_user_ids.read().await.values()
-            .filter(|&&::domain::EventPostComment { post_id, author_id, .. }| post_id == post_id_ && author_id == user_id_)
+        self.comments_by_post_and_user_ids
+            .read()
+            .await
+            .values()
+            .filter(|&&::domain::EventPostComment { post_id, author_id, .. }| {
+                post_id == post_id_ && author_id == user_id_
+            })
             .cloned()
             .collect::<::std::vec::Vec<_>>()
             .into_ok()
@@ -561,19 +818,26 @@ impl EventPostCommentRepository for InMemoryEventPostCommentRepository {
     async fn view_by_post_id(
         self: ::std::sync::Arc<Self>, post_id_: ::domain::Uuid,
     ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::EventPostComment>> {
-        self.comments_by_ids.read().await.values()
+        self.comments_by_ids
+            .read()
+            .await
+            .values()
             .filter(|&&::domain::EventPostComment { post_id, .. }| post_id == post_id_)
             .cloned()
             .collect::<::std::vec::Vec<_>>()
             .into_ok()
     }
 
-    async fn count_by_post_id(self: ::std::sync::Arc<Self>, post_id_: ::domain::Uuid) -> ::axiom::result::Fallible<::core::primitive::u64> {
-        (
-            self.comments_by_ids.read().await.values()
+    async fn count_by_post_id(
+        self: ::std::sync::Arc<Self>, post_id_: ::domain::Uuid,
+    ) -> ::axiom::result::Fallible<::core::primitive::u64> {
+        (self
+            .comments_by_ids
+            .read()
+            .await
+            .values()
             .filter(|&&::domain::EventPostComment { post_id, .. }| post_id == post_id_)
-            .count() as ::core::primitive::u64
-        )
+            .count() as ::core::primitive::u64)
             .into_ok()
     }
 }
@@ -585,10 +849,12 @@ pub struct InMemoryUserRepository {
         ::tokio::sync::RwLock<::std::collections::BTreeMap<::core::cmp::Reverse<::domain::Uuid>, ::domain::User>>,
 
     #[builder(default, with = |value: ::std::collections::HashMap<::domain::Username, ::domain::User, self::hash::BuildHasher>| ::tokio::sync::RwLock::new(value))]
-    users_by_usernames: ::tokio::sync::RwLock<::std::collections::HashMap<::domain::Username, ::domain::User, self::hash::BuildHasher>>,
+    users_by_usernames:
+        ::tokio::sync::RwLock<::std::collections::HashMap<::domain::Username, ::domain::User, self::hash::BuildHasher>>,
 
     #[builder(default, with = |value: ::std::collections::HashMap<::domain::Email, ::domain::User, self::hash::BuildHasher>| ::tokio::sync::RwLock::new(value))]
-    users_by_emails: ::tokio::sync::RwLock<::std::collections::HashMap<::domain::Email, ::domain::User, self::hash::BuildHasher>>,
+    users_by_emails:
+        ::tokio::sync::RwLock<::std::collections::HashMap<::domain::Email, ::domain::User, self::hash::BuildHasher>>,
 }
 
 #[async_trait]
@@ -598,7 +864,10 @@ impl UserRepository for InMemoryUserRepository {
             .write()
             .await
             .insert(::core::cmp::Reverse(user.id), user.clone());
-        self.users_by_usernames.write().await.insert(user.username.clone(), user.clone());
+        self.users_by_usernames
+            .write()
+            .await
+            .insert(user.username.clone(), user.clone());
         self.users_by_emails.write().await.insert(user.email.clone(), user.clone());
 
         ::axiom::result::Fallible::Ok(())
@@ -607,7 +876,12 @@ impl UserRepository for InMemoryUserRepository {
     async fn get_by_id(
         self: ::std::sync::Arc<Self>, user_id: ::domain::Uuid,
     ) -> ::axiom::result::Fallible<::core::option::Option<::domain::User>> {
-        self.users_by_ids.read().await.get(&::core::cmp::Reverse(user_id)).cloned().into_ok()
+        self.users_by_ids
+            .read()
+            .await
+            .get(&::core::cmp::Reverse(user_id))
+            .cloned()
+            .into_ok()
     }
 
     async fn get_by_username(
@@ -653,7 +927,10 @@ impl UserRepository for InMemoryUserRepository {
             }
         };
 
-        let filter_statuses = filter.statuses.as_ref().map(|statuses| statuses.iter().collect::<::std::collections::HashSet<_>>());
+        let filter_statuses = filter
+            .statuses
+            .as_ref()
+            .map(|statuses| statuses.iter().collect::<::std::collections::HashSet<_>>());
 
         let apply_filter_statuses = move |user: &&::domain::User| {
             if let ::core::option::Option::Some(ref statuses) = filter_statuses {
@@ -663,7 +940,10 @@ impl UserRepository for InMemoryUserRepository {
             }
         };
 
-        let filter_roles = filter.roles.as_ref().map(|roles| roles.iter().collect::<::std::collections::HashSet<_>>());
+        let filter_roles = filter
+            .roles
+            .as_ref()
+            .map(|roles| roles.iter().collect::<::std::collections::HashSet<_>>());
 
         let apply_filter_roles = move |user: &&::domain::User| {
             if let ::core::option::Option::Some(ref roles) = filter_roles {
@@ -673,9 +953,14 @@ impl UserRepository for InMemoryUserRepository {
             }
         };
 
-        let apply_filter = move |user: &&::domain::User| apply_filter_query(user) && apply_filter_statuses(user) && apply_filter_roles(user);
+        let apply_filter = move |user: &&::domain::User| {
+            apply_filter_query(user) && apply_filter_statuses(user) && apply_filter_roles(user)
+        };
 
-        self.users_by_ids.read().await.values()
+        self.users_by_ids
+            .read()
+            .await
+            .values()
             .filter(apply_filter)
             .cloned()
             .collect::<::std::vec::Vec<_>>()
@@ -683,7 +968,10 @@ impl UserRepository for InMemoryUserRepository {
     }
 
     async fn view(self: ::std::sync::Arc<Self>) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::User>> {
-        self.users_by_ids.read().await.values()
+        self.users_by_ids
+            .read()
+            .await
+            .values()
             .cloned()
             .collect::<::std::vec::Vec<_>>()
             .into_ok()
@@ -697,13 +985,18 @@ pub struct GenericUserExporter {
 
 #[async_trait]
 impl UserExporter for GenericUserExporter {
-    async fn export_volunteers_as_csv(self: ::std::sync::Arc<Self>) -> ::axiom::result::Fallible<::axiom::bytes::Bytes> {
+    async fn export_volunteers_as_csv(
+        self: ::std::sync::Arc<Self>,
+    ) -> ::axiom::result::Fallible<::axiom::bytes::Bytes> {
         let mut writer = ::csv::Writer::from_writer(::std::vec::Vec::new());
 
         writer.write_record(["id", "role", "statuses", "username", "email", "full-name", "avatar-url"])?;
 
-        ::std::sync::Arc::clone(&self.user_repository).view().await?
+        ::std::sync::Arc::clone(&self.user_repository)
+            .view()
+            .await?
             .into_iter()
+            .filter(|::domain::User { role, .. }| ::core::matches!(role, ::domain::UserRole::Volunteer))
             .map(::core::convert::Into::<self::serde::User>::into)
             .try_for_each(|user| writer.serialize(user))?;
 
@@ -712,10 +1005,16 @@ impl UserExporter for GenericUserExporter {
         writer.into_inner()?.into_t::<::axiom::bytes::Bytes>().into_ok()
     }
 
-    async fn export_volunteers_as_json(self: ::std::sync::Arc<Self>) -> ::axiom::result::Fallible<::axiom::bytes::Bytes> {
-        let users = ::std::sync::Arc::clone(&self.user_repository).view().await?
+    async fn export_volunteers_as_json(
+        self: ::std::sync::Arc<Self>,
+    ) -> ::axiom::result::Fallible<::axiom::bytes::Bytes> {
+        let users = ::std::sync::Arc::clone(&self.user_repository)
+            .view()
+            .await?
             .into_iter()
-            .map(::core::convert::Into::<self::serde::User>::into).collect::<::std::vec::Vec<_>>();
+            .filter(|::domain::User { role, .. }| ::core::matches!(role, ::domain::UserRole::Volunteer))
+            .map(::core::convert::Into::<self::serde::User>::into)
+            .collect::<::std::vec::Vec<_>>();
 
         ::serde_json::to_string(&users)?.into_t::<::axiom::bytes::Bytes>().into_ok()
     }
@@ -723,7 +1022,7 @@ impl UserExporter for GenericUserExporter {
 
 #[derive(::bon::Builder)]
 pub struct MockMediaRepository {
-    #[builder(default = "https://i.kym-cdn.com/photos/images/original/003/136/289/782.jpg", into)]
+    #[builder(into)]
     url: ::axiom::string::String,
 }
 
@@ -733,7 +1032,9 @@ impl MediaRepository for MockMediaRepository {
         true.into_ok()
     }
 
-    async fn save(self: ::std::sync::Arc<Self>, _bytes: ::axiom::bytes::Bytes) -> ::axiom::result::Fallible<::axiom::string::String> {
+    async fn save(
+        self: ::std::sync::Arc<Self>, _bytes: ::axiom::bytes::Bytes,
+    ) -> ::axiom::result::Fallible<::axiom::string::String> {
         self.url.clone().into_ok()
     }
 
@@ -776,7 +1077,12 @@ impl UuidCodec for LowerUrnUuidCodec {
     ) -> ::axiom::result::Fallible<::axiom::string::String> {
         let mut buffer = [0u8; 45];
 
-        ::uuid::Uuid::from_bytes(*uuid).as_urn().encode_lower(&mut buffer).to_string().into_t::<::axiom::string::String>().into_ok()
+        ::uuid::Uuid::from_bytes(*uuid)
+            .as_urn()
+            .encode_lower(&mut buffer)
+            .to_string()
+            .into_t::<::axiom::string::String>()
+            .into_ok()
     }
 
     async fn parse(
@@ -807,7 +1113,10 @@ impl TimestampCodec for Rfc2822TimestampCodec {
     async fn parse(
         self: ::std::sync::Arc<Self>, timestamp: ::axiom::string::String,
     ) -> ::axiom::result::Fallible<::axiom::time::Timestamp> {
-        ::chrono::DateTime::parse_from_rfc2822(&timestamp)?.with_timezone(&::chrono::Utc).into_t::<::axiom::time::Timestamp>().into_ok()
+        ::chrono::DateTime::parse_from_rfc2822(&timestamp)?
+            .with_timezone(&::chrono::Utc)
+            .into_t::<::axiom::time::Timestamp>()
+            .into_ok()
     }
 }
 
@@ -826,13 +1135,20 @@ where
     ) -> ::axiom::result::Fallible<::axiom::string::String> {
         use ::jwt::SignWithKey as _;
 
-        payload.into_t::<self::serde::AuthTokenPayload>().sign_with_key(&self.key)?.into_t::<::axiom::string::String>().into_ok()
+        payload
+            .into_t::<self::serde::AuthTokenPayload>()
+            .sign_with_key(&self.key)?
+            .into_t::<::axiom::string::String>()
+            .into_ok()
     }
 
     async fn get_payload(
         self: ::std::sync::Arc<Self>, token: ::axiom::string::String,
     ) -> ::axiom::result::Fallible<::core::option::Option<::use_cases::gateways::AuthTokenPayload>> {
-        ::jwt::VerifyWithKey::<self::serde::AuthTokenPayload>::verify_with_key(&*token, &self.key).ok().map(::core::convert::Into::into).into_ok()
+        ::jwt::VerifyWithKey::<self::serde::AuthTokenPayload>::verify_with_key(&*token, &self.key)
+            .ok()
+            .map(::core::convert::Into::into)
+            .into_ok()
     }
 }
 
@@ -854,7 +1170,11 @@ impl<'pepper> PasswordHasher for Argon2PasswordHasher<'pepper> {
         // later
         let salt =
             ::argon2::password_hash::SaltString::try_from_rng(&mut ::argon2::password_hash::rand_core::OsRng).unwrap();
-        self.context.hash_password(password.as_bytes(), &salt)?.to_string().into_t::<::axiom::string::String>().into_ok()
+        self.context
+            .hash_password(password.as_bytes(), &salt)?
+            .to_string()
+            .into_t::<::axiom::string::String>()
+            .into_ok()
     }
 
     async fn verify(
@@ -934,10 +1254,22 @@ mod serde {
         fn from(value: ::domain::Event) -> Self {
             Self::builder()
                 .id(value.id)
-                .statuses(value.statuses.into_iter().map(::core::convert::Into::into).collect::<::std::vec::Vec<_>>())
+                .statuses(
+                    value
+                        .statuses
+                        .into_iter()
+                        .map(::core::convert::Into::into)
+                        .collect::<::std::vec::Vec<_>>(),
+                )
                 .name(value.name)
                 .description(value.description)
-                .categories(value.categories.into_iter().map(::core::convert::Into::into).collect::<::std::vec::Vec<_>>())
+                .categories(
+                    value
+                        .categories
+                        .into_iter()
+                        .map(::core::convert::Into::into)
+                        .collect::<::std::vec::Vec<_>>(),
+                )
                 .location(value.location)
                 .image_url(value.image_url)
                 .build()
@@ -968,17 +1300,11 @@ mod serde {
     impl ::core::convert::From<::domain::EventStatus> for EventStatus {
         fn from(value: ::domain::EventStatus) -> Self {
             match value {
-                ::domain::EventStatus::Created {
-                    created_by_manager_id,
-                    created_at,
-                } => Self::Created {
+                ::domain::EventStatus::Created { created_by_manager_id, created_at } => Self::Created {
                     created_by_manager_id: created_by_manager_id.into(),
                     created_at,
                 },
-                ::domain::EventStatus::Updated {
-                    updated_by_manager_id,
-                    updated_at,
-                } => Self::Updated {
+                ::domain::EventStatus::Updated { updated_by_manager_id, updated_at } => Self::Updated {
                     updated_by_manager_id: updated_by_manager_id.into(),
                     updated_at,
                 },
@@ -1003,17 +1329,11 @@ mod serde {
     impl ::core::convert::From<EventStatus> for ::domain::EventStatus {
         fn from(value: EventStatus) -> Self {
             match value {
-                EventStatus::Created {
-                    created_by_manager_id,
-                    created_at,
-                } => Self::Created {
+                EventStatus::Created { created_by_manager_id, created_at } => Self::Created {
                     created_by_manager_id: created_by_manager_id.into(),
                     created_at,
                 },
-                EventStatus::Updated {
-                    updated_by_manager_id,
-                    updated_at,
-                } => Self::Updated {
+                EventStatus::Updated { updated_by_manager_id, updated_at } => Self::Updated {
                     updated_by_manager_id: updated_by_manager_id.into(),
                     updated_at,
                 },
@@ -1057,7 +1377,13 @@ mod serde {
             Self::builder()
                 .id(value.id)
                 .role(value.role)
-                .statuses(value.statuses.into_iter().map(::core::convert::Into::into).collect::<::std::vec::Vec<_>>())
+                .statuses(
+                    value
+                        .statuses
+                        .into_iter()
+                        .map(::core::convert::Into::into)
+                        .collect::<::std::vec::Vec<_>>(),
+                )
                 .username(value.username)
                 .email(value.email)
                 .full_name(value.full_name)
@@ -1198,8 +1524,7 @@ mod string {
     }
 
     impl StringSliceExt for str {
-        fn is_subsequence(&self, needle: &str) -> bool
-        {
+        fn is_subsequence(&self, needle: &str) -> bool {
             let mut heystack = self.chars();
 
             for needle_chr in needle.chars() {

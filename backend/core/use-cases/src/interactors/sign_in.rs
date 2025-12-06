@@ -10,8 +10,7 @@ pub struct SignInInteractor {
 
     user_repository: ::std::sync::Arc<dyn UserRepository + ::core::marker::Send + ::core::marker::Sync>,
 
-    auth_token_generator:
-        ::std::sync::Arc<dyn AuthTokenGenerator + ::core::marker::Send + ::core::marker::Sync>,
+    auth_token_generator: ::std::sync::Arc<dyn AuthTokenGenerator + ::core::marker::Send + ::core::marker::Sync>,
     password_hasher: ::std::sync::Arc<dyn PasswordHasher + ::core::marker::Send + ::core::marker::Sync>,
 }
 
@@ -23,9 +22,7 @@ impl SignInBoundary for SignInInteractor {
         let user = if let ::core::result::Result::Ok(username) =
             ::domain::Username::try_from(request.username_or_email.clone())
         {
-            let user = ::std::sync::Arc::clone(&self.user_repository)
-                .get_by_username(username)
-                .await?;
+            let user = ::std::sync::Arc::clone(&self.user_repository).get_by_username(username).await?;
 
             if ::core::matches!(user, ::core::option::Option::None) {
                 errors.push(ErrResponse::UsernameNotFound {
@@ -34,20 +31,14 @@ impl SignInBoundary for SignInInteractor {
             }
 
             user
-
         } else if let ::core::result::Result::Ok(email) = ::domain::Email::try_from(request.username_or_email.clone()) {
-            let user = ::std::sync::Arc::clone(&self.user_repository)
-                .get_by_email(email)
-                .await?;
+            let user = ::std::sync::Arc::clone(&self.user_repository).get_by_email(email).await?;
 
             if ::core::matches!(user, ::core::option::Option::None) {
-                errors.push(ErrResponse::EmailNotFound {
-                    email: request.username_or_email,
-                });
+                errors.push(ErrResponse::EmailNotFound { email: request.username_or_email });
             }
-            
-            user
 
+            user
         } else {
             errors.push(ErrResponse::UsernameOrEmailInvalid {
                 username_or_email: request.username_or_email.clone(),

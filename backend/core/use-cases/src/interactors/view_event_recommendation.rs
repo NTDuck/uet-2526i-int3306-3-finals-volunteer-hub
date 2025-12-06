@@ -12,15 +12,12 @@ pub struct ViewEventRecommendationInteractor {
 
     uuid_codec: ::std::sync::Arc<dyn UuidCodec + ::core::marker::Send + ::core::marker::Sync>,
     timestamp_codec: ::std::sync::Arc<dyn TimestampCodec + ::core::marker::Send + ::core::marker::Sync>,
-    auth_token_generator:
-        ::std::sync::Arc<dyn AuthTokenGenerator + ::core::marker::Send + ::core::marker::Sync>,
+    auth_token_generator: ::std::sync::Arc<dyn AuthTokenGenerator + ::core::marker::Send + ::core::marker::Sync>,
 }
 
 #[async_trait]
 impl ViewEventRecommendationBoundary for ViewEventRecommendationInteractor {
-    async fn apply(
-        self: ::std::sync::Arc<Self>, request: Request,
-    ) -> ::axiom::result::Fallible<Response> {
+    async fn apply(self: ::std::sync::Arc<Self>, request: Request) -> ::axiom::result::Fallible<Response> {
         let actor_id = match ::std::sync::Arc::clone(&self.auth_token_generator)
             .get_payload(request.token)
             .await?
@@ -45,7 +42,9 @@ impl ViewEventRecommendationBoundary for ViewEventRecommendationInteractor {
                     .view_recently_approved_ids()
                     .await?,
             RecommendationType::RecentlyPosted =>
-                ::std::sync::Arc::clone(&self.event_recommender).view_recently_posted_ids().await?,
+                ::std::sync::Arc::clone(&self.event_recommender)
+                    .view_recently_posted_ids()
+                    .await?,
             RecommendationType::Trending =>
                 ::std::sync::Arc::clone(&self.event_recommender).view_trending_ids().await?,
             RecommendationType::Personalized =>
@@ -59,9 +58,7 @@ impl ViewEventRecommendationBoundary for ViewEventRecommendationInteractor {
             .then(|event_id| {
                 let event_repository = ::std::sync::Arc::clone(&self.event_repository);
 
-                async move {
-                    ::std::sync::Arc::clone(&event_repository).get_by_id(event_id).await
-                }
+                async move { ::std::sync::Arc::clone(&event_repository).get_by_id(event_id).await }
             })
             .filter_map(|transposable| async move { transposable.transpose() })
             .and_then(|event| {

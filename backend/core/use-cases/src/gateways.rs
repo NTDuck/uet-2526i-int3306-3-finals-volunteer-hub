@@ -31,7 +31,14 @@ pub struct EventRepositorySearchFilter {
     pub timestamps: ::core::ops::Range<::core::option::Option<::axiom::time::Timestamp>>,
 }
 
-#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::core::cmp::Eq, ::core::cmp::PartialEq, ::core::hash::Hash)]
+#[derive(
+    ::core::fmt::Debug,
+    ::core::clone::Clone,
+    ::core::marker::Copy,
+    ::core::cmp::Eq,
+    ::core::cmp::PartialEq,
+    ::core::hash::Hash
+)]
 pub enum EventRepositorySearchFilterEventStatus {
     Created,
     Updated,
@@ -100,8 +107,9 @@ pub trait EventRecommender {
         self: ::std::sync::Arc<Self>,
     ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::Uuid>>;
 
-    async fn view_trending_ids(self: ::std::sync::Arc<Self>)
-        -> ::axiom::result::Fallible<::std::vec::Vec<::domain::Uuid>>;
+    async fn view_trending_ids(
+        self: ::std::sync::Arc<Self>,
+    ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::Uuid>>;
 
     async fn view_personalized_ids(
         self: ::std::sync::Arc<Self>, user_id: ::domain::Uuid,
@@ -173,7 +181,9 @@ pub trait EventPostReactionRepository {
         self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid,
     ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::EventPostReaction>>;
 
-    async fn count_by_post_id(self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid) -> ::axiom::result::Fallible<::core::primitive::u64> {
+    async fn count_by_post_id(
+        self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid,
+    ) -> ::axiom::result::Fallible<::core::primitive::u64> {
         (self.view_by_post_id(post_id).await?.len() as ::core::primitive::u64).into_ok()
     }
 }
@@ -199,7 +209,9 @@ pub trait EventPostCommentRepository {
         self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid,
     ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::EventPostComment>>;
 
-    async fn count_by_post_id(self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid) -> ::axiom::result::Fallible<::core::primitive::u64> {
+    async fn count_by_post_id(
+        self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid,
+    ) -> ::axiom::result::Fallible<::core::primitive::u64> {
         (self.view_by_post_id(post_id).await?.len() as ::core::primitive::u64).into_ok()
     }
 }
@@ -250,7 +262,14 @@ pub struct UserRepositorySearchFilter {
     pub statuses: ::core::option::Option<::std::vec::Vec<UserRepositoryViewFilterUserStatus>>,
 }
 
-#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::core::cmp::Eq, ::core::cmp::PartialEq, ::core::hash::Hash)]
+#[derive(
+    ::core::fmt::Debug,
+    ::core::clone::Clone,
+    ::core::marker::Copy,
+    ::core::cmp::Eq,
+    ::core::cmp::PartialEq,
+    ::core::hash::Hash
+)]
 pub enum UserRepositoryViewFilterUserStatus {
     Created,
     Updated,
@@ -280,7 +299,14 @@ impl ::core::convert::From<&::domain::UserStatus> for UserRepositoryViewFilterUs
     }
 }
 
-#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::core::cmp::Eq, ::core::cmp::PartialEq, ::core::hash::Hash)]
+#[derive(
+    ::core::fmt::Debug,
+    ::core::clone::Clone,
+    ::core::marker::Copy,
+    ::core::cmp::Eq,
+    ::core::cmp::PartialEq,
+    ::core::hash::Hash
+)]
 pub enum UserRepositoryViewFilterUserRole {
     Volunteer,
     EventManager,
@@ -309,9 +335,8 @@ impl ::core::convert::From<UserRepositoryViewFilterUserRole> for ::domain::UserR
 
 #[async_trait]
 pub trait UserExporter {
-    async fn export_volunteers_as_csv(
-        self: ::std::sync::Arc<Self>,
-    ) -> ::axiom::result::Fallible<::axiom::bytes::Bytes>;
+    async fn export_volunteers_as_csv(self: ::std::sync::Arc<Self>)
+        -> ::axiom::result::Fallible<::axiom::bytes::Bytes>;
     async fn export_volunteers_as_json(
         self: ::std::sync::Arc<Self>,
     ) -> ::axiom::result::Fallible<::axiom::bytes::Bytes>;
@@ -321,7 +346,9 @@ pub trait UserExporter {
 pub trait MediaRepository {
     async fn verify(self: ::std::sync::Arc<Self>, bytes: ::axiom::bytes::Bytes) -> ::axiom::result::Fallible<bool>;
 
-    async fn save(self: ::std::sync::Arc<Self>, bytes: ::axiom::bytes::Bytes) -> ::axiom::result::Fallible<::axiom::string::String>;
+    async fn save(
+        self: ::std::sync::Arc<Self>, bytes: ::axiom::bytes::Bytes,
+    ) -> ::axiom::result::Fallible<::axiom::string::String>;
 
     async fn remove(self: ::std::sync::Arc<Self>, url: ::axiom::string::String) -> ::axiom::result::Fallible;
 }

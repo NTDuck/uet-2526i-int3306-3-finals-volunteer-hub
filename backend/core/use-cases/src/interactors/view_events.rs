@@ -11,15 +11,12 @@ pub struct ViewEventsInteractor {
 
     uuid_codec: ::std::sync::Arc<dyn UuidCodec + ::core::marker::Send + ::core::marker::Sync>,
     timestamp_codec: ::std::sync::Arc<dyn TimestampCodec + ::core::marker::Send + ::core::marker::Sync>,
-    auth_token_generator:
-        ::std::sync::Arc<dyn AuthTokenGenerator + ::core::marker::Send + ::core::marker::Sync>,
+    auth_token_generator: ::std::sync::Arc<dyn AuthTokenGenerator + ::core::marker::Send + ::core::marker::Sync>,
 }
 
 #[async_trait]
 impl ViewEventsBoundary for ViewEventsInteractor {
-    async fn apply(
-        self: ::std::sync::Arc<Self>, request: Request,
-    ) -> ::axiom::result::Fallible<Response> {
+    async fn apply(self: ::std::sync::Arc<Self>, request: Request) -> ::axiom::result::Fallible<Response> {
         match ::std::sync::Arc::clone(&self.auth_token_generator)
             .get_payload(request.token)
             .await?
@@ -39,7 +36,10 @@ impl ViewEventsBoundary for ViewEventsInteractor {
                 }
             },
             ::core::option::Option::Some(AuthTokenPayload { user_role, .. }) =>
-                return super::err!(UserUnauthorized { user_role: user_role.into(), allowed_user_roles: ::std::vec![UserRole::EventManager, UserRole::Administrator] }),
+                return super::err!(UserUnauthorized {
+                    user_role: user_role.into(),
+                    allowed_user_roles: ::std::vec![UserRole::EventManager, UserRole::Administrator]
+                }),
         }
 
         let events = match request.filter {
@@ -61,7 +61,13 @@ impl ViewEventsBoundary for ViewEventsInteractor {
                 let uuid_codec = ::std::sync::Arc::clone(&self.uuid_codec);
                 let timestamp_codec = ::std::sync::Arc::clone(&self.timestamp_codec);
 
-                async move { Event::build_from(event).with_uuid_codec(uuid_codec).with_timestamp_codec(::std::sync::Arc::clone(&timestamp_codec)).try_build().await }
+                async move {
+                    Event::build_from(event)
+                        .with_uuid_codec(uuid_codec)
+                        .with_timestamp_codec(::std::sync::Arc::clone(&timestamp_codec))
+                        .try_build()
+                        .await
+                }
             })
             .try_collect::<::std::vec::Vec<_>>()
             .await?;

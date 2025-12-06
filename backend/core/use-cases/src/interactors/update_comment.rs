@@ -10,8 +10,7 @@ pub struct UpdateEventPostCommentInteractor {
     media_repository: ::std::sync::Arc<dyn MediaRepository + ::core::marker::Send + ::core::marker::Sync>,
 
     uuid_codec: ::std::sync::Arc<dyn UuidCodec + ::core::marker::Send + ::core::marker::Sync>,
-    auth_token_generator:
-        ::std::sync::Arc<dyn AuthTokenGenerator + ::core::marker::Send + ::core::marker::Sync>,
+    auth_token_generator: ::std::sync::Arc<dyn AuthTokenGenerator + ::core::marker::Send + ::core::marker::Sync>,
 }
 
 #[async_trait]
@@ -43,7 +42,10 @@ impl UpdateEventPostCommentBoundary for UpdateEventPostCommentInteractor {
                 user_id
             },
             ::core::option::Option::Some(AuthTokenPayload { user_role, .. }) =>
-                return super::err!(UserUnauthorized { user_role: user_role.into(), allowed_user_roles: ::std::vec![UserRole::Volunteer, UserRole::EventManager] }),
+                return super::err!(UserUnauthorized {
+                    user_role: user_role.into(),
+                    allowed_user_roles: ::std::vec![UserRole::Volunteer, UserRole::EventManager]
+                }),
         };
 
         let mut errors = ::std::vec::Vec::new();
@@ -65,15 +67,13 @@ impl UpdateEventPostCommentBoundary for UpdateEventPostCommentInteractor {
         let comment_content = request
             .comment_content
             .map(|comment_content| {
-                ::domain::EventPostCommentContent::try_from(comment_content).map_err(|error| {
-                    errors.push(ErrResponse::CommentContentInvalid {
-                        comment_content: error.into(),
-                    })
-                })
+                ::domain::EventPostCommentContent::try_from(comment_content)
+                    .map_err(|error| errors.push(ErrResponse::CommentContentInvalid { comment_content: error.into() }))
             })
             .transpose();
 
-        let comment_image_url = request.comment_image
+        let comment_image_url = request
+            .comment_image
             .map(::core::convert::Into::<::axiom::bytes::Bytes>::into)
             .map_async(|image| {
                 let media_repository = ::std::sync::Arc::clone(&self.media_repository);
@@ -83,7 +83,8 @@ impl UpdateEventPostCommentBoundary for UpdateEventPostCommentInteractor {
 
                     (image, verified).into_ok()
                 }
-            }).await
+            })
+            .await
             .transpose()?
             .map(|(image, verified)| {
                 if !verified {
@@ -95,13 +96,9 @@ impl UpdateEventPostCommentBoundary for UpdateEventPostCommentInteractor {
             .map_async(|image| {
                 let media_repository = ::std::sync::Arc::clone(&self.media_repository);
 
-                async move {
-                    ::std::sync::Arc::clone(&media_repository)
-                        .save(image)
-                        .await?
-                        .into_ok()
-                }
-            }).await
+                async move { ::std::sync::Arc::clone(&media_repository).save(image).await?.into_ok() }
+            })
+            .await
             .transpose()?;
 
         let ::core::result::Result::Ok(comment_content) = comment_content else {
@@ -114,9 +111,13 @@ impl UpdateEventPostCommentBoundary for UpdateEventPostCommentInteractor {
 
         let mut comment = unsafe { comment.unwrap_unchecked() };
 
-        comment_content.map(::core::convert::Into::into).map(|comment_content| comment.content = comment_content);
+        comment_content
+            .map(::core::convert::Into::into)
+            .map(|comment_content| comment.content = comment_content);
 
-        comment_image_url.map(::core::convert::Into::into).map(|comment_image_url| comment.image_url = comment_image_url);
+        comment_image_url
+            .map(::core::convert::Into::into)
+            .map(|comment_image_url| comment.image_url = comment_image_url);
 
         ::std::sync::Arc::clone(&self.comment_repository).save(comment).await?;
 

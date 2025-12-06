@@ -42,7 +42,7 @@ pub struct ViewEventHistoryEvent {
 
     pub registration_status: ViewEventHistoryEventRegistrationStatus,
     pub registration_status_last_updated_at: ::axiom::string::String,
-    
+
     pub name: ::axiom::string::String,
     pub categories: ::std::vec::Vec<::axiom::string::String>,
     pub location: ::axiom::string::String,
@@ -66,9 +66,19 @@ impl ViewEventHistoryEvent {
         Self::builder()
             .id(::std::sync::Arc::clone(&uuid_codec).format(event.id).await?)
             .registration_status(event_registration_status)
-            .registration_status_last_updated_at(::std::sync::Arc::clone(&timestamp_codec).format(event_registration_status.at()).await?)
+            .registration_status_last_updated_at(
+                ::std::sync::Arc::clone(&timestamp_codec)
+                    .format(event_registration_status.at())
+                    .await?,
+            )
             .name(event.name)
-            .categories(event.categories.into_iter().map(::core::convert::Into::into).collect::<::std::vec::Vec<_>>())
+            .categories(
+                event
+                    .categories
+                    .into_iter()
+                    .map(::core::convert::Into::into)
+                    .collect::<::std::vec::Vec<_>>(),
+            )
             .location(event.location)
             .image_url(event.image_url)
             .build()

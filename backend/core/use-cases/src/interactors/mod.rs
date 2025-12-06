@@ -56,7 +56,8 @@ pub use self::view_post::*;
 pub use self::view_published_events::*;
 pub use self::view_users::*;
 
-/// Assumes: **(1)** `$ok` is of type `OkResponse`; **(2)** `type Response = ::core::result::Result<OkResponse, _>`; **(3)** crate `axiom` is in scope.
+/// Assumes: **(1)** `$ok` is of type `OkResponse`; **(2)** `type Response =
+/// ::core::result::Result<OkResponse, _>`; **(3)** crate `axiom` is in scope.
 macro_rules! ok {
     ($($ok:tt)*) => {
         ::axiom::result::Fallible::Ok(Response::Ok($($ok)*))
@@ -64,20 +65,24 @@ macro_rules! ok {
 }
 
 /// Assumes: **(1)** `$errs` is of type
-/// `::std::vec::Vec<ErrResponse>`; **(2)** `type Response = ::core::result::Result<_, ::std::vec::Vec<ErrResponse>>`; **(3)** crate `axiom` is in scope.
+/// `::std::vec::Vec<ErrResponse>`; **(2)** `type Response =
+/// ::core::result::Result<_, ::std::vec::Vec<ErrResponse>>`; **(3)** crate
+/// `axiom` is in scope.
 macro_rules! errs {
     ($($errs:tt)*) => {
         ::axiom::result::Fallible::Ok(Response::Err($($errs)*))
     };
 }
 
-/// Assumes: **(1)** `$err` is of type `ErrResponse`; **(2)** `type Response = ::core::result::Result<_, ::std::vec::Vec<ErrResponse>>`; **(3)** crate `axiom` is in scope.
+/// Assumes: **(1)** `$err` is of type `ErrResponse`; **(2)** `type Response =
+/// ::core::result::Result<_, ::std::vec::Vec<ErrResponse>>`; **(3)** crate
+/// `axiom` is in scope.
 macro_rules! err {
     ($($err:tt)*) => {
         ::axiom::result::Fallible::Ok(Response::Err(::std::vec![ErrResponse::$($err)*]))
     }
 }
 
-pub(in crate::interactors) use ok;
-pub(in crate::interactors) use errs;
 pub(in crate::interactors) use err;
+pub(in crate::interactors) use errs;
+pub(in crate::interactors) use ok;

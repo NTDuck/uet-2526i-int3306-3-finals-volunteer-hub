@@ -45,7 +45,7 @@ pub struct ViewEventChannelEventPost {
     pub last_updated_at: ::axiom::string::String,
     pub title: ::axiom::string::String,
     pub content: ::axiom::string::String,
-    
+
     #[builder(required)]
     pub image_url: ::core::option::Option<::axiom::string::String>,
 

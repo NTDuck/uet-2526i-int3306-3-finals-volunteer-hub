@@ -119,7 +119,13 @@ impl ViewPublishedEventsEvent {
             .status(event_status)
             .status_last_updated_at(::std::sync::Arc::clone(&timestamp_codec).format(event_status.at()).await?)
             .name(event.name)
-            .categories(event.categories.into_iter().map(::core::convert::Into::into).collect::<::std::vec::Vec<_>>())
+            .categories(
+                event
+                    .categories
+                    .into_iter()
+                    .map(::core::convert::Into::into)
+                    .collect::<::std::vec::Vec<_>>(),
+            )
             .location(event.location)
             .image_url(event.image_url)
             .build()

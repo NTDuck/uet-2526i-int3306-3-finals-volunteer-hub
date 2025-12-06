@@ -10,20 +10,17 @@ pub struct CreateEventInteractor {
     media_repository: ::std::sync::Arc<dyn MediaRepository + ::core::marker::Send + ::core::marker::Sync>,
 
     uuid_generator: ::std::sync::Arc<dyn UuidGenerator + ::core::marker::Send + ::core::marker::Sync>,
-    auth_token_generator:
-        ::std::sync::Arc<dyn AuthTokenGenerator + ::core::marker::Send + ::core::marker::Sync>,
+    auth_token_generator: ::std::sync::Arc<dyn AuthTokenGenerator + ::core::marker::Send + ::core::marker::Sync>,
 }
 
 #[async_trait]
 impl CreateEventBoundary for CreateEventInteractor {
-    async fn apply(
-        self: ::std::sync::Arc<Self>, request: Request,
-    ) -> ::axiom::result::Fallible<Response> {
+    async fn apply(self: ::std::sync::Arc<Self>, request: Request) -> ::axiom::result::Fallible<Response> {
         let actor_id = match ::std::sync::Arc::clone(&self.auth_token_generator)
             .get_payload(request.token)
             .await?
         {
-            ::core::option::Option::None => return super::err!( AuthenticationTokenInvalid),
+            ::core::option::Option::None => return super::err!(AuthenticationTokenInvalid),
             ::core::option::Option::Some(AuthTokenPayload {
                 user_id,
                 user_role: ::domain::UserRole::EventManager,
@@ -45,7 +42,10 @@ impl CreateEventBoundary for CreateEventInteractor {
                 user_id
             },
             ::core::option::Option::Some(AuthTokenPayload { user_role, .. }) =>
-                return super::err!(UserUnauthorized { user_role: user_role.into(), allowed_user_roles: ::std::vec![ UserRole::EventManager, ], }),
+                return super::err!(UserUnauthorized {
+                    user_role: user_role.into(),
+                    allowed_user_roles: ::std::vec![UserRole::EventManager,],
+                }),
         };
 
         let mut errors = ::std::vec::Vec::new();
@@ -53,9 +53,8 @@ impl CreateEventBoundary for CreateEventInteractor {
         let event_name = ::domain::EventName::try_from(request.event_name)
             .map_err(|error| errors.push(ErrResponse::EventNameInvalid { event_name: error.into() }));
 
-        let event_description = ::domain::EventDescription::try_from(request.event_description).map_err(|error| {
-            errors.push(ErrResponse::EventDescriptionInvalid { event_description: error.into() })
-        });
+        let event_description = ::domain::EventDescription::try_from(request.event_description)
+            .map_err(|error| errors.push(ErrResponse::EventDescriptionInvalid { event_description: error.into() }));
 
         let event_categories = request
             .event_categories
@@ -67,19 +66,19 @@ impl CreateEventBoundary for CreateEventInteractor {
                 })
             });
 
-        let event_location = ::domain::EventLocation::try_from(request.event_location).map_err(|error| {
-            errors.push(ErrResponse::EventLocationInvalid { event_location: error.into() })
-        });
+        let event_location = ::domain::EventLocation::try_from(request.event_location)
+            .map_err(|error| errors.push(ErrResponse::EventLocationInvalid { event_location: error.into() }));
 
         let event_image = ::axiom::bytes::Bytes::from(request.event_image);
 
-        if ::std::sync::Arc::clone(&self.media_repository).verify(event_image.clone()).await? {
+        if ::std::sync::Arc::clone(&self.media_repository)
+            .verify(event_image.clone())
+            .await?
+        {
             errors.push(ErrResponse::EventImageInvalid);
         }
 
-        let event_image_url = ::std::sync::Arc::clone(&self.media_repository)
-            .save(event_image)
-            .await?;
+        let event_image_url = ::std::sync::Arc::clone(&self.media_repository).save(event_image).await?;
 
         let (
             ::core::result::Result::Ok(event_name),
@@ -97,12 +96,17 @@ impl CreateEventBoundary for CreateEventInteractor {
 
         let event_id = loop {
             let uuid = ::std::sync::Arc::clone(&self.uuid_generator).generate().await?;
-            if !::std::sync::Arc::clone(&self.event_repository).contains_id(uuid).await? { break uuid; }
+            if !::std::sync::Arc::clone(&self.event_repository).contains_id(uuid).await? {
+                break uuid;
+            }
         };
 
         let event = ::domain::Event::builder()
             .id(event_id)
-            .statuses(::vec1::vec1!(::domain::EventStatus::Created { created_by_manager_id: actor_id, created_at: ::axiom::time::Timestamp::now() }))
+            .statuses(::vec1::vec1!(::domain::EventStatus::Created {
+                created_by_manager_id: actor_id,
+                created_at: ::axiom::time::Timestamp::now()
+            }))
             .name(event_name)
             .description(event_description)
             .categories(event_categories)
