@@ -32,7 +32,7 @@ $ deno task build-sveltekit-minimal
 $ deno task preview-sveltekit-minimal
 ```
 
-## How to resolve conflicts
+## How to please Github
 
 Assume we're merging PR branch `indev` into `master`. The following snippet
 achieves the same thing as if we visit each conflict and select
@@ -44,7 +44,7 @@ $ git config --global alias.nccommit "commit -a --allow-empty-message -m ''"
 
 $ git pull origin master
 $ git checkout indev
-$ git merge master --squash
+$ git merge master
 $ git checkout --ours .
 $ git add .
 $ git nccommit
