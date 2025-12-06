@@ -39,6 +39,8 @@ achieves the same thing as if we visit each conflict and select
 `Keep Current Changes`.
 
 ```cmd
+$ git config --global alias.nccommit "commit -a --allow-empty-message -m ''"
+
 $ git pull origin master
 $ git checkout indev
 $ git merge master --squash
