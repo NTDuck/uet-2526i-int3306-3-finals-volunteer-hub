@@ -11,8 +11,8 @@ axiom = { path = "../../axiom" }
 
 bon = { workspace = true }
 once_cell = { workspace = true }
-thiserror = { workspace = true }
 regex = { workspace = true }
+thiserror = { workspace = true }
 vec1 = { workspace = true }
 
 [lints]

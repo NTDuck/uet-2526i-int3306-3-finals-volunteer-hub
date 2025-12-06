@@ -7,13 +7,12 @@ repository.workspace = true
 publish.workspace = true
 
 [dependencies]
-darling = "0.21.3"
+darling = "0.23.0"
 heck = "0.5.0"
 proc-macro2 = "1.0.103"
-syn = "2.0.110"
 quote = "1.0.42"
-
 strum = { workspace = true }
+syn = "2.0.110"
 
 [lib]
 proc-macro = true

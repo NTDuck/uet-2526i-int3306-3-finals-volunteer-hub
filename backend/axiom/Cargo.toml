@@ -9,8 +9,8 @@ publish.workspace = true
 [dependencies]
 axiom-derive = { path = "../axiom-derive" }
 
-async-trait = { workspace = true }
 anyhow = { workspace = true }
+async-trait = { workspace = true }
 bytes = { workspace = true }
 chrono = { workspace = true }
 futures = { workspace = true }

@@ -4,7 +4,37 @@ on:
   workflow_call:
 
 jobs:
+  cargo-udeps:
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+        channel:
+          - nightly
+
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: ./backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.channel }}
+          override: true
+
+      - uses: aig787/cargo-udeps-action@v1
+        with:
+          version: "latest"
+          args: "--all-targets"
+
   cargo-deny:
+    needs:
+      - cargo-udeps
+
     strategy:
       fail-fast: false
       matrix:
@@ -40,6 +70,7 @@ jobs:
 
   cargo-audit:
     needs:
+      - cargo-udeps
       - cargo-deny
 
     strategy:

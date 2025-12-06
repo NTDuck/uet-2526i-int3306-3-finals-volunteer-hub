@@ -171,8 +171,7 @@ impl UpdateEventBoundary for UpdateEventInteractor {
         event_description.map(|event_description| event.description = event_description);
         event_categories.map(|event_categories| event.categories = event_categories);
         event_location.map(|event_location| event.location = event_location);
-        event_image_url
-            .map(|event_image_url| event.image_url = event_image_url);
+        event_image_url.map(|event_image_url| event.image_url = event_image_url);
 
         ::std::sync::Arc::clone(&self.event_repository).save(event).await?;
 

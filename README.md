@@ -213,23 +213,12 @@ $ deno task preview-sveltekit-minimal
   > [./backend/core/use-cases/src/boundaries/view_event_recommendation.rs](./backend/core/use-cases/src/boundaries/view_event_recommendation.rs)
   > |
   > [./backend/core/use-cases/src/interactors/view_event_recommendation.rs](./backend/core/use-cases/src/interactors/view_event_recommendation.rs)
-
-- view events
-- view self profile
-- update self profile
-- view user
-- view event
-- view published event
-
-TODO
-
+  
 ## TODO
+
+- Implement the following use cases: `view_self_profile`, `update_self_profile`, `view_user`, `view_event`, `view_published_event`
 - Increase parallelism via e.g. `buffer_unordered(...)` for streams, `rayon`
-
-- impl noti
-- transposable into axiom trait
-- reorder axiom & cargo by alphabet
-
-- in hot loops, if perf, use smallvec in lieu of vec
-- opt (column-only repo)
-- unsafe to map (ev rcm)
+- Replace `.filter_map(|transposable| async move { transposable.transpose() })` with `.transpose()` via an `axiom` trait
+- Implement push notification
+- Improve performance by collecting into `::smallvec::SmallVec` instead of `::std::vec::Vec` in hot loops
+- Improve performance by querying specific column(s) 

@@ -13,26 +13,25 @@ domain = { path = "../../core/domain" }
 use-cases = { path = "../../core/use-cases", features = ["wasm-bindings"] }
 infrastructures = { path = "../../infrastructures" }
 
-bon = { workspace = true }
-futures = { workspace = true }
-
 argon2 = { version = "0.6.0-rc.1", features = ["std", "parallel", "zeroize"] }
-hmac = { version = "0.12.1" }
-sha2 = { version = "0.10.9" }
+bon = { workspace = true }
+colored = "3.0.0"
 dotenvy = { version = "0.15.7" }  # suggested in lieu of `dotenv` as of security advisory RUSTSEC-2021-0141
+futures = { workspace = true }
+hmac = { version = "0.12.1" }
+paste = "1.0.15"
+sha2 = { version = "0.10.9" }
 tracing = { workspace = true }
 tracing-wasm = "0.2.1"
-colored = "3.0.0"
-paste = "1.0.15"
 
 # [target.'cfg(target_arch = "wasm32")'.dependencies]
 console_error_panic_hook = "0.1.7"
-wasm-bindgen = { version = "=0.2.102", features = ["strict-macro"] }  # jsr:@deno/wasmbuild@0.19.3
-wasm-bindgen-futures = "=0.4.52"  # jsr:@deno/wasmbuild@0.19.3
-serde-wasm-bindgen = "0.6.5"
 gloo = { version = "0.11.0", features = ["futures", "timers", "utils"] }
 serde = { workspace = true }
+serde-wasm-bindgen = "0.6.5"
 tsify = { version = "0.5.5", features = ["js"], default-features = false }
+wasm-bindgen = { version = "=0.2.102", features = ["strict-macro"] }  # jsr:@deno/wasmbuild@0.19.3
+wasm-bindgen-futures = "=0.4.52"  # jsr:@deno/wasmbuild@0.19.3
 
 [build-dependencies]
 axiom = { path = "../../axiom" }
