@@ -383,12 +383,12 @@ impl Application {
     {
         use ::colored::Colorize as _;
 
-        ::tracing::debug!("{label} {request:?}", label = "[IN]".green());
+        ::tracing::debug!("{label} {request:?}", label = "[WASM-REQ]".green());
 
         f(request)
             .await
             .into_promise()
-            .inspect(|response| ::tracing::debug!("{label} {response:?}", label = "[OUT]".green()))
+            .inspect(|response| ::tracing::debug!("{label} {response:?}", label = "[WASM-RES]".green()))
     }
 }
 
@@ -778,7 +778,7 @@ impl<T> IntoPromise<T> for ::axiom::result::Fallible<T> {
     fn into_promise(self) -> Promise<T> {
         use ::colored::Colorize as _;
 
-        self.inspect_err(|error| ::tracing::debug!("{label} {error}", label = "[UNEXPECTED-ERROR]".red()))
+        self.inspect_err(|error| ::tracing::debug!("{label} {error}", label = "[EXP-ERR]".red()))
             .map_err(|error| ::wasm_bindgen::JsValue::from_str(&error.to_string()))
     }
 }
@@ -791,7 +791,7 @@ where
         use ::colored::Colorize as _;
 
         self
-            .inspect_err(|error| ::tracing::debug!("{label} {error}", label = "[UNEXPECTED-ERROR]".red()))
+            .inspect_err(|error| ::tracing::debug!("{label} {error}", label = "[UNEXP-ERR]".red()))
             .map_err(|error| ::wasm_bindgen::JsValue::from_str(&error.to_string()))
             .and_then(|inner| {
                 inner
@@ -799,7 +799,7 @@ where
                         errors
                             .into_iter()
                             .map(|error| unsafe { <::wasm_bindgen::JsValue as ::gloo::utils::format::JsValueSerdeExt>::from_serde(&error)
-                                .inspect(|error| ::tracing::debug!("{label} {error:?}", label = "[EXPECTED-ERROR]".red()))
+                                .inspect(|error| ::tracing::debug!("{label} {error:?}", label = "[EXP-ERR]".red()))
                                 .unwrap_unchecked() })  // We kinda know what we're doing
                             .collect::<::std::vec::Vec<_>>()
                     })

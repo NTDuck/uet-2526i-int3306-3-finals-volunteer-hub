@@ -1395,7 +1395,7 @@ mod serde {
     }
 
     #[derive(::serde::Serialize, ::serde::Deserialize)]
-    #[serde(untagged, rename_all = "kebab-case")]
+    #[serde(rename_all = "kebab-case")]
     pub enum UserRole {
         Volunteer,
         EventManager,
