@@ -50,25 +50,24 @@ impl ViewEventVolunteersBoundary for ViewEventVolunteersInteractor {
 
         let volunteers = event_registrations
             .into_stream()
-            .map(|event_registration| (event_registration.volunteer_id, *event_registration.statuses.last()))
-            .then(|(volunteer_id, event_registration_status)| {
+            .then(|event_registration| {
                 let user_repository = ::std::sync::Arc::clone(&self.user_repository);
 
                 async move {
                     user_repository
-                        .get_by_id(volunteer_id)
+                        .get_by_id(event_registration.volunteer_id)
                         .await?
                         .filter(|volunteer| ::core::matches!(volunteer.role, ::domain::UserRole::Volunteer))
-                        .map(|volunteer| (volunteer, event_registration_status))
+                        .map(|volunteer| (volunteer, event_registration))
                         .into_ok()
                 }
             })
             .filter_map(|transposable| async move { transposable.transpose() })
-            .and_then(|(volunteer, event_registration_status)| {
+            .and_then(|(volunteer, event_registration)| {
                 let uuid_codec = ::std::sync::Arc::clone(&self.uuid_codec);
 
                 async move {
-                    Volunteer::build_from(volunteer, event_registration_status)
+                    Volunteer::build_from(volunteer, event_registration)
                         .with_uuid_codec(uuid_codec)
                         .try_build()
                         .await
