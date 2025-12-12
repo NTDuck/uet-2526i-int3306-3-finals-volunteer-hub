@@ -1261,7 +1261,7 @@ mod serde {
                         .statuses
                         .into_iter()
                         .map(::core::convert::Into::<EventStatus>::into)
-                        .map(|status| ::serde_json::to_string(status).unwrap_or_default())
+                        .map(|status| ::serde_json::to_string(&status).unwrap_or_default())
                         .collect::<::std::vec::Vec<_>>()
                         .join("|"),
                 )
@@ -1271,7 +1271,7 @@ mod serde {
                     value
                         .categories
                         .into_iter()
-                        .map(::core::convert::Into::into)
+                        .map(::core::convert::Into::<::axiom::string::String>::into)
                         .collect::<::std::vec::Vec<_>>()
                         .join("|"),
                 )
@@ -1387,7 +1387,7 @@ mod serde {
                         .statuses
                         .into_iter()
                         .map(::core::convert::Into::<UserStatus>::into)
-                        .map(|status| ::serde_json::to_string(status).unwrap_or_default())
+                        .map(|status| ::serde_json::to_string(&status).unwrap_or_default())
                         .collect::<::std::vec::Vec<_>>()
                         .join("|"),
                 )
