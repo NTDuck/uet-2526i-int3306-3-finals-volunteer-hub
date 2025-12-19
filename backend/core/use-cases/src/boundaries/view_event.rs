@@ -21,8 +21,7 @@ pub struct ViewEventRequest {
 }
 
 #[cfg_attr(feature = "wasm-bindings", ::tsify::declare)]
-pub type ViewEventResponse =
-    ::core::result::Result<ViewEventOkResponse, ::std::vec::Vec<ViewEventErrResponse>>;
+pub type ViewEventResponse = ::core::result::Result<ViewEventOkResponse, ::std::vec::Vec<ViewEventErrResponse>>;
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
 #[builder(on(_, into))]
@@ -68,18 +67,26 @@ impl ViewEventEvent {
     ) -> ::axiom::result::Fallible<Self> {
         Self::builder()
             .id(::std::sync::Arc::clone(&uuid_codec).format(event.id).await?)
-            .statuses(event.statuses.into_iter().into_stream().then(|status| {
-                let uuid_codec = ::std::sync::Arc::clone(&uuid_codec);
-                let timestamp_codec = ::std::sync::Arc::clone(&timestamp_codec);
+            .statuses(
+                event
+                    .statuses
+                    .into_iter()
+                    .into_stream()
+                    .then(|status| {
+                        let uuid_codec = ::std::sync::Arc::clone(&uuid_codec);
+                        let timestamp_codec = ::std::sync::Arc::clone(&timestamp_codec);
 
-                async move {
-                    ViewEventEventStatus::build_from(status)
-                        .with_uuid_codec(::std::sync::Arc::clone(&uuid_codec))
-                        .with_timestamp_codec(::std::sync::Arc::clone(&timestamp_codec))
-                        .try_build()
-                        .await
-                }
-            }).try_collect::<::std::vec::Vec<_>>().await?)
+                        async move {
+                            ViewEventEventStatus::build_from(status)
+                                .with_uuid_codec(::std::sync::Arc::clone(&uuid_codec))
+                                .with_timestamp_codec(::std::sync::Arc::clone(&timestamp_codec))
+                                .try_build()
+                                .await
+                        }
+                    })
+                    .try_collect::<::std::vec::Vec<_>>()
+                    .await?,
+            )
             .name(event.name)
             .categories(
                 event
@@ -132,25 +139,36 @@ impl ViewEventEventStatus {
         >,
     ) -> ::axiom::result::Fallible<Self> {
         match event_status {
-            ::domain::EventStatus::Created { created_by_manager_id, created_at  } => Self::Created {
+            ::domain::EventStatus::Created { created_by_manager_id, created_at } => Self::Created {
                 created_by_manager_id: ::std::sync::Arc::clone(&uuid_codec).format(created_by_manager_id).await?,
                 created_at: ::std::sync::Arc::clone(&timestamp_codec).format(created_at).await?,
             }
             .into_ok(),
-            ::domain::EventStatus::Updated { updated_by_manager_id, updated_at  } => Self::Updated {
+            ::domain::EventStatus::Updated { updated_by_manager_id, updated_at } => Self::Updated {
                 updated_by_manager_id: ::std::sync::Arc::clone(&uuid_codec).format(updated_by_manager_id).await?,
                 updated_at: ::std::sync::Arc::clone(&timestamp_codec).format(updated_at).await?,
             }
             .into_ok(),
-            ::domain::EventStatus::Approved { approved_by_administrator_id, approved_at  } => Self::Approved {
-                approved_by_administrator_id: ::std::sync::Arc::clone(&uuid_codec).format(approved_by_administrator_id).await?,
+            ::domain::EventStatus::Approved {
+                approved_by_administrator_id,
+                approved_at,
+            } => Self::Approved {
+                approved_by_administrator_id: ::std::sync::Arc::clone(&uuid_codec)
+                    .format(approved_by_administrator_id)
+                    .await?,
                 approved_at: ::std::sync::Arc::clone(&timestamp_codec).format(approved_at).await?,
             }
             .into_ok(),
-            ::domain::EventStatus::Rejected { rejected_by_administrator_id, rejected_at  } => Self::Rejected {
-                rejected_by_administrator_id: ::std::sync::Arc::clone(&uuid_codec).format(rejected_by_administrator_id).await?,
+            ::domain::EventStatus::Rejected {
+                rejected_by_administrator_id,
+                rejected_at,
+            } => Self::Rejected {
+                rejected_by_administrator_id: ::std::sync::Arc::clone(&uuid_codec)
+                    .format(rejected_by_administrator_id)
+                    .await?,
                 rejected_at: ::std::sync::Arc::clone(&timestamp_codec).format(rejected_at).await?,
-            }.into_ok(),
+            }
+            .into_ok(),
         }
     }
 }

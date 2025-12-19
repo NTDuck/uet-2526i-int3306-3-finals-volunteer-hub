@@ -16,7 +16,7 @@ pub trait ViewUserBoundary {
 #[cfg_attr(feature = "wasm-bindings", tsify(from_wasm_abi))]
 pub struct ViewUserRequest {
     pub token: ::axiom::string::String,
-    
+
     pub user_id: ::axiom::string::String,
 }
 
@@ -152,7 +152,9 @@ impl ViewUserUserStatus {
                 suspended_by_administrator_id,
                 suspended_at,
             } => ViewUserUserStatus::Suspended {
-                suspended_by_administrator_id: ::std::sync::Arc::clone(&uuid_codec).format(suspended_by_administrator_id).await?,
+                suspended_by_administrator_id: ::std::sync::Arc::clone(&uuid_codec)
+                    .format(suspended_by_administrator_id)
+                    .await?,
                 suspended_at: ::std::sync::Arc::clone(&timestamp_codec).format(suspended_at).await?,
             }
             .into_ok(),
@@ -160,11 +162,13 @@ impl ViewUserUserStatus {
                 unsuspended_by_administrator_id,
                 unsuspended_at,
             } => ViewUserUserStatus::Unsuspended {
-                unsuspended_by_administrator_id: ::std::sync::Arc::clone(&uuid_codec).format(unsuspended_by_administrator_id).await?,
+                unsuspended_by_administrator_id: ::std::sync::Arc::clone(&uuid_codec)
+                    .format(unsuspended_by_administrator_id)
+                    .await?,
                 unsuspended_at: ::std::sync::Arc::clone(&timestamp_codec).format(unsuspended_at).await?,
             }
             .into_ok(),
-            }
+        }
     }
 }
 
@@ -183,19 +187,25 @@ impl ViewUserUser {
         Self::builder()
             .id(::std::sync::Arc::clone(&uuid_codec).format(user.id).await?)
             .role(user.role)
-            .statuses(user.statuses.into_iter().into_stream().then(|status| {
-                let uuid_codec = ::std::sync::Arc::clone(&uuid_codec);
-                let timestamp_codec = ::std::sync::Arc::clone(&timestamp_codec);
-                
-                async move {
-                    ViewUserUserStatus::build_from(status)
-                        .with_uuid_codec(::std::sync::Arc::clone(&uuid_codec))
-                        .with_timestamp_codec(::std::sync::Arc::clone(&timestamp_codec))
-                        .try_build()
-                        .await
-                }
-            })
-                .try_collect::<::std::vec::Vec<_>>().await?)
+            .statuses(
+                user.statuses
+                    .into_iter()
+                    .into_stream()
+                    .then(|status| {
+                        let uuid_codec = ::std::sync::Arc::clone(&uuid_codec);
+                        let timestamp_codec = ::std::sync::Arc::clone(&timestamp_codec);
+
+                        async move {
+                            ViewUserUserStatus::build_from(status)
+                                .with_uuid_codec(::std::sync::Arc::clone(&uuid_codec))
+                                .with_timestamp_codec(::std::sync::Arc::clone(&timestamp_codec))
+                                .try_build()
+                                .await
+                        }
+                    })
+                    .try_collect::<::std::vec::Vec<_>>()
+                    .await?,
+            )
             .username(user.username)
             .email(user.email)
             .full_name(user.full_name)

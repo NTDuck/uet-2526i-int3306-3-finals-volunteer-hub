@@ -42,7 +42,9 @@ impl ViewPublishedEventBoundary for ViewPublishedEventInteractor {
         }
 
         let event_id = ::std::sync::Arc::clone(&self.uuid_codec).parse(request.event_id).await?;
-        let ::core::option::Option::Some(event) = ::std::sync::Arc::clone(&self.event_repository).get_by_id(event_id).await? else {
+        let ::core::option::Option::Some(event) =
+            ::std::sync::Arc::clone(&self.event_repository).get_by_id(event_id).await?
+        else {
             return super::err!(EventNotFound);
         };
 

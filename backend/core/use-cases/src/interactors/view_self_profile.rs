@@ -20,11 +20,7 @@ impl ViewSelfProfileBoundary for ViewSelfProfileInteractor {
             .await?
         {
             ::core::option::Option::None => return super::err!(AuthenticationTokenInvalid),
-            ::core::option::Option::Some(AuthTokenPayload {
-                user_id,
-                expiry_timestamp,
-                ..
-            }) => {
+            ::core::option::Option::Some(AuthTokenPayload { user_id, expiry_timestamp, .. }) => {
                 if expiry_timestamp < ::axiom::time::Timestamp::now() {
                     return super::err!(AuthenticationTokenExpired);
                 }
@@ -37,7 +33,9 @@ impl ViewSelfProfileBoundary for ViewSelfProfileInteractor {
             },
         };
 
-        let ::core::option::Option::Some(user) = ::std::sync::Arc::clone(&self.user_repository).get_by_id(actor_id).await? else {
+        let ::core::option::Option::Some(user) =
+            ::std::sync::Arc::clone(&self.user_repository).get_by_id(actor_id).await?
+        else {
             return super::err!(UserNotFound);
         };
 

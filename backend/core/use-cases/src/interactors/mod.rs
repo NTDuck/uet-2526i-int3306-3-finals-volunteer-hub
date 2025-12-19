@@ -20,18 +20,18 @@ mod unsubscribe_from_event;
 mod update_comment;
 mod update_event;
 mod update_post;
+mod view_event;
 mod view_event_channel;
 mod view_event_history;
 mod view_event_recommendation;
 mod view_event_volunteers;
 mod view_events;
 mod view_post;
-mod view_published_events;
-mod view_users;
-mod view_event;
 mod view_published_event;
+mod view_published_events;
 mod view_self_profile;
 mod view_user;
+mod view_users;
 
 pub use self::create_comment::*;
 pub use self::create_event::*;
@@ -53,18 +53,18 @@ pub use self::unsubscribe_from_event::*;
 pub use self::update_comment::*;
 pub use self::update_event::*;
 pub use self::update_post::*;
+pub use self::view_event::*;
 pub use self::view_event_channel::*;
 pub use self::view_event_history::*;
 pub use self::view_event_recommendation::*;
 pub use self::view_event_volunteers::*;
 pub use self::view_events::*;
 pub use self::view_post::*;
-pub use self::view_published_events::*;
-pub use self::view_users::*;
-pub use self::view_event::*;
 pub use self::view_published_event::*;
+pub use self::view_published_events::*;
 pub use self::view_self_profile::*;
 pub use self::view_user::*;
+pub use self::view_users::*;
 
 /// Assumes: **(1)** `$ok` is of type `OkResponse`; **(2)** `type Response =
 /// ::core::result::Result<OkResponse, _>`; **(3)** crate `axiom` is in scope.

@@ -113,7 +113,11 @@ impl ViewPublishedEventsEvent {
     ) -> ::axiom::result::Fallible<Self> {
         Self::builder()
             .id(::std::sync::Arc::clone(&uuid_codec).format(event.id).await?)
-            .last_updated_at(::std::sync::Arc::clone(&timestamp_codec).format(event.statuses.last().at()).await?)
+            .last_updated_at(
+                ::std::sync::Arc::clone(&timestamp_codec)
+                    .format(event.statuses.last().at())
+                    .await?,
+            )
             .name(event.name)
             .categories(
                 event

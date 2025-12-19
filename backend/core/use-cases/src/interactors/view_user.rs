@@ -41,7 +41,9 @@ impl ViewUserBoundary for ViewUserInteractor {
         }
 
         let user_id = ::std::sync::Arc::clone(&self.uuid_codec).parse(request.user_id).await?;
-        let ::core::option::Option::Some(user) = ::std::sync::Arc::clone(&self.user_repository).get_by_id(user_id).await? else {
+        let ::core::option::Option::Some(user) =
+            ::std::sync::Arc::clone(&self.user_repository).get_by_id(user_id).await?
+        else {
             return super::err!(UserNotFound);
         };
 
