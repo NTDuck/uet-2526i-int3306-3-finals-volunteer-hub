@@ -113,7 +113,7 @@ impl ViewEventPostBoundary for ViewEventPostInteractor {
                         let timestamp_codec = ::std::sync::Arc::clone(&self.timestamp_codec);
 
                         async move {
-                            EventPostComment::build_from(comment, author)
+                            EventPostComment::build_from(comment, author, actor_id)
                                 .with_uuid_codec(::std::sync::Arc::clone(&uuid_codec))
                                 .with_timestamp_codec(::std::sync::Arc::clone(&timestamp_codec))
                                 .try_build()
@@ -145,6 +145,7 @@ impl ViewEventPostBoundary for ViewEventPostInteractor {
                     .contains_post_and_user_id(post.id, actor_id)
                     .await?,
             )
+            .is_authored_by_actor(post.author_id == actor_id)
             .build();
 
         super::ok!(response)
