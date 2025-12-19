@@ -64,8 +64,7 @@ impl ViewEventChannelBoundary for ViewEventChannelInteractor {
             .view_by_event_id(event_id)
             .await?
             .into_stream()
-            .zip(::futures::stream::repeat(::std::sync::Arc::clone(&self.user_repository).get_by_id(actor_id).await?))
-            .then(|(post, actor)| {
+            .then(|post| {
                 let reaction_repository = ::std::sync::Arc::clone(&self.reaction_repository);
                 let comment_repository = ::std::sync::Arc::clone(&self.comment_repository);
                 let user_repository = ::std::sync::Arc::clone(&self.user_repository);
@@ -99,23 +98,6 @@ impl ViewEventChannelBoundary for ViewEventChannelInteractor {
                                 .contains_post_and_user_id(post.id, actor_id)
                                 .await?,
                         )
-                        .comments_by_actor(
-                            ::futures::stream::iter(
-                                ::std::sync::Arc::clone(&comment_repository)
-                                    .view_by_post_and_user_id(post.id, actor_id)
-                                    .await?,
-                            )
-                            .zip(::futures::stream::repeat(actor))
-                            .then(|(comment, actor)| async {
-                                EventPostComment::build_from(comment, actor)
-                                    .with_uuid_codec(::std::sync::Arc::clone(&uuid_codec))
-                                    .with_timestamp_codec(::std::sync::Arc::clone(&timestamp_codec))
-                                    .try_build()
-                                    .await
-                            })
-                            .try_collect::<::std::vec::Vec<_>>()
-                            .await?,
-                        )
                         .build()
                         .into_ok()
                 }
@@ -135,4 +117,3 @@ type ErrResponse = ViewEventChannelErrResponse;
 type UserRole = ViewEventChannelUserRole;
 type User = ViewEventChannelUser;
 type EventPost = ViewEventChannelEventPost;
-type EventPostComment = ViewEventChannelEventPostComment;

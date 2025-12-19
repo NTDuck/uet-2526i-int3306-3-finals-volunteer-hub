@@ -244,3 +244,9 @@ $ git push -u origin indev
 - Improve performance by collecting into `::smallvec::SmallVec` instead of
   `::std::vec::Vec` in hot loops
 - Improve performance by querying specific column(s)
+
+Needed backend functions:
+- Include "byActor: boolean" in ViewEventChannelEventPost
+- Include "byActor: boolean" in ViewEventPostEventPostComment
+- ViewProfile
+- ViewPublishedEvent

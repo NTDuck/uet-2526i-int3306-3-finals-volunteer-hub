@@ -54,7 +54,6 @@ pub struct ViewEventChannelEventPost {
 
     pub author: ::core::option::Option<ViewEventChannelUser>,
     pub is_reacted_by_actor: bool,
-    pub comments_by_actor: ::std::vec::Vec<ViewEventChannelEventPostComment>,
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::bon::Builder)]
@@ -74,6 +73,8 @@ pub struct ViewEventChannelEventPostComment {
     pub image_url: ::core::option::Option<::axiom::string::String>,
 
     pub author: ::core::option::Option<ViewEventChannelUser>,
+
+    pub is_authored_by_actor: bool,
 }
 
 #[::bon::bon]
@@ -82,6 +83,7 @@ impl ViewEventChannelEventPostComment {
     pub async fn build_from(
         #[builder(start_fn)] comment: ::domain::EventPostComment,
         #[builder(start_fn)] author: ::core::option::Option<::domain::User>,
+        #[builder(start_fn)] actor_id: ::domain::Uuid,
         #[builder(setters(name = with_uuid_codec))] uuid_codec: ::std::sync::Arc<
             dyn crate::gateways::UuidCodec + ::core::marker::Send + ::core::marker::Sync,
         >,
@@ -109,6 +111,7 @@ impl ViewEventChannelEventPostComment {
                     .await
                     .transpose()?,
             )
+            .is_authored_by_actor(actor_id == comment.author_id)
             .build()
             .into_ok()
     }
