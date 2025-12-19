@@ -89,8 +89,7 @@ pub struct ViewPublishedEventsOkResponse {
 pub struct ViewPublishedEventsEvent {
     pub id: ::axiom::string::String,
 
-    pub status: ViewPublishedEventsEventStatus,
-    pub status_last_updated_at: ::axiom::string::String,
+    pub last_updated_at: ::axiom::string::String,
 
     pub name: ::axiom::string::String,
     pub categories: ::std::vec::Vec<::axiom::string::String>,
@@ -112,12 +111,9 @@ impl ViewPublishedEventsEvent {
             dyn crate::gateways::TimestampCodec + ::core::marker::Send + ::core::marker::Sync,
         >,
     ) -> ::axiom::result::Fallible<Self> {
-        let event_status = *event.statuses.last();
-
         Self::builder()
             .id(::std::sync::Arc::clone(&uuid_codec).format(event.id).await?)
-            .status(event_status)
-            .status_last_updated_at(::std::sync::Arc::clone(&timestamp_codec).format(event_status.at()).await?)
+            .last_updated_at(::std::sync::Arc::clone(&timestamp_codec).format(event.statuses.last().at()).await?)
             .name(event.name)
             .categories(
                 event
@@ -130,29 +126,6 @@ impl ViewPublishedEventsEvent {
             .image_url(event.image_url)
             .build()
             .into_ok()
-    }
-}
-
-#[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy, ::strum::Display)]
-#[cfg_attr(feature = "serde", derive(::serde::Serialize))]
-#[cfg_attr(feature = "serde", serde(rename_all = "kebab-case"))]
-#[cfg_attr(feature = "wasm-bindings", derive(::tsify::Tsify))]
-#[cfg_attr(feature = "wasm-bindings", tsify(into_wasm_abi))]
-pub enum ViewPublishedEventsEventStatus {
-    Created,
-    Updated,
-    Approved,
-    Rejected,
-}
-
-impl ::core::convert::From<::domain::EventStatus> for ViewPublishedEventsEventStatus {
-    fn from(value: ::domain::EventStatus) -> Self {
-        match value {
-            ::domain::EventStatus::Created { .. } => Self::Created,
-            ::domain::EventStatus::Updated { .. } => Self::Updated,
-            ::domain::EventStatus::Approved { .. } => Self::Approved,
-            ::domain::EventStatus::Rejected { .. } => Self::Rejected,
-        }
     }
 }
 

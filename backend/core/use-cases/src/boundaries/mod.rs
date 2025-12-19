@@ -26,6 +26,10 @@ mod view_events;
 mod view_post;
 mod view_published_events;
 mod view_users;
+mod view_event;
+mod view_published_event;
+mod view_self_profile;
+mod view_user;
 
 pub use self::create_comment::*;
 pub use self::create_event::*;
@@ -55,6 +59,10 @@ pub use self::view_events::*;
 pub use self::view_post::*;
 pub use self::view_published_events::*;
 pub use self::view_users::*;
+pub use self::view_event::*;
+pub use self::view_published_event::*;
+pub use self::view_self_profile::*;
+pub use self::view_user::*;
 
 pub(in crate::boundaries) mod fmt {
     pub fn join_with_comma<T: ::core::fmt::Display>(values: &[T]) -> ::axiom::string::String {
