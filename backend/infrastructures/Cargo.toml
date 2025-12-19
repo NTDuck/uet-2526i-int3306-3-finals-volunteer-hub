@@ -26,7 +26,6 @@ seahash = { version = "4.1.0", optional = true }
 serde = { workspace = true }
 serde_json = "1.0.45"
 thiserror = { workspace = true }
-tracing = { workspace = true }
 tokio = { version = "1.47.1", features = ["sync"] }
 uuid = { version = "1.18.1", features = ["v7"] }
 
