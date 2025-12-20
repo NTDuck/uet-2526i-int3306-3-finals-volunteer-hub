@@ -1045,6 +1045,79 @@ impl MediaRepository for MockMediaRepository {
     }
 }
 
+#[derive(::bon::Builder)]
+pub struct WasmMediaRepository {
+    #[builder(with = |callable: ::js_sys::Function| WasmMediaRepositorySingleThreadedCallable(callable))]
+    upload_file_callable: WasmMediaRepositorySingleThreadedCallable,
+}
+
+#[async_trait]
+impl MediaRepository for WasmMediaRepository {
+    async fn verify(self: ::std::sync::Arc<Self>, bytes: ::axiom::bytes::Bytes) -> ::axiom::result::Fallible<bool> {
+        ::image::guess_format(&bytes).is_ok().into_ok()
+    }
+
+    async fn save(
+        self: ::std::sync::Arc<Self>, bytes: ::axiom::bytes::Bytes,
+    ) -> ::axiom::result::Fallible<::axiom::string::String> {
+        let future = {
+            let bytes = ::js_sys::Array::from(&bytes.as_ref().into_t::<::js_sys::Uint8Array>());
+
+            let promise = self
+                .upload_file_callable
+                .call1(&::wasm_bindgen::JsValue::NULL, &bytes)
+                .map_err(|error| ::anyhow::anyhow!("Failed to call JS function: {:?}", error))?;
+
+            let promise = ::js_sys::Promise::from(promise).into();
+            WasmMediaRepositorySingleThreadedFuture(promise)
+        };
+
+        let result = future
+            .await
+            .map_err(|error| ::anyhow::anyhow!("JS Promise rejected: {:?}", error))?;
+
+        let url = result
+            .as_string()
+            .ok_or_else(|| ::anyhow::anyhow!("JS Promise resolved to non-string value"))?;
+
+        url.into_t::<::axiom::string::String>().into_ok()
+    }
+
+    async fn remove(self: ::std::sync::Arc<Self>, _url: ::axiom::string::String) -> ::axiom::result::Fallible {
+        unimplemented!()
+    }
+}
+
+#[repr(transparent)]
+pub struct WasmMediaRepositorySingleThreadedCallable(::js_sys::Function);
+
+unsafe impl ::core::marker::Send for WasmMediaRepositorySingleThreadedCallable {}
+unsafe impl ::core::marker::Sync for WasmMediaRepositorySingleThreadedCallable {}
+
+impl ::core::ops::Deref for WasmMediaRepositorySingleThreadedCallable {
+    type Target = ::js_sys::Function;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+#[repr(transparent)]
+struct WasmMediaRepositorySingleThreadedFuture(::wasm_bindgen_futures::JsFuture);
+
+unsafe impl ::core::marker::Send for WasmMediaRepositorySingleThreadedFuture {}
+unsafe impl ::core::marker::Sync for WasmMediaRepositorySingleThreadedFuture {}
+
+impl ::core::future::Future for WasmMediaRepositorySingleThreadedFuture {
+    type Output = Result<::wasm_bindgen::JsValue, ::wasm_bindgen::JsValue>;
+
+    fn poll(
+        mut self: ::core::pin::Pin<&mut Self>, context: &mut ::core::task::Context<'_>,
+    ) -> ::core::task::Poll<Self::Output> {
+        ::core::pin::Pin::new(&mut self.0).poll(context)
+    }
+}
+
 pub struct UuidV7Generator;
 
 #[::bon::bon]

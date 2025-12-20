@@ -22,6 +22,7 @@ hmac = { version = "0.12.1" }
 sha2 = { version = "0.10.9" }
 tracing = { workspace = true }
 tracing-wasm = "0.2.1"
+js-sys = "*"
 
 # [target.'cfg(target_arch = "wasm32")'.dependencies]
 console_error_panic_hook = "0.1.7"

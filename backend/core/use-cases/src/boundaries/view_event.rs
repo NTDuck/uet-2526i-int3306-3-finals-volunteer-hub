@@ -46,6 +46,7 @@ pub struct ViewEventEvent {
     pub statuses: ::std::vec::Vec<ViewEventEventStatus>,
 
     pub name: ::axiom::string::String,
+    pub description: ::axiom::string::String,
     pub categories: ::std::vec::Vec<::axiom::string::String>,
     pub location: ::axiom::string::String,
 
@@ -88,6 +89,7 @@ impl ViewEventEvent {
                     .await?,
             )
             .name(event.name)
+            .description(event.description)
             .categories(
                 event
                     .categories
