@@ -42,6 +42,8 @@ pub struct ViewEventVolunteersVolunteer {
     pub id: ::axiom::string::String,
 
     pub status: ViewEventVolunteersUserStatus,
+
+    pub registration_id: ::axiom::string::String,
     pub registration_status: ViewEventVolunteersEventRegistrationStatus,
 
     pub username: ::axiom::string::String,
@@ -58,15 +60,16 @@ impl ViewEventVolunteersVolunteer {
     #[builder(finish_fn(name = try_build))]
     pub async fn build_from(
         #[builder(start_fn)] volunteer: ::domain::User,
-        #[builder(start_fn)] event_registration_status: ::domain::EventRegistrationStatus,
+        #[builder(start_fn)] event_registration: ::domain::EventRegistration,
         #[builder(setters(name = with_uuid_codec))] uuid_codec: ::std::sync::Arc<
             dyn crate::gateways::UuidCodec + ::core::marker::Send + ::core::marker::Sync,
         >,
     ) -> ::axiom::result::Fallible<Self> {
         Self::builder()
-            .id(uuid_codec.format(volunteer.id).await?)
+            .id(::std::sync::Arc::clone(&uuid_codec).format(volunteer.id).await?)
             .status(*volunteer.statuses.last())
-            .registration_status(event_registration_status)
+            .registration_id(::std::sync::Arc::clone(&uuid_codec).format(event_registration.id).await?)
+            .registration_status(*event_registration.statuses.last())
             .username(volunteer.username)
             .email(volunteer.email)
             .full_name(volunteer.full_name)

@@ -64,14 +64,14 @@ impl ModerateUserBoundary for ModerateUserInteractor {
                     user_status,
                     ::domain::UserStatus::Created { .. }
                         | ::domain::UserStatus::Updated { .. }
-                        | ::domain::UserStatus::Suspended { .. }
+                        | ::domain::UserStatus::Unsuspended { .. }
                 ) {
                     return super::err!(UserStatusNotEligible {
                         user_status: user_status.into(),
                         allowed_user_statuses: ::std::vec![
                             UserStatus::Created,
                             UserStatus::Updated,
-                            UserStatus::Suspended,
+                            UserStatus::Unsuspended,
                         ],
                     });
                 }

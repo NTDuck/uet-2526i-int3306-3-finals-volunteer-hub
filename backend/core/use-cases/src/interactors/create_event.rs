@@ -69,9 +69,10 @@ impl CreateEventBoundary for CreateEventInteractor {
         let event_location = ::domain::EventLocation::try_from(request.event_location)
             .map_err(|error| errors.push(ErrResponse::EventLocationInvalid { event_location: error.into() }));
 
-        let event_image = ::axiom::bytes::Bytes::from(request.event_image);
+        // let event_image = ::axiom::bytes::Bytes::from(request.event_image);
+        let event_image = ::axiom::bytes::Bytes::from("Hello world");
 
-        if ::std::sync::Arc::clone(&self.media_repository)
+        if !::std::sync::Arc::clone(&self.media_repository)
             .verify(event_image.clone())
             .await?
         {

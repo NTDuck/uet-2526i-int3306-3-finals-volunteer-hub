@@ -1242,11 +1242,11 @@ mod serde {
     pub struct Event {
         pub id: Uuid,
 
-        pub statuses: ::std::vec::Vec<EventStatus>,
+        pub statuses: ::axiom::string::String,
 
         pub name: ::axiom::string::String,
         pub description: ::axiom::string::String,
-        pub categories: ::std::vec::Vec<::axiom::string::String>,
+        pub categories: ::axiom::string::String,
         pub location: ::axiom::string::String,
 
         pub image_url: ::axiom::string::String,
@@ -1260,8 +1260,10 @@ mod serde {
                     value
                         .statuses
                         .into_iter()
-                        .map(::core::convert::Into::into)
-                        .collect::<::std::vec::Vec<_>>(),
+                        .map(::core::convert::Into::<EventStatus>::into)
+                        .map(|status| ::serde_json::to_string(&status).unwrap_or_default())
+                        .collect::<::std::vec::Vec<_>>()
+                        .join("|"),
                 )
                 .name(value.name)
                 .description(value.description)
@@ -1269,8 +1271,9 @@ mod serde {
                     value
                         .categories
                         .into_iter()
-                        .map(::core::convert::Into::into)
-                        .collect::<::std::vec::Vec<_>>(),
+                        .map(::core::convert::Into::<::axiom::string::String>::into)
+                        .collect::<::std::vec::Vec<_>>()
+                        .join("|"),
                 )
                 .location(value.location)
                 .image_url(value.image_url)
@@ -1364,7 +1367,7 @@ mod serde {
         pub id: Uuid,
 
         pub role: UserRole,
-        pub statuses: ::std::vec::Vec<UserStatus>,
+        pub statuses: ::axiom::string::String,
 
         pub username: ::axiom::string::String,
         pub email: ::axiom::string::String,
@@ -1383,8 +1386,10 @@ mod serde {
                     value
                         .statuses
                         .into_iter()
-                        .map(::core::convert::Into::into)
-                        .collect::<::std::vec::Vec<_>>(),
+                        .map(::core::convert::Into::<UserStatus>::into)
+                        .map(|status| ::serde_json::to_string(&status).unwrap_or_default())
+                        .collect::<::std::vec::Vec<_>>()
+                        .join("|"),
                 )
                 .username(value.username)
                 .email(value.email)
@@ -1395,7 +1400,7 @@ mod serde {
     }
 
     #[derive(::serde::Serialize, ::serde::Deserialize)]
-    #[serde(untagged, rename_all = "kebab-case")]
+    #[serde(rename_all = "kebab-case")]
     pub enum UserRole {
         Volunteer,
         EventManager,
