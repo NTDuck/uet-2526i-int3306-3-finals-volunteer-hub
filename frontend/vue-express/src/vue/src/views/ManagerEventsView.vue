@@ -5,12 +5,9 @@ import { getRole, isLoggedIn } from '../utils/auth'
 import router from '../router'
 import { showConfirmationPopup, showErrorPopup } from '../utils/popups'
 
-// --- Types ---
-// Updated to match your backend 'ViewEventsEventStatus'
 type EventStatus = 'created' | 'updated' | 'approved' | 'rejected'
 type VolunteerStatus = 'pending' | 'accepted' | 'declined' | 'completed' | 'withdrawn'
 
-// Updated to match your backend 'ViewEventsEvent'
 interface EventItem {
   id: string
   name: string
@@ -19,8 +16,6 @@ interface EventItem {
   categories: string[]
   location: string
   imageUrl?: string
-  // Description is NOT returned by the list endpoint /api/manager/events
-  // It will be undefined when clicking Edit from the list
   description?: string
 }
 
@@ -29,22 +24,22 @@ interface Volunteer {
   fullName: string
   email: string
   registrationStatus: VolunteerStatus
+  registrationId: string
+  status: string
+  username: string
 }
 
-// --- State ---
 const events = ref<EventItem[]>([])
 const volunteers = ref<Volunteer[]>([])
 const isLoading = ref(false)
 const isSubmitting = ref(false)
 
-// Modals State
 const showEventModal = ref(false)
 const showVolunteerModal = ref(false)
 const isEditing = ref(false)
 const currentEventId = ref<string | null>(null)
 const currentEventName = ref('')
 
-// Form State
 const eventForm = reactive({
   name: '',
   description: '',
@@ -58,8 +53,6 @@ const eventFormErrors = reactive({
   location: '',
   image: ''
 })
-
-// --- Helpers ---
 
 const imageToBytes = async (file: File): Promise<number[]> => {
   const arrayBuffer = await file.arrayBuffer()
@@ -75,15 +68,10 @@ const resetForm = () => {
   Object.keys(eventFormErrors).forEach((k) => ((eventFormErrors as any)[k] = ''))
 }
 
-// --- API Actions ---
-
-// 1. Fetch Events (Updated to use /api/manager/events)
+// Fetch Events (Updated to use /api/manager/events)
 const fetchEvents = async () => {
   isLoading.value = true
   try {
-    // We are not passing filters (?query=...) here as the Dashboard
-    // typically shows "My Managed Events" by default.
-    // If you add a search bar later, you can append ?query=value here.
     const response = await fetch('http://localhost:4000/api/manager/events', {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
@@ -91,7 +79,6 @@ const fetchEvents = async () => {
     })
 
     if (response.ok) {
-      // The backend returns ViewEventsOkResponse['events'] which is ViewEventsEvent[]
       events.value = await response.json()
     } else {
       console.error('Failed to fetch manager events', response.status)
@@ -103,7 +90,7 @@ const fetchEvents = async () => {
   }
 }
 
-// 2. Create or Update Event
+// Create or Update Event
 const saveEvent = async () => {
   let isValid = true
   if (!eventForm.name) {
@@ -245,22 +232,27 @@ const moderateRegistration = async (volunteer: Volunteer, newStatus: VolunteerSt
   if (!(await showConfirmationPopup(`Moderate Registration`, `Mark this volunteer as ${newStatus}?`))) return
 
   try {
-    const response = await fetch(`http://localhost:4000/api/manager/registrations/${volunteer.id}/moderate`, {
+    const response = await fetch(`http://localhost:4000/api/manager/registrations/${volunteer.registrationId}/moderate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify({ eventRegistrationStatus: newStatus })
+      body: JSON.stringify({ event_registration_status: newStatus, user_id: volunteer.id})
     })
-    const body = await response.json()
+    
     if (response.ok) {
       if (currentEventId.value) fetchVolunteers(currentEventId.value)
-    } else if (body.error === 'UserSuspended') {
-      showErrorPopup('Moderate Registration', `You have been suspended and now cannot moderate registrations`, 100)
-    } else if (body.error === 'EventRegistrationNotFound') {
-      showErrorPopup('Moderate Registration', `Event registration not found!`)
-    } else {
-      showErrorPopup(`Moderate Registration`, `Failed to update user's registration status`, 100)
-    }
+    } else { 
+      const body = await response.json()
+      if (body.error === 'UserSuspended') {
+        showErrorPopup('Moderate Registration', `You have been suspended and now cannot moderate registrations`, 100)
+      }
+      else if (body.error === 'EventRegistrationNotFound') {
+        showErrorPopup('Moderate Registration', `Event registration not found!`)
+      }
+      else {
+        showErrorPopup(`Moderate Registration`, `Failed to update user's registration status`, 100)
+      }
+    }   
   } catch (error) {
     console.error('Moderation error:', error)
   }
@@ -297,7 +289,7 @@ const openVolunteersModal = (event: EventItem) => {
   showVolunteerModal.value = true
 }
 
-const onFileChange = async (e: Event) => {
+const onFileChange = async (_e: Event) => {
   // const target = e.target as HTMLInputElement
   // if (target.files && target.files.length > 0) {
   //   const file = target.files[0]
@@ -312,7 +304,7 @@ onMounted(async () => {
     router.push('/signin')
     return
   }
-  const role = getRole()
+  const role = await getRole()
   if (role !== 'event-manager' && role !== 'administrator') {
     showErrorPopup('Unauthorized', 'You must be an Event Manager or Administrator!')
     router.push('/home')

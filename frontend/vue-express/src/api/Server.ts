@@ -11,10 +11,12 @@ import { createAdminRoutes } from "./routes/AdminRoutes.ts";
 import { createManagerRoutes } from "./routes/ManagerRoutes.ts";
 import { createVolunteerRoutes } from "./routes/VolunteerRoutes.ts";
 import { createEventRoutes } from "./routes/EventRoutes.ts";
+import { NotCleanWasmApp } from "../workarounds/NotCleanWasmApp.ts";
+import { createNotificationRoutes } from "./routes/NotificationRoutes.ts";
 
 const __dirname = dirname(fromFileUrl(import.meta.url));
 
-export function createServer(wasmApp: Application) {
+export function createServer(wasmApp: Application, notCleanWasmApp: NotCleanWasmApp) {
   const app = express();
 
   const allowedOrigins = ["http://localhost:5050"];
@@ -35,11 +37,12 @@ export function createServer(wasmApp: Application) {
   app.use(cookieParser());
   app.use(express.json({ limit: "50mb" }));
 
-  app.use("/api", createAuthRoutes(wasmApp));
-  app.use("/api/admin", createAdminRoutes(wasmApp));
-  app.use("/api/manager", createManagerRoutes(wasmApp));
-  app.use("/api/volunteer", createVolunteerRoutes(wasmApp));
-  app.use("/api", createEventRoutes(wasmApp));
+  app.use("/api", createAuthRoutes(wasmApp, notCleanWasmApp));
+  app.use("/api", createEventRoutes(wasmApp, notCleanWasmApp));
+  app.use("/api/admin", createAdminRoutes(wasmApp, notCleanWasmApp));
+  app.use("/api/manager", createManagerRoutes(wasmApp, notCleanWasmApp));
+  app.use("/api/volunteer", createVolunteerRoutes(wasmApp, notCleanWasmApp));
+  app.use("/api/notification", createNotificationRoutes(wasmApp, notCleanWasmApp));
 
   return app;
 }

@@ -3,7 +3,7 @@ import { onMounted, ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import NavBar from '../components/NavBar.vue'
 import { showConfirmationPopup, showErrorPopup } from '../utils/popups'
-import { isLoggedIn } from '../utils/auth'
+import { getRole, isLoggedIn } from '../utils/auth'
 
 type RegistrationStatus = 'pending' | 'withdrawn' | 'accepted' | 'declined' | 'completed' | null
 
@@ -15,7 +15,6 @@ interface EventDetail {
   categories: string[]
   imageUrl?: string
   lastUpdatedAt?: string
-  // Add other fields you expect the future "Get Event" API to return
 }
 
 const route = useRoute()
@@ -28,23 +27,39 @@ const isSubmitting = ref(false)
 
 const fetchEventDetails = async () => {
   try {
-    // TODO: Replace this with the actual API call when backend is ready
-    // const response = await fetch(`http://localhost:4000/api/events/${eventId}`)
-    // const data = await response.json()
-    await new Promise((r) => setTimeout(r, 200))
-
-    event.value = {
-      id: eventId,
-      name: 'Community Tree Planting Day',
-      description:
-        'Join us for a day of making our city greener! We will be planting over 500 trees in the local park. Gloves and shovels provided. Lunch will be served at 12 PM. Please wear comfortable clothes.',
-      location: 'Central Park, Hanoi',
-      categories: ['Environment', 'Community', 'Nature'],
-      imageUrl: 'https://placehold.co/800x400',
-      lastUpdatedAt: new Date().toISOString()
+    let response
+    const role = await getRole()
+    if (role === 'administrator' || role === 'event-manager') {
+      response = await fetch(`http://localhost:4000/api/events/${eventId}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include'
+      })
+    } else {
+      response = await fetch(`http://localhost:4000/api/volunteer/events/${eventId}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include'
+      })
+    }
+    if (response.ok) {
+      const data = await response.json()
+      event.value = {
+        id: data.id,
+        name: data.name,
+        description: data.description ? data.description : 'mocked description',
+        location: data.location,
+        categories: data.categories,
+        imageUrl: data.imageUrl,
+        lastUpdatedAt: data.lastUpdatedAt ? data.lastUpdatedAt : ''
+      }
+    } else {
+      showErrorPopup('API Error', 'Failed to load event details', 100)
+      router.push('/home')
     }
   } catch (error) {
     showErrorPopup('Error', 'Failed to load event details.')
+    router.push('/home')
   }
 }
 
@@ -83,7 +98,9 @@ const handleSubscribe = async () => {
   try {
     const response = await fetch(`http://localhost:4000/api/volunteer/events/${eventId}/subscribe`, {
       method: 'POST',
-      credentials: 'include'
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({event_name: event.value?.name})
     })
 
     if (response.status === 201) {
@@ -95,7 +112,7 @@ const handleSubscribe = async () => {
       } else if (err.error === 'UserUnauthorized') {
         showErrorPopup('Subscription Failed', 'You must be a volunteer to subscribe to events')
       } else {
-        showErrorPopup('Subscription Failed', err.error + ' ' + err.message || "Failed to subscribe to event", 100)
+        showErrorPopup('Subscription Failed', err.error + ' ' + err.message || 'Failed to subscribe to event', 100)
       }
     }
   } catch (error) {
@@ -251,7 +268,7 @@ onMounted(async () => {
             </button>
 
             <button
-              v-else-if="registrationStatus === 'pending' || registrationStatus === 'accepted'"
+              v-else-if="registrationStatus === 'pending'"
               @click="handleUnsubscribe"
               :disabled="isSubmitting"
               class="flex-1 bg-white border-2 border-red-500 text-red-600 hover:bg-red-50 text-lg font-semibold py-3 px-6 rounded-lg transition-all disabled:opacity-50 flex justify-center items-center gap-2 hover:cursor-pointer"

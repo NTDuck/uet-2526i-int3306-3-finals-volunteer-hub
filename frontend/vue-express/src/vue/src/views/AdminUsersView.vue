@@ -156,7 +156,7 @@ onMounted(async () => {
   if (!(await isLoggedIn())) {
     router.push('/signin')
   }
-  if (getRole() !== 'administrator') {
+  if (await getRole() !== 'administrator') {
     showErrorPopup('Unauthorized', 'You must be an Administrator!')
     router.push('/home')
     return

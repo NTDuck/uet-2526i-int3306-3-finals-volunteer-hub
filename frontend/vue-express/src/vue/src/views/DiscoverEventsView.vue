@@ -80,7 +80,7 @@ onMounted(async () => {
     router.push('/signin')
     return
   }
-  const role = getRole()
+  const role = await getRole()
   if (role !== 'volunteer') {
     showErrorPopup("Unauthorized", "You must be a Volunteer!")
     router.push('/home')

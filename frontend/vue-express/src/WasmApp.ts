@@ -186,6 +186,12 @@ const seedMockEvents = async (wasmApp: Application) => {
       password: "password",
     })
   ).token;
+  const adminToken = (
+    await wasmApp.signIn({
+      usernameOrEmail: "admin",
+      password: "password",
+    })
+  ).token;
 
   // 1. Environmental Cleanup - Red River (Manager 1)
   await wasmApp.createEvent({
@@ -290,4 +296,11 @@ const seedMockEvents = async (wasmApp: Application) => {
     eventLocation: "Hanoi Library, 47 Ba Trieu, Hoan Kiem, Hanoi",
     eventImage: [],
   });
+
+  const events = await wasmApp.viewEvents({ token: managerToken, filter: undefined });
+  for (const event of events.events) {
+    if (event.name === "Digital Skills for Everyone") {
+      await wasmApp.moderateEvent({ token: adminToken, eventId: event.id, eventStatus: "approved" });
+    }
+  }
 };

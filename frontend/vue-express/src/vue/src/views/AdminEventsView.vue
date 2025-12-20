@@ -51,7 +51,6 @@ const fetchEvents = async () => {
       params.append('end', end.toISOString())
     }
 
-    console.log(`ADMIN EVENTS: params: ${params.toString()}`)
     // Assuming the route is mounted under /api/admin/events based on context
     const response = await fetch(`http://localhost:4000/api/admin/events?${params.toString()}`, {
       method: 'GET',
@@ -154,7 +153,7 @@ onMounted(async () => {
     router.push('/signin')
   }
 
-  if (getRole() !== 'administrator') {
+  if (await getRole() !== 'administrator') {
     showErrorPopup('Unauthorized', 'You must be an Administrator!')
     router.push('/home')
     return

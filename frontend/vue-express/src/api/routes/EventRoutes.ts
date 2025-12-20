@@ -8,8 +8,11 @@ import {
   ViewEventsFilter,
 } from "volunteerhub";
 import { WasmError } from "../Types.ts";
+import { NotCleanWasmApp } from "../../workarounds/NotCleanWasmApp.ts";
+import { pushSubscriptions } from "../NotificationStore.ts";
+import { sendPushNotification } from "../utils/WebPush.ts";
 
-export function createEventRoutes(wasmApp: Application) {
+export function createEventRoutes(wasmApp: Application, notCleanWasmApp: NotCleanWasmApp) {
   const router = Router();
 
   // Discover events
@@ -47,6 +50,21 @@ export function createEventRoutes(wasmApp: Application) {
         type: req.query.type as ViewEventRecommendationRecommendationType,
       });
       return res.status(200).json(result.events);
+    } catch (error) {
+      handleWasmError(error, res);
+    }
+  });
+
+  // View Event
+  router.get("/events/:id", async (req: Request, res: Response) => {
+    const token = req.cookies["auth-token"];
+    if (!token) return res.status(401).json({ error: "AuthenticationTokenInvalid", message: "Missing auth token" });
+
+    try {
+      const result = await wasmApp.viewEvent({ token, eventId: req.params.id });
+      // deno-lint-ignore no-explicit-any
+      const plainObject = Object.fromEntries(result as unknown as Map<string, any>);
+      return res.status(200).json(plainObject);
     } catch (error) {
       handleWasmError(error, res);
     }
@@ -93,6 +111,49 @@ export function createEventRoutes(wasmApp: Application) {
         postContent: req.body.postContent,
         postImage: req.body.postImage,
       });
+
+      (async () => {
+        try {
+          const eventRaw = await wasmApp.viewPublishedEvent({
+            token: token,
+            eventId: req.params.id,
+          });
+          // deno-lint-ignore no-explicit-any
+          const event = Object.fromEntries(eventRaw as unknown as Map<string, any>);
+          const eventName = event.name;
+
+          const userProfile = await wasmApp.viewSelfProfile({ token });
+          // deno-lint-ignore no-explicit-any
+          const author = Object.fromEntries(userProfile as unknown as Map<string, any>);
+          const authorName = author.fullName || author.username;
+
+          const subscriberIds = Array.from(pushSubscriptions.keys());
+
+          const managerIds = (await Promise.all(subscriberIds.map(async (userId) => {
+            try {
+              if (userId === author.id) return null;
+
+              const userRaw = await notCleanWasmApp.getUserDetails(userId);
+              // deno-lint-ignore no-explicit-any
+              const user = Object.fromEntries(userRaw as unknown as Map<string, any>);
+
+              return user.role === "event-manager" ? userId : null;
+            } catch (_e) {
+              return null;
+            }
+          }))).filter((id): id is string => id !== null);
+
+          managerIds.forEach((managerId) => {
+            sendPushNotification(managerId, {
+              title: "New Event Channel Post",
+              body: `${authorName} posted in ${eventName}: "${req.body.postTitle}"`,
+            });
+          });
+        } catch (e) {
+          console.error("Failed to notify managers about new post", e);
+        }
+      })();
+
       return res.status(201).send();
     } catch (error) {
       handleWasmError(error, res);

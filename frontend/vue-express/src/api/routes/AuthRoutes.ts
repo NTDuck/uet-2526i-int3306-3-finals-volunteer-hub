@@ -4,8 +4,9 @@ import { Router } from "express";
 import type { Request, Response } from "express";
 import { Application, SignUpUserRole } from "volunteerhub";
 import { WasmError } from "../Types.ts";
+import { NotCleanWasmApp } from "../../workarounds/NotCleanWasmApp.ts";
 
-export function createAuthRoutes(wasmApp: Application) {
+export function createAuthRoutes(wasmApp: Application, notCleanWasmApp: NotCleanWasmApp) {
   const router = Router();
 
   router.post("/signup", async (req: Request, res: Response) => {
@@ -92,6 +93,39 @@ export function createAuthRoutes(wasmApp: Application) {
     return res.status(200).json({ message: "Signed out successfully" });
   });
 
+  // Get a user's details
+  router.get("/users/:id", async (req: Request, res: Response) => {
+    const token = req.cookies["auth-token"];
+    if (!token) {
+      return res.status(401).json({
+        logged_in: false,
+        message: "No authentication token found",
+      });
+    }
+
+    try {
+      const resultRaw = await notCleanWasmApp.getUserDetails(req.params.id);
+
+      // deno-lint-ignore no-explicit-any
+      const result = Object.fromEntries(resultRaw as unknown as Map<string, any>);
+      return res.status(200).json({
+        user_id: result.id,
+        username: result.username,
+        fullname: result.fullName,
+        email: result.email,
+        avatar_url: result.avatarUrl,
+        statuses: result.statuses,
+        role: result.role,
+      });
+    } catch (error) {
+      console.log(error);
+      return res.status(401).json({
+        logged_in: false,
+        message: "Invalid or expired token",
+      });
+    }
+  });
+
   // Jwt key check
   router.get("/me", async (req: Request, res: Response) => {
     const token = req.cookies["auth-token"];
@@ -104,9 +138,19 @@ export function createAuthRoutes(wasmApp: Application) {
     }
 
     try {
-      await wasmApp.viewEventRecommendation({ token: token, type: "recently-published" });
+      const resultRaw = await wasmApp.viewSelfProfile({ token: token });
+
+      // deno-lint-ignore no-explicit-any
+      const result = Object.fromEntries(resultRaw as unknown as Map<string, any>);
       return res.status(200).json({
         logged_in: true,
+        user_id: result.id,
+        username: result.username,
+        fullname: result.fullName,
+        email: result.email,
+        avatar_url: result.avatarUrl,
+        status: result.statuses,
+        role: result.role,
       });
     } catch (error) {
       console.log(error);

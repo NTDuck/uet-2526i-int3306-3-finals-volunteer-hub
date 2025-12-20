@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { isLoggedIn } from '../utils/auth'
+import { PUBLIC_VAPID_KEY, urlBase64ToUint8Array } from '../utils/random'
 
 const email = ref('')
 const password = ref('')
@@ -10,8 +11,33 @@ const errorMessage = ref('')
 const showErrorMessage = ref(false)
 const router = useRouter()
 
+const registerForPushNotifications = async () => {
+  if (!('serviceWorker' in navigator)) return;
+
+  try {
+    const register = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+    await navigator.serviceWorker.ready;
+
+    const subscription = await register.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(PUBLIC_VAPID_KEY)
+    });
+
+    await fetch('http://localhost:4000/api/notification/subscribe', {
+      method: 'POST',
+      body: JSON.stringify(subscription),
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include'
+    });
+    console.log('Push notification subscribed!');
+  } catch (e) {
+    console.error('Failed to subscribe to push', e);
+  }
+}
+
 onMounted(async () => {
   if (await isLoggedIn()) {
+    await registerForPushNotifications()
     router.push('/home')
   }
   document.getElementById('email')!.focus()
@@ -31,6 +57,7 @@ const onSubmit = async () => {
   })
 
   if (response.status === 200) {
+    await registerForPushNotifications()
     router.push('/home')
   } else if (response.status === 401) {
     showErrorMessage.value = true

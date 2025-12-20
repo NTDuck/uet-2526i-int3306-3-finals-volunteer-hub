@@ -14,8 +14,9 @@ import {
   ViewUsersUserStatus,
 } from "volunteerhub";
 import { WasmError } from "../Types.ts";
+import { NotCleanWasmApp } from "../../workarounds/NotCleanWasmApp.ts";
 
-export function createAdminRoutes(wasmApp: Application) {
+export function createAdminRoutes(wasmApp: Application, notCleanWasmApp: NotCleanWasmApp) {
   const router = Router();
 
   // View Users
@@ -71,9 +72,6 @@ export function createAdminRoutes(wasmApp: Application) {
     if (req.query.statuses) {
       statuses.push(req.query.statuses);
     }
-    console.log(
-      `GET /api/admin/events: query: ${req.query.query}, statuses: ${statuses}, startTimestamp: ${req.query.start}, endTimestamp: ${req.query.end}`,
-    );
     const filter: ViewEventsFilter = {
       query: req.query.query,
       statuses: statuses.length === 0 ? undefined : statuses,
