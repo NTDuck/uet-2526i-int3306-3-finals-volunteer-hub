@@ -46,6 +46,7 @@ pub struct ViewPublishedEventEvent {
     pub last_updated_at: ::axiom::string::String,
 
     pub name: ::axiom::string::String,
+    pub description: ::axiom::string::String,
     pub categories: ::std::vec::Vec<::axiom::string::String>,
     pub location: ::axiom::string::String,
 
@@ -73,6 +74,7 @@ impl ViewPublishedEventEvent {
                     .await?,
             )
             .name(event.name)
+            .description(event.description)
             .categories(
                 event
                     .categories

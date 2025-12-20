@@ -167,3 +167,6 @@ vite.config.ts.timestamp-*
 
 # Deno build output
 .deno-deploy/
+
+# Static file uploads
+frontend/sveltekit-minimal/static/uploads/

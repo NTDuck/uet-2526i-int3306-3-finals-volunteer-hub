@@ -3,6 +3,7 @@
 ## Deps
 
 - [Rust](https://rust-lang.org/tools/install/)
+  > assumes MSVC toolchain.
 - [wasm-pack](https://drager.github.io/wasm-pack/)
   > basically `cargo install wasm-pack`
 - [Deno](https://docs.deno.com/runtime/getting_started/installation/)
