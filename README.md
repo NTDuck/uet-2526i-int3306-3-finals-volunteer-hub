@@ -2,10 +2,15 @@
 
 ## Deps
 
-- [Rust](https://rust-lang.org/tools/install/)
-  > assumes MSVC toolchain.
-- [wasm-pack](https://drager.github.io/wasm-pack/)
-  > basically `cargo install wasm-pack`
+- [Rust](https://rust-lang.org/tools/install/)<br> [windows] use
+  `stable-x86_64-pc-windows-msvc` toolchain.
+- [MSVC Build tools](https://visualstudio.microsoft.com/downloads/)<br>
+  [windows] use the following individual components: Windows Universal C
+  Runtime, Windows 11 SDK (10.0.26100.7175), Windows Performance Toolkit, MSVC
+  v143 - VS 2022 C++ ARM build tools (v14.44-17.14), MSVC v143 - VS 2022 C++
+  x64/x86 build tools (v14.44-17.14)
+- [wasm-pack](https://drager.github.io/wasm-pack/)<br> run
+  `cargo install wasm-pack`
 - [Deno](https://docs.deno.com/runtime/getting_started/installation/)
 
 ## How to install

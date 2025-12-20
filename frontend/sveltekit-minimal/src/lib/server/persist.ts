@@ -1,6 +1,8 @@
 import { mkdir, writeFile } from "node:fs/promises";
-import { extname, join } from "node:path";
+import { join } from "node:path";
 import { randomUUID } from "node:crypto";
+import { Buffer } from "node:buffer";
+import process from "node:process";
 
 export async function uploadFile(bytes: Uint8Array): Promise<string> {
   const buffer = Buffer.from(bytes);
