@@ -127,9 +127,9 @@ pub struct Application {
 
 #[wasm_bindgen]
 impl Application {
-    #[wasm_bindgen(js_name = withProfile)]
-    pub async fn with_profile(profile: Profile) -> Promise<Self> {
-        Gateways::try_from(profile)
+    #[wasm_bindgen(js_name = withContext)]
+    pub async fn with_profile(context: ApplicationContext) -> Promise<Self> {
+        Gateways::try_from(context)
             .map(::core::convert::Into::<Self>::into)
             .inspect_err(|error| ::tracing::error!("{error}")) // Saves hours of debugging
             .into_promise()
@@ -738,6 +738,23 @@ impl ::core::convert::From<Gateways> for Application {
     }
 }
 
+#[wasm_bindgen]
+pub struct ApplicationContext {
+    #[allow(dead_code)]
+    profile: Profile,
+
+    #[wasm_bindgen(js_name = uploadFileCallable)]
+    upload_file_callable: ::js_sys::Function,
+}
+
+#[wasm_bindgen]
+impl ApplicationContext {
+    #[wasm_bindgen(constructor)]
+    pub fn new(profile: Profile, upload_file_callable: ::js_sys::Function) -> Self {
+        Self { profile, upload_file_callable }
+    }
+}
+
 #[derive(::bon::Builder)]
 struct Gateways {
     event_repository: ::std::sync::Arc<dyn EventRepository + ::core::marker::Send + ::core::marker::Sync>,
@@ -764,10 +781,10 @@ struct Gateways {
     password_hasher: ::std::sync::Arc<dyn PasswordHasher + ::core::marker::Send + ::core::marker::Sync>,
 }
 
-impl ::core::convert::TryFrom<Profile> for Gateways {
+impl ::core::convert::TryFrom<ApplicationContext> for Gateways {
     type Error = ::axiom::result::Error;
 
-    fn try_from(_profile: Profile) -> ::core::result::Result<Self, Self::Error> {
+    fn try_from(context: ApplicationContext) -> ::core::result::Result<Self, Self::Error> {
         use ::hmac::Mac as _;
 
         ::console_error_panic_hook::set_once();
@@ -800,9 +817,14 @@ impl ::core::convert::TryFrom<Profile> for Gateways {
                     .user_repository(::std::sync::Arc::clone(&user_repository))
                     .build(),
             ))
+            // .media_repository(::std::sync::Arc::new(
+            //     MockMediaRepository::builder()
+            //         .url("https://i.kym-cdn.com/photos/images/original/003/136/289/782.jpg")
+            //         .build(),
+            // ))
             .media_repository(::std::sync::Arc::new(
-                MockMediaRepository::builder()
-                    .url("https://i.kym-cdn.com/photos/images/original/003/136/289/782.jpg")
+                WasmMediaRepository::builder()
+                    .upload_file_callable(context.upload_file_callable)
                     .build(),
             ))
             .uuid_generator(::std::sync::Arc::new(UuidV7Generator::builder().build()))
@@ -841,10 +863,10 @@ impl ::core::convert::TryFrom<Profile> for Gateways {
 }
 
 #[derive(::core::fmt::Debug, ::core::clone::Clone, ::core::marker::Copy)]
-#[derive(::serde::Deserialize)]
+#[derive(::serde::Serialize, ::serde::Deserialize)]
 #[serde(rename_all = "kebab-case")]
 #[derive(::tsify::Tsify)]
-#[tsify(from_wasm_abi)]
+#[tsify(from_wasm_abi, into_wasm_abi)]
 pub enum Profile {
     Dev,
     Prod,

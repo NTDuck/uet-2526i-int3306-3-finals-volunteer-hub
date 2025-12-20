@@ -18,7 +18,7 @@
 
 <h1>register!</h1>
 
-<form method="POST">
+<form method="POST" enctype="multipart/form-data">
   <label for="user-role">user-role</label>
   <select name="user-role" required>
     <option value="volunteer">volunteer</option>
@@ -37,6 +37,9 @@
 
   <label for="full-name">full-name</label>
   <input type="text" name="full-name" value={form?.data.fullName ?? ""} required>
+
+  <label for="avatar">avatar</label>
+  <input type="file" name="avatar" accept="image/*">
 
   <button type="submit">register</button>
 </form>
