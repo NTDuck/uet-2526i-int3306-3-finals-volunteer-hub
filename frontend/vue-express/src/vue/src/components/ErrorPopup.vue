@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { onMounted, onUnmounted } from 'vue'
+
 const props = defineProps<{
   title: string
   message: string
@@ -8,11 +10,31 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'close'): void
 }>()
+
 const widthClass = props.width ? `max-w-[${props.width}rem]` : `max-w-80`
+
+const handleGlobalKeydown = (e: KeyboardEvent) => {
+  if (e.key === 'Enter') {
+    e.preventDefault()
+    e.stopPropagation()
+    emit('close')
+  } else {
+    e.preventDefault()
+    e.stopPropagation()
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', handleGlobalKeydown, { capture: true })
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleGlobalKeydown, { capture: true })
+})
 </script>
 
 <template>
-  <div class="fixed inset-0 z-10000 flex items-center justify-center bg-black/50 p-4" @click.self="emit('close')">
+  <div class="fixed inset-0 z-10000 flex items-center justify-center bg-black/50 p-4">
     <div class="rounded-lg bg-white p-6 shadow-xl text-center" :class="widthClass">
       <div class="flex justify-center mb-4"><img src="/error_icon.png" class="h-16 w-16" /></div>
       <h3 class="w-full mb-2 text-[1.8rem] text-black font-bold">{{ title }}</h3>

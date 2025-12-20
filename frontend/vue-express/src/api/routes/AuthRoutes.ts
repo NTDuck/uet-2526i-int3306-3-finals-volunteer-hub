@@ -11,7 +11,6 @@ export function createAuthRoutes(wasmApp: Application, notCleanWasmApp: NotClean
 
   router.post("/signup", async (req: Request, res: Response) => {
     try {
-      let avatar: number[] | undefined;
       await wasmApp.signUp({
         username: req.body.username,
         userRole: req.body.user_role as SignUpUserRole,
@@ -126,7 +125,7 @@ export function createAuthRoutes(wasmApp: Application, notCleanWasmApp: NotClean
     }
   });
 
-  // Jwt key check
+  // Get current user profile
   router.get("/me", async (req: Request, res: Response) => {
     const token = req.cookies["auth-token"];
 

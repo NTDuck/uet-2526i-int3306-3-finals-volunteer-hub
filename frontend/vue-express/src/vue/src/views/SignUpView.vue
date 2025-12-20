@@ -6,7 +6,6 @@ import { isLoggedIn } from '../utils/auth'
 const username = ref('')
 const email = ref('')
 const fullName = ref('')
-const role = ref<'Volunteer' | 'Event Manager'>('Volunteer')
 const password = ref('')
 const confirmPassword = ref('')
 const router = useRouter()
@@ -34,7 +33,7 @@ const onSubmit = async () => {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       username: username.value,
-      user_role: role.value === 'Volunteer' ? 'volunteer' : 'event-manager',
+      user_role: 'volunteer',
       email: email.value,
       password: password.value,
       fullname: fullName.value,
@@ -120,19 +119,6 @@ const onSubmit = async () => {
                 required
               />
             </div>
-          </div>
-
-          <div>
-            <label for="role" class="text-[1.1rem] text-gray-700">User Role</label>
-            <select
-              id="role"
-              v-model="role"
-              class="w-full h-10 px-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600 transition duration-200 text-[1rem]"
-              required
-            >
-              <option value="Volunteer">Volunteer</option>
-              <option value="Event Manager">Event Manager</option>
-            </select>
           </div>
 
           <div>
