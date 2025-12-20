@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import NavBar from '../components/NavBar.vue'
+import router from '../router'
+import { getRole, isLoggedIn } from '../utils/auth'
+import { showConfirmationPopup, showErrorPopup } from '../utils/popups'
 
 // --- Types ---
 type EventStatus = 'created' | 'updated' | 'approved' | 'rejected'
@@ -70,7 +73,14 @@ const fetchEvents = async () => {
 
 // 2. Moderate Event (Approve/Reject)
 const moderateEvent = async (event: EventItem, newStatus: 'approved' | 'rejected') => {
-  if (!confirm(`Are you sure you want to ${newStatus} the event "${event.name}"?`)) return
+  if (
+    !(await showConfirmationPopup(
+      `Event Moderation`,
+      `Are you sure you want to ${newStatus === 'approved' ? 'approve' : 'reject'} the event "${event.name}"?`
+    ))
+  ) {
+    return
+  }
 
   try {
     const response = await fetch(`http://localhost:4000/api/admin/events/${event.id}/moderate`, {
@@ -83,7 +93,12 @@ const moderateEvent = async (event: EventItem, newStatus: 'approved' | 'rejected
     if (response.ok) {
       await fetchEvents() // Refresh list to show updated status
     } else {
-      alert('Failed to update event status.')
+      const err = await response.json()
+      if (err.error === "EventStatusNotEligible") {
+        showErrorPopup('Event Management', 'Cannot reject an already approved event!', 100)
+      } else {
+        showErrorPopup('Event Management', 'Failed to update event status', 100)
+      }
     }
   } catch (error) {
     console.error('Error moderating event:', error)
@@ -115,7 +130,7 @@ const exportEvents = async (format: ExportFormat) => {
       window.URL.revokeObjectURL(url)
       document.body.removeChild(a)
     } else {
-      alert('Failed to export events')
+      showErrorPopup('Event Management', 'Failed to export events', 40)
     }
   } catch (error) {
     console.error('Export error:', error)
@@ -134,7 +149,17 @@ const onFilterChange = () => {
   }, 400)
 }
 
-onMounted(() => {
+onMounted(async () => {
+  if (!(await isLoggedIn())) {
+    router.push('/signin')
+  }
+
+  if (getRole() !== 'administrator') {
+    showErrorPopup('Unauthorized', 'You must be an Administrator!')
+    router.push('/home')
+    return
+  }
+
   fetchEvents()
 })
 </script>
@@ -252,166 +277,287 @@ onMounted(() => {
           />
         </div>
 
-        <div class="md:col-span-1 flex justify-center pb-2">
+        <div class="md:col-span-1 flex justify-center">
           <button
             v-if="startDate || endDate || filterStatus || searchQuery"
             @click="
-              startDate = ''
-              endDate = ''
-              filterStatus = ''
-              searchQuery = ''
+              startDate = '';
+            endDate = '';
+            filterStatus = '';
+            searchQuery = '';
               fetchEvents()
             "
-            class="text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-red-50 transition"
+            class="text-red-500 hover:cursor-pointer hover:text-red-700 pt-2 px-2 text-[0.9rem] transition flex hover:underline"
             title="Clear Filters"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path
-                fill-rule="evenodd"
-                d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                clip-rule="evenodd"
-              />
-            </svg>
+            Clear Filters
           </button>
         </div>
       </div>
 
-      <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
-        <div class="overflow-x-auto">
-          <table class="w-full text-left border-collapse">
-            <thead>
-              <tr
-                class="bg-gray-50 border-b border-gray-200 text-xs uppercase text-gray-500 font-semibold tracking-wider"
-              >
-                <th class="px-6 py-4">Event Details</th>
-                <th class="px-6 py-4">Categories</th>
-                <th class="px-6 py-4">Status</th>
-                <th class="px-6 py-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-100">
-              <tr v-if="isLoading">
-                <td colspan="4" class="px-6 py-12 text-center">
-                  <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#256EB1]"></div>
-                </td>
-              </tr>
+      <div v-if="isLoading" class="flex justify-center items-center py-12">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-[#256EB1]"></div>
+      </div>
 
-              <tr v-else-if="events.length === 0">
-                <td colspan="4" class="px-6 py-12 text-center text-gray-500">No events found matching criteria.</td>
-              </tr>
+      <div
+        v-else-if="events.length === 0"
+        class="text-center py-12 bg-white rounded-xl border border-gray-200 shadow-sm"
+      >
+        <p class="text-gray-500">No events found matching criteria.</p>
+      </div>
 
-              <tr v-else v-for="event in events" :key="event.id" class="hover:bg-gray-50 transition-colors">
-                <td class="px-6 py-4">
-                  <div class="flex items-center gap-4">
-                    <div class="h-16 w-24 bg-gray-200 rounded-md overflow-hidden shrink-0">
-                      <img v-if="event.imageUrl" :src="event.imageUrl" class="h-full w-full object-cover" />
-                      <div v-else class="h-full w-full flex items-center justify-center text-gray-400 bg-gray-100">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          class="h-6 w-6"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                          />
-                        </svg>
-                      </div>
-                    </div>
-                    <div>
-                      <div class="font-bold text-gray-900 line-clamp-1">{{ event.name }}</div>
-                      <div class="text-sm text-gray-500 flex items-center mt-1">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          class="h-3 w-3 mr-1"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                          />
-                          <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                          />
-                        </svg>
-                        {{ event.location }}
-                      </div>
-                    </div>
-                  </div>
-                </td>
-
-                <td class="px-6 py-4">
-                  <div class="flex flex-wrap gap-1">
-                    <span
-                      v-for="cat in event.categories.slice(0, 2)"
-                      :key="cat"
-                      class="px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100"
-                    >
-                      {{ cat }}
-                    </span>
-                    <span v-if="event.categories.length > 2" class="text-xs text-gray-400">
-                      +{{ event.categories.length - 2 }}
-                    </span>
-                  </div>
-                </td>
-
-                <td class="px-6 py-4">
-                  <span
-                    class="px-2 py-1 rounded-full text-xs font-bold flex items-center w-fit gap-1 capitalize"
-                    :class="{
-                      'bg-green-100 text-green-700': event.status === 'approved',
-                      'bg-red-100 text-red-700': event.status === 'rejected',
-                      'bg-yellow-100 text-yellow-700': event.status === 'created' || event.status === 'updated'
-                    }"
+      <div v-else>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 lg:hidden">
+          <div
+            v-for="event in events"
+            :key="event.id"
+            class="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex flex-col gap-4"
+          >
+            <div class="flex gap-4">
+              <div class="h-20 w-24 bg-gray-200 rounded-md overflow-hidden shrink-0">
+                <img v-if="event.imageUrl" :src="event.imageUrl" class="h-full w-full object-cover" />
+                <div v-else class="h-full w-full flex items-center justify-center text-gray-400 bg-gray-100">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-8 w-8"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
                   >
-                    <span
-                      class="h-1.5 w-1.5 rounded-full"
-                      :class="{
-                        'bg-green-500': event.status === 'approved',
-                        'bg-red-500': event.status === 'rejected',
-                        'bg-yellow-500': event.status === 'created' || event.status === 'updated'
-                      }"
-                    ></span>
-                    {{ event.status }}
-                  </span>
-                  <div class="text-[10px] text-gray-400 mt-1">
-                    {{ new Date(event.statusLastUpdatedAt).toLocaleDateString() }}
-                  </div>
-                </td>
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    />
+                  </svg>
+                </div>
+              </div>
 
-                <td class="px-6 py-4 text-right">
-                  <div class="flex justify-end gap-2">
-                    <button
-                      v-if="event.status !== 'approved'"
-                      @click="moderateEvent(event, 'approved')"
-                      class="text-xs font-medium bg-green-50 text-green-700 hover:bg-green-100 border border-green-200 px-3 py-1.5 rounded transition"
-                    >
-                      Approve
-                    </button>
+              <div class="flex-1 min-w-0">
+                <h3 class="font-bold text-gray-900 line-clamp-2 leading-tight">{{ event.name }}</h3>
+                <div class="text-sm text-gray-500 flex items-center mt-2">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-4 w-4 mr-1 text-gray-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                    />
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
+                  </svg>
+                  <span class="truncate">{{ event.location }}</span>
+                </div>
+              </div>
+            </div>
 
-                    <button
-                      v-if="event.status !== 'rejected'"
-                      @click="moderateEvent(event, 'rejected')"
-                      class="text-xs font-medium bg-white text-red-600 hover:bg-red-50 border border-red-200 px-3 py-1.5 rounded transition"
-                    >
-                      Reject
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+            <div class="flex flex-wrap gap-2">
+              <span
+                v-for="cat in event.categories.slice(0, 3)"
+                :key="cat"
+                class="px-2 py-1 rounded text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100"
+              >
+                {{ cat }}
+              </span>
+              <span v-if="event.categories.length > 3" class="text-xs pt-1 text-gray-400">
+                +{{ event.categories.length - 3 }} more
+              </span>
+            </div>
+
+            <div class="flex justify-between items-center border-t border-b border-gray-50 py-3">
+              <span
+                class="px-2.5 py-1 rounded-full text-sm font-bold flex items-center gap-1.5 capitalize"
+                :class="{
+                  'bg-green-100 text-green-700': event.status === 'approved',
+                  'bg-red-100 text-red-700': event.status === 'rejected',
+                  'bg-yellow-100 text-yellow-700': event.status === 'created' || event.status === 'updated'
+                }"
+              >
+                <span
+                  class="h-1.5 w-1.5 rounded-full"
+                  :class="{
+                    'bg-green-500': event.status === 'approved',
+                    'bg-red-500': event.status === 'rejected',
+                    'bg-yellow-500': event.status === 'created' || event.status === 'updated'
+                  }"
+                ></span>
+                {{ event.status }}
+              </span>
+              <div class="text-xs text-gray-400">
+                Updated: {{ new Date(event.statusLastUpdatedAt).toLocaleDateString() }}
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 mt-auto">
+              <button
+                :disabled="event.status === 'approved'"
+                @click="moderateEvent(event, 'approved')"
+                class="hover:cursor-pointer w-full py-2 rounded-lg font-medium text-sm transition border-2 flex justify-center items-center disabled:opacity-50 disabled:cursor-not-allowed"
+                :class="
+                  event.status === 'approved'
+                    ? 'bg-gray-50 text-gray-400 border-gray-100'
+                    : 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100'
+                "
+              >
+                Approve
+              </button>
+
+              <button
+                :disabled="event.status === 'rejected'"
+                @click="moderateEvent(event, 'rejected')"
+                class="hover:cursor-pointer w-full py-2 rounded-lg font-medium text-sm transition border-2 flex justify-center items-center disabled:opacity-50 disabled:cursor-not-allowed"
+                :class="
+                  event.status === 'rejected'
+                    ? 'bg-gray-50 text-gray-400 border-gray-100'
+                    : 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
+                "
+              >
+                Reject
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="hidden lg:block bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr
+                  class="bg-gray-50 border-b border-gray-200 text-xs uppercase text-gray-500 font-semibold tracking-wider"
+                >
+                  <th class="px-6 py-4">Event Details</th>
+                  <th class="px-6 py-4">Categories</th>
+                  <th class="px-6 py-4">Status</th>
+                  <th class="px-6 py-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                <tr v-for="event in events" :key="event.id" class="hover:bg-gray-50 transition-colors">
+                  <td class="px-6 py-4 min-w-[350px]">
+                    <div class="flex items-center gap-4">
+                      <div class="h-16 w-24 bg-gray-200 rounded-md overflow-hidden shrink-0">
+                        <img v-if="event.imageUrl" :src="event.imageUrl" class="h-full w-full object-cover" />
+                        <div v-else class="h-full w-full flex items-center justify-center text-gray-400 bg-gray-100">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="h-6 w-6"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                            />
+                          </svg>
+                        </div>
+                      </div>
+                      <div>
+                        <div class="font-bold text-gray-900 line-clamp-1">{{ event.name }}</div>
+                        <div class="text-[0.9rem] text-gray-500 flex items-center mt-1">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="h-5 w-5 mr-1"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                              d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                            />
+                            <path
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                              d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                            />
+                          </svg>
+                          {{ event.location }}
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+
+                  <td class="px-6 py-4">
+                    <div class="flex flex-wrap gap-1">
+                      <span
+                        v-for="cat in event.categories.slice(0, 2)"
+                        :key="cat"
+                        class="px-2 py-0.5 rounded text-[1rem] font-medium bg-blue-50 text-blue-700 border border-blue-100"
+                      >
+                        {{ cat }}
+                      </span>
+                      <span v-if="event.categories.length > 2" class="text-[1rem] pt-1 text-gray-400">
+                        +{{ event.categories.length - 2 }}
+                      </span>
+                    </div>
+                  </td>
+
+                  <td class="px-6 py-4">
+                    <div class="flex flex-col justify-center items-center flex-nowrap h-full">
+                      <span
+                        class="px-2 py-1 rounded-full text-[0.9rem] font-bold flex items-center w-fit gap-1 capitalize"
+                        :class="{
+                          'bg-green-100 text-green-700': event.status === 'approved',
+                          'bg-red-100 text-red-700': event.status === 'rejected',
+                          'bg-yellow-100 text-yellow-700': event.status === 'created' || event.status === 'updated'
+                        }"
+                      >
+                        <span
+                          class="h-1.5 w-1.5 rounded-full"
+                          :class="{
+                            'bg-green-500': event.status === 'approved',
+                            'bg-red-500': event.status === 'rejected',
+                            'bg-yellow-500': event.status === 'created' || event.status === 'updated'
+                          }"
+                        ></span>
+                        {{ event.status }}
+                      </span>
+                      <div class="text-[0.8rem] text-gray-400 mt-1">
+                        {{ new Date(event.statusLastUpdatedAt).toLocaleDateString() }}
+                      </div>
+                    </div>
+                  </td>
+
+                  <td class="px-6 py-4 text-right">
+                    <div class="flex justify-end gap-2">
+                      <button
+                        v-if="event.status !== 'approved'"
+                        @click="moderateEvent(event, 'approved')"
+                        class="text-[0.9rem] hover:cursor-pointer font-medium text-green-700 bg-green-50 border-green-200 hover:bg-green-100 border-2 px-3 py-1.5 rounded transition"
+                      >
+                        Approve
+                      </button>
+
+                      <button
+                        v-if="event.status !== 'rejected'"
+                        @click="moderateEvent(event, 'rejected')"
+                        class="text-[0.9rem] hover:cursor-pointer font-medium bg-red-50 text-red-700 border-red-200 hover:bg-red-100 border-2 px-3 py-1.5 rounded transition"
+                      >
+                        Reject
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </main>

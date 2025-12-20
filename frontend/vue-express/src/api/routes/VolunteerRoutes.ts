@@ -10,7 +10,12 @@ export function createVolunteerRoutes(wasmApp: Application) {
   // View published events
   router.get("/events/discover", async (req: Request, res: Response) => {
     const token = req.cookies["auth-token"];
-    if (!token) return res.status(401).json({ error: "AuthenticationTokenInvalid", message: "Missing auth token" });
+    if (!token) {
+      return res.status(401).json({
+        error: "AuthenticationTokenInvalid",
+        message: "Missing auth token",
+      });
+    }
 
     try {
       const query = req.query.q;
@@ -18,7 +23,11 @@ export function createVolunteerRoutes(wasmApp: Application) {
       const endTimestamp = req.query.end;
       const result = await wasmApp.viewPublishedEvents({
         token: token,
-        filter: { query: query, startTimestamp: startTimestamp, endTimestamp: endTimestamp },
+        filter: {
+          query: query,
+          startTimestamp: startTimestamp,
+          endTimestamp: endTimestamp,
+        },
       });
       return res.status(200).json(result.events);
     } catch (error) {
@@ -29,7 +38,12 @@ export function createVolunteerRoutes(wasmApp: Application) {
   // Subscribe
   router.post("/events/:id/subscribe", async (req: Request, res: Response) => {
     const token = req.cookies["auth-token"];
-    if (!token) return res.status(401).json({ error: "AuthenticationTokenInvalid", message: "Missing auth token" });
+    if (!token) {
+      return res.status(401).json({
+        error: "AuthenticationTokenInvalid",
+        message: "Missing auth token",
+      });
+    }
 
     try {
       await wasmApp.subscribeToEvent({ token, eventId: req.params.id });
@@ -40,22 +54,38 @@ export function createVolunteerRoutes(wasmApp: Application) {
   });
 
   // Unsubscribe
-  router.post("/events/:id/unsubscribe", async (req: Request, res: Response) => {
-    const token = req.cookies["auth-token"];
-    if (!token) return res.status(401).json({ error: "AuthenticationTokenInvalid", message: "Missing auth token" });
+  router.post(
+    "/events/:id/unsubscribe",
+    async (req: Request, res: Response) => {
+      const token = req.cookies["auth-token"];
+      if (!token) {
+        return res.status(401).json({
+          error: "AuthenticationTokenInvalid",
+          message: "Missing auth token",
+        });
+      }
 
-    try {
-      await wasmApp.unsubscribeFromEvent({ token, eventOrRegistrationId: req.params.id });
-      return res.status(200).send();
-    } catch (error) {
-      handleWasmError(error, res);
-    }
-  });
+      try {
+        await wasmApp.unsubscribeFromEvent({
+          token,
+          eventOrRegistrationId: req.params.id,
+        });
+        return res.status(200).send();
+      } catch (error) {
+        handleWasmError(error, res);
+      }
+    },
+  );
 
   // View History
   router.get("/events/history", async (req: Request, res: Response) => {
     const token = req.cookies["auth-token"];
-    if (!token) return res.status(401).json({ error: "AuthenticationTokenInvalid", message: "Missing auth token" });
+    if (!token) {
+      return res.status(401).json({
+        error: "AuthenticationTokenInvalid",
+        message: "Missing auth token",
+      });
+    }
 
     try {
       const result = await wasmApp.viewEventHistory({ token });

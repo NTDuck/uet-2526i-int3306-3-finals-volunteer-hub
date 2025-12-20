@@ -3,6 +3,7 @@ import { onMounted, ref } from 'vue'
 import NavBar from '../components/NavBar.vue'
 import { getRole, isLoggedIn } from '../utils/auth'
 import router from '../router'
+import { showConfirmationPopup, showErrorPopup } from '../utils/popups'
 
 // --- Types ---
 type UserRole = 'volunteer' | 'event-manager' | 'administrator'
@@ -74,7 +75,14 @@ const toggleUserStatus = async (user: User) => {
   // If currently suspended -> unsuspended. Otherwise -> suspended.
   const newStatus = user.status === 'suspended' ? 'unsuspended' : 'suspended'
 
-  if (!confirm(`Are you sure you want to change ${user.username}'s status to ${newStatus}?`)) return
+  if (
+    !(await showConfirmationPopup(
+      `Moderate User`,
+      `Are you sure you want to ${newStatus === 'suspended' ? 'suspend' : 'activate'} ${user.username}'s account?`
+    ))
+  ) {
+    return
+  }
 
   try {
     const response = await fetch(`http://localhost:4000/api/admin/users/${user.id}/moderate`, {
@@ -88,7 +96,7 @@ const toggleUserStatus = async (user: User) => {
       // Optimistic update or refetch. Refetching is safer for admin data consistency.
       await fetchUsers()
     } else {
-      alert('Failed to update user status.')
+      showErrorPopup('User Management', 'Failed to update user status')
     }
   } catch (error) {
     console.error('Error moderating user:', error)
@@ -124,7 +132,7 @@ const exportVolunteers = async (format: ExportFormat) => {
       window.URL.revokeObjectURL(url)
       document.body.removeChild(a)
     } else {
-      alert('Failed to export data')
+      showErrorPopup('User Management', 'Failed to export user list')
     }
   } catch (error) {
     console.error('Export error:', error)
@@ -149,7 +157,9 @@ onMounted(async () => {
     router.push('/signin')
   }
   if (getRole() !== 'administrator') {
+    showErrorPopup('Unauthorized', 'You must be an Administrator!')
     router.push('/home')
+    return
   }
   fetchUsers()
 })
@@ -227,14 +237,14 @@ onMounted(async () => {
             @input="onFilterChange"
             type="text"
             placeholder="Search by name, username or email..."
-            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
           />
         </div>
 
         <select
           v-model="filterRole"
           @change="onFilterChange"
-          class="w-full md:w-48 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+          class="w-full md:w-48 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white transition"
         >
           <option class="border-[1rem]" value="">All Roles</option>
           <option value="volunteer">Volunteer</option>
@@ -245,7 +255,7 @@ onMounted(async () => {
         <select
           v-model="filterStatus"
           @change="onFilterChange"
-          class="w-full md:w-48 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+          class="w-full md:w-48 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white transition"
         >
           <option value="">All Statuses</option>
           <option value="created">Created</option>
@@ -255,12 +265,87 @@ onMounted(async () => {
         </select>
       </div>
 
-      <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
-        <div class="overflow-x-auto">
+      <div v-if="isLoading" class="flex justify-center items-center py-12">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-[#256EB1]"></div>
+      </div>
+
+      <div
+        v-else-if="users.length === 0"
+        class="text-center py-12 bg-white rounded-xl border border-gray-200 shadow-sm"
+      >
+        <p class="text-gray-500">No users found matching your criteria.</p>
+      </div>
+
+      <div v-else>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 lg:hidden">
+          <div
+            v-for="user in users"
+            :key="user.id"
+            class="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex flex-col gap-4"
+          >
+            <div class="flex items-center gap-4">
+              <div class="h-12 w-12 rounded-full bg-gray-200 shrink-0 overflow-hidden">
+                <img v-if="user.avatarUrl" :src="user.avatarUrl" class="h-full w-full object-cover" />
+                <div
+                  v-else
+                  class="h-full w-full flex items-center justify-center text-gray-500 font-bold bg-blue-100 text-lg"
+                >
+                  {{ user.username.charAt(0).toUpperCase() }}
+                </div>
+              </div>
+
+              <div class="flex-1 min-w-0">
+                <div class="font-bold text-lg text-gray-900 truncate">{{ user.fullName }}</div>
+                <div class="text-sm text-gray-500 truncate">{{ user.email }}</div>
+              </div>
+            </div>
+
+            <div class="flex justify-between items-center border-t border-b border-gray-50 py-3">
+              <span
+                class="px-2.5 py-1 rounded-md text-sm font-medium border"
+                :class="{
+                  'bg-purple-50 text-purple-700 border-purple-200': user.role === 'administrator',
+                  'bg-blue-50 text-blue-700 border-blue-200': user.role === 'event-manager',
+                  'bg-green-50 text-green-700 border-green-200': user.role === 'volunteer'
+                }"
+              >
+                {{ user.role }}
+              </span>
+
+              <span
+                class="px-2.5 py-1 rounded-full text-sm font-medium flex items-center gap-1.5"
+                :class="{
+                  'bg-red-100 text-red-700': user.status === 'suspended',
+                  'bg-green-100 text-green-700': user.status !== 'suspended'
+                }"
+              >
+                <span
+                  class="h-1.5 w-1.5 rounded-full"
+                  :class="user.status === 'suspended' ? 'bg-red-500' : 'bg-green-500'"
+                ></span>
+                {{ user.status }}
+              </span>
+            </div>
+
+            <button
+              @click="toggleUserStatus(user)"
+              class="hover:cursor-pointer w-full py-2 rounded-lg font-medium transition-colors border text-sm flex justify-center items-center"
+              :class="
+                user.status === 'suspended'
+                  ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100'
+                  : 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
+              "
+            >
+              {{ user.status === 'suspended' ? 'Activate User' : 'Suspend User' }}
+            </button>
+          </div>
+        </div>
+
+        <div class="hidden lg:block bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
           <table class="w-full text-left border-collapse">
             <thead>
               <tr
-                class="bg-gray-50 border-b border-gray-200 text-xs uppercase text-gray-500 font-semibold tracking-wider"
+                class="bg-gray-50 border-b border-gray-200 text-[1rem] uppercase text-gray-500 font-semibold tracking-wider"
               >
                 <th class="px-6 py-4">User</th>
                 <th class="px-6 py-4">Role</th>
@@ -269,17 +354,7 @@ onMounted(async () => {
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-100">
-              <tr v-if="isLoading">
-                <td colspan="4" class="px-6 py-8 text-center">
-                  <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#256EB1]"></div>
-                </td>
-              </tr>
-
-              <tr v-else-if="users.length === 0">
-                <td colspan="4" class="px-6 py-8 text-center text-gray-500">No users found matching your criteria.</td>
-              </tr>
-
-              <tr v-else v-for="user in users" :key="user.id" class="hover:bg-gray-50 transition-colors">
+              <tr v-for="user in users" :key="user.id" class="hover:bg-gray-50 transition-colors">
                 <td class="px-6 py-4">
                   <div class="flex items-center gap-3">
                     <div class="h-10 w-10 rounded-full bg-gray-200 shrink-0 overflow-hidden">
@@ -292,15 +367,15 @@ onMounted(async () => {
                       </div>
                     </div>
                     <div>
-                      <div class="font-medium text-gray-900">{{ user.fullName }}</div>
-                      <div class="text-sm text-gray-500">{{ user.email }}</div>
+                      <div class="font-medium text-[1.1rem] text-gray-900">{{ user.fullName }}</div>
+                      <div class="text-[0.9rem] text-gray-500">{{ user.email }}</div>
                     </div>
                   </div>
                 </td>
 
                 <td class="px-6 py-4">
                   <span
-                    class="px-2 py-1 rounded-md text-xs font-medium border"
+                    class="px-2 py-1 rounded-md text-[1rem] font-medium border"
                     :class="{
                       'bg-purple-50 text-purple-700 border-purple-200': user.role === 'administrator',
                       'bg-blue-50 text-blue-700 border-blue-200': user.role === 'event-manager',
@@ -313,7 +388,7 @@ onMounted(async () => {
 
                 <td class="px-6 py-4">
                   <span
-                    class="px-2 py-1 rounded-full text-xs font-medium flex items-center w-fit gap-1"
+                    class="px-2 py-1 rounded-full text-[1rem] font-medium flex items-center w-fit gap-1"
                     :class="{
                       'bg-red-100 text-red-700': user.status === 'suspended',
                       'bg-green-100 text-green-700': user.status !== 'suspended'
@@ -330,11 +405,11 @@ onMounted(async () => {
                 <td class="px-6 py-4 text-right">
                   <button
                     @click="toggleUserStatus(user)"
-                    class="text-sm font-medium transition-colors focus:outline-none px-3 py-1 rounded-md border"
+                    class="text-[1rem] hover:cursor-pointer font-medium transition-colors focus:outline-none px-3 py-1 rounded-md border"
                     :class="
                       user.status === 'suspended'
-                        ? 'text-green-600 border-green-200 hover:bg-green-50'
-                        : 'text-red-600 border-red-200 hover:bg-red-50'
+                      ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100'
+                      : 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
                     "
                   >
                     {{ user.status === 'suspended' ? 'Activate' : 'Suspend' }}
@@ -343,12 +418,12 @@ onMounted(async () => {
               </tr>
             </tbody>
           </table>
-        </div>
 
-        <div
-          class="bg-gray-50 px-6 py-3 border-t border-gray-200 text-xs text-gray-500 flex justify-between items-center"
-        >
-          <span>Showing {{ users.length }} results</span>
+          <div
+            class="bg-gray-50 px-6 py-3 border-t border-gray-200 text-xs text-gray-500 flex justify-between items-center"
+          >
+            <span>Showing {{ users.length }} results</span>
+          </div>
         </div>
       </div>
     </main>

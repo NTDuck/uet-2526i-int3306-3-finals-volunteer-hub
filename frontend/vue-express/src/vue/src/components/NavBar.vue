@@ -36,11 +36,7 @@ const determineNavLinks = (role: string) => {
   if (role === 'administrator') {
     return [...commonLinks, { label: 'Users', to: '/admin/users' }, { label: 'Events', to: '/admin/events' }]
   } else if (role === 'event-manager') {
-    return [
-      ...commonLinks,
-      { label: 'Dashboard', to: '/manager/dashboard' },
-      { label: 'Create Event', to: '/manager/events/create' }
-    ]
+    return [...commonLinks, { label: 'Manage Events', to: '/manager/events' }]
   } else {
     return [...commonLinks, { label: 'Discover Events', to: '/discover' }, { label: 'My History', to: '/my-history' }]
   }

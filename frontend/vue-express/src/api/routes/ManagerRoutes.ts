@@ -1,11 +1,40 @@
 // @ts-types="express"
 import { Router } from "express";
 import type { Request, Response } from "express";
-import { Application, ModerateEventRegistrationNewEventRegistrationStatus } from "volunteerhub";
+import {
+  Application,
+  ModerateEventRegistrationNewEventRegistrationStatus,
+  ViewEventsEventStatus,
+  ViewEventsFilter,
+} from "volunteerhub";
 import { WasmError } from "../Types.ts";
 
 export function createManagerRoutes(wasmApp: Application) {
   const router = Router();
+
+  // View events
+  router.get("/events", async (req: Request, res: Response) => {
+    const token = req.cookies["auth-token"];
+    if (!token) return res.status(401).json({ error: "AuthenticationTokenInvalid", message: "Missing auth token" });
+
+    const statuses: ViewEventsEventStatus[] = [];
+    if (req.query.statuses) {
+      statuses.push(req.query.statuses);
+    }
+    const filter: ViewEventsFilter = {
+      query: req.query.query,
+      statuses: statuses.length === 0 ? undefined : statuses,
+      startTimestamp: req.query.start,
+      endTimestamp: req.query.end,
+    };
+
+    try {
+      const result = await wasmApp.viewEvents({ token, filter });
+      return res.status(200).json(result.events);
+    } catch (error) {
+      handleWasmError(error, res);
+    }
+  });
 
   // Create Event
   router.post("/events", async (req: Request, res: Response) => {

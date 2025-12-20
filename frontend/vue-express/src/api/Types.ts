@@ -1,5 +1,5 @@
 export type WasmError = {
-  error: string
-  message: string
-  data: string
-}
+  error: string;
+  message: string;
+  data: string;
+};

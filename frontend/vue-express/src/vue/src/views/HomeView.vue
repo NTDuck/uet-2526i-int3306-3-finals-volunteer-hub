@@ -3,6 +3,7 @@ import { onMounted, ref } from 'vue'
 import NavBar from '../components/NavBar.vue'
 import { isLoggedIn } from '../utils/auth'
 import router from '../router'
+import { showErrorPopup } from '../utils/popups'
 
 interface EventItem {
   id: string
@@ -41,7 +42,7 @@ const fetchEvents = async () => {
       const data = await response.json()
       events.value = data
     } else {
-      console.error('Failed to fetch events', response.status)
+      console.error('Failed to fetch events', response.json())
       events.value = []
     }
   } catch (error) {
@@ -60,6 +61,7 @@ const setFilter = (type: RecommendationType) => {
 
 onMounted(async () => {
   if (!(await isLoggedIn())) {
+    showErrorPopup('Unauthorized', 'You must log in first!')
     router.push('/signin')
   }
 
@@ -99,8 +101,9 @@ onMounted(async () => {
       <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div
           v-for="event in events"
+          @click="router.push(`/events/${event.id.substring(9)}`)"
           :key="event.id"
-          class="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden flex flex-col h-full cursor-pointer"
+          class="bg-white rounded-xl shadow-sm flex flex-col h-full cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all duration-300 overflow-hidden"
         >
           <div class="h-48 bg-gray-200 w-full object-cover relative">
             <img v-if="event.imageUrl" :src="event.imageUrl" alt="Event Cover" class="w-full h-full object-cover" />

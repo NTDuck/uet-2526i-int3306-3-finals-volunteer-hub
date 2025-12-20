@@ -42,8 +42,8 @@ export function createAuthRoutes(wasmApp: Application) {
         usernameOrEmail: req.body.username,
         password: req.body.password,
       });
-      
-      const maxAge = req.body.remember_me ? 72 * 60 * 60 * 1000 : 3 * 60 * 60 * 1000
+
+      const maxAge = req.body.remember_me ? 72 * 60 * 60 * 1000 : 3 * 60 * 60 * 1000;
       res.cookie("auth-token", result.token, {
         httpOnly: true,
         secure: true,
@@ -75,21 +75,21 @@ export function createAuthRoutes(wasmApp: Application) {
 
   // Sign out
   router.get("/signout", (_req: Request, res: Response) => {
-      res.cookie("auth-token", "", {
-        httpOnly: true,
-        secure: true,
-        sameSite: "strict",
-        maxAge: 0,
-      });
+    res.cookie("auth-token", "", {
+      httpOnly: true,
+      secure: true,
+      sameSite: "strict",
+      maxAge: 0,
+    });
 
-      res.cookie("user-role", "", {
-        httpOnly: false,
-        secure: true,
-        sameSite: "strict",
-        maxAge: 0,
-      });
+    res.cookie("user-role", "", {
+      httpOnly: false,
+      secure: true,
+      sameSite: "strict",
+      maxAge: 0,
+    });
 
-      return res.status(200).json({ message: "Signed out successfully" });
+    return res.status(200).json({ message: "Signed out successfully" });
   });
 
   // Jwt key check

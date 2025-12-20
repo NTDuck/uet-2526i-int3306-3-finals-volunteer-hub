@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import NavBar from '../components/NavBar.vue'
+import router from '../router'
+import { isLoggedIn, getRole } from '../utils/auth'
+import { showErrorPopup } from '../utils/popups'
 
 // --- Types ---
 interface EventItem {
@@ -26,26 +29,24 @@ const endDate = ref('')
 const fetchEvents = async () => {
   isLoading.value = true
   try {
-    // Construct Query Params
     const params = new URLSearchParams()
 
     if (searchQuery.value) {
       params.append('q', searchQuery.value)
     }
 
-    // Convert HTML date (YYYY-MM-DD) to ISO string or timestamp if needed
-    // Assuming backend handles standard date strings, otherwise consider .toISOString()
     if (startDate.value) {
-      params.append('start', new Date(startDate.value).toISOString())
+      params.append('start', new Date(startDate.value).toUTCString())
     }
+    
     if (endDate.value) {
-      // Set end date to end of the day to be inclusive
       const end = new Date(endDate.value)
       end.setHours(23, 59, 59, 999)
-      params.append('end', end.toISOString())
+      params.append('end', end.toUTCString())
     }
 
-    const response = await fetch(`http://localhost:4000/api/events/discover?${params.toString()}`, {
+    console.log(params.toString())
+    const response = await fetch(`http://localhost:4000/api/volunteer/events/discover?${params.toString()}`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include'
@@ -55,7 +56,7 @@ const fetchEvents = async () => {
       events.value = await response.json()
     } else {
       console.error('Failed to discover events', response.status)
-      events.value = [] // Clear on error
+      events.value = []
     }
   } catch (error) {
     console.error('Error fetching events:', error)
@@ -74,14 +75,25 @@ const onSearchInput = () => {
 }
 
 // --- Lifecycle ---
-onMounted(() => {
+onMounted(async () => {
+  if (!(await isLoggedIn())) {
+    router.push('/signin')
+    return
+  }
+  const role = getRole()
+  if (role !== 'volunteer') {
+    showErrorPopup("Unauthorized", "You must be a Volunteer!")
+    router.push('/home')
+    return
+  }
+  
   fetchEvents()
 })
 </script>
 
 <template>
   <div class="min-h-screen bg-gray-100 font-sans text-gray-800">
-    <NavBar active="Discover" />
+    <NavBar active="Discover Events" />
 
     <main class="max-w-[2000px] mx-auto py-8 px-8 flex flex-col md:flex-row gap-6">
       <aside class="w-full md:w-64 shrink-0">
@@ -188,6 +200,7 @@ onMounted(() => {
           <div
             v-for="event in events"
             :key="event.id"
+            @click="router.push(`/events/${event.id.substring(9)}`)"
             class="bg-white rounded-xl shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col h-full cursor-pointer group"
           >
             <div class="h-48 bg-gray-200 w-full relative overflow-hidden">
@@ -258,7 +271,7 @@ onMounted(() => {
                 <span class="text-xs text-gray-400"
                   >Updated: {{ new Date(event.statusLastUpdatedAt).toLocaleDateString() }}</span
                 >
-                <button class="text-[#256EB1] font-semibold text-sm hover:underline">View Details &rarr;</button>
+                <button @click="router.push(`/events/${event.id.substring(9)}`)" class="text-[#256EB1] font-semibold text-sm hover:cursor-pointer hover:underline">View Details &rarr;</button>
               </div>
             </div>
           </div>

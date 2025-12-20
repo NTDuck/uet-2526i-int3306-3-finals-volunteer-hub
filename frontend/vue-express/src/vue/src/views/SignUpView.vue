@@ -88,7 +88,7 @@ const onSubmit = async () => {
                 id="username"
                 v-model="username"
                 type="text"
-                class="w-full h-10 px-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
+                class="w-full h-10 px-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600 transition duration-200"
                 autocomplete="username"
                 required
               />
@@ -100,7 +100,7 @@ const onSubmit = async () => {
                 id="email"
                 v-model="email"
                 type="text"
-                class="w-full h-10 px-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
+                class="w-full h-10 px-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600 transition duration-200"
                 autocomplete="email"
                 required
               />
@@ -115,7 +115,7 @@ const onSubmit = async () => {
                 id="fullName"
                 v-model="fullName"
                 type="text"
-                class="w-full h-10 px-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
+                class="w-full h-10 px-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600 transition duration-200"
                 autocomplete="given-name"
                 required
               />
@@ -127,7 +127,7 @@ const onSubmit = async () => {
             <select
               id="role"
               v-model="role"
-              class="w-full h-10 px-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600 text-[1rem]"
+              class="w-full h-10 px-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600 transition duration-200 text-[1rem]"
               required
             >
               <option value="Volunteer">Volunteer</option>
@@ -141,7 +141,7 @@ const onSubmit = async () => {
               id="password"
               v-model="password"
               type="password"
-              class="w-full h-10 px-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
+              class="w-full h-10 px-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600 transition duration-200"
               autocomplete="new-password"
               required
             />
@@ -153,7 +153,7 @@ const onSubmit = async () => {
               id="confirmPassword"
               v-model="confirmPassword"
               type="password"
-              class="w-full h-10 px-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
+              class="w-full h-10 px-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600 transition duration-200"
               autocomplete="new-password"
               required
             />

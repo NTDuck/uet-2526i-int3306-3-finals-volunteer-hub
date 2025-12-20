@@ -6,7 +6,6 @@ import cors from "cors";
 import { Application } from "../../../../backend/bindings/output/volunteer-hub.d.ts";
 import cookieParser from "cookie-parser";
 
-// Import Route Creators
 import { createAuthRoutes } from "./routes/AuthRoutes.ts";
 import { createAdminRoutes } from "./routes/AdminRoutes.ts";
 import { createManagerRoutes } from "./routes/ManagerRoutes.ts";
@@ -34,14 +33,13 @@ export function createServer(wasmApp: Application) {
   };
   app.use(cors(corsOptions));
   app.use(cookieParser());
-  app.use(express.json());
+  app.use(express.json({ limit: "50mb" }));
 
-  // Setup routes
   app.use("/api", createAuthRoutes(wasmApp));
   app.use("/api/admin", createAdminRoutes(wasmApp));
   app.use("/api/manager", createManagerRoutes(wasmApp));
   app.use("/api/volunteer", createVolunteerRoutes(wasmApp));
-  app.use("/api", createEventRoutes(wasmApp)); // Contains general routes like /recommendations, /posts, /comments
+  app.use("/api", createEventRoutes(wasmApp));
 
   return app;
 }
