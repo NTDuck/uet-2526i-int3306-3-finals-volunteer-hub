@@ -61,7 +61,7 @@ const setFilter = (type: RecommendationType) => {
 
 onMounted(async () => {
   if (!(await isLoggedIn())) {
-    showErrorPopup('Unauthorized', 'You must log in first!')
+    // showErrorPopup('Unauthorized', 'You must log in first!')
     router.push('/signin')
   }
 

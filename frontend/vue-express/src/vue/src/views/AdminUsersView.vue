@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, reactive } from 'vue'
+import { onMounted, onUnmounted, ref, reactive, computed } from 'vue'
 import NavBar from '../components/NavBar.vue'
 import { getRole, isLoggedIn } from '../utils/auth'
 import router from '../router'
@@ -20,6 +20,7 @@ interface User {
   avatarUrl?: string
 }
 
+// --- State ---
 const users = ref<User[]>([])
 const isLoading = ref(false)
 const isExporting = ref(false)
@@ -51,6 +52,28 @@ const navLinks = [
   { label: 'Reports', to: '/admin/reports' }
 ]
 
+// --- Computed ---
+
+// Filter users locally based on search query
+const filteredUsers = computed(() => {
+  let result = users.value
+
+  // Search Filter (Frontend)
+  if (searchQuery.value.trim()) {
+    const query = searchQuery.value.toLowerCase().trim()
+    result = result.filter(
+      (user) =>
+        user.fullName.toLowerCase().includes(query) ||
+        user.username.toLowerCase().includes(query) ||
+        user.email.toLowerCase().includes(query)
+    )
+  }
+
+  return result
+})
+
+// --- Handlers ---
+
 const handleGlobalClick = (event: MouseEvent) => {
   const target = event.target as HTMLElement
   if (!target.closest('.export-dropdown-container')) {
@@ -70,11 +93,15 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
   }
 }
 
+// --- API Helpers ---
+
 const fetchUsers = async () => {
   isLoading.value = true
   try {
     const params = new URLSearchParams()
-    if (searchQuery.value) params.append('query', searchQuery.value)
+
+    // REMOVED: params.append('query', searchQuery.value) - Handled on frontend
+
     if (filterRole.value) params.append('roles', filterRole.value)
     if (filterStatus.value) params.append('statuses', filterStatus.value)
 
@@ -175,6 +202,8 @@ const exportVolunteers = async (format: ExportFormat) => {
   }
 }
 
+// --- Image Handling ---
+
 const triggerModalFileUpload = () => {
   document.getElementById('modal-avatar-upload')?.click()
 }
@@ -217,6 +246,8 @@ const processFile = async (file: File) => {
   const buffer = await file.arrayBuffer()
   newUser.avatar = Array.from(new Uint8Array(buffer))
 }
+
+// --- User Creation ---
 
 const createUser = async () => {
   if (!newUser.username || !newUser.email || !newUser.password || !newUser.fullName) {
@@ -263,19 +294,28 @@ const createUser = async () => {
   }
 }
 
+// --- Watchers & Lifecycle ---
+
 let debounceTimer: ReturnType<typeof setTimeout>
 const onFilterChange = () => {
+  // If only role/status changed, fetch from backend.
+  // If search query changed, we don't need to fetch because of frontend filtering,
+  // BUT fetchUsers() handles role/status params so it's safer to just re-fetch.
   clearTimeout(debounceTimer)
   debounceTimer = setTimeout(() => fetchUsers(), 400)
 }
 
+// Note: For pure frontend search, we don't strictly need a watcher on searchQuery to trigger fetchUsers,
+// but fetchUsers refreshes the list based on Role/Status filters which might be needed.
+// However, since we removed 'query' from params, typing in search box shouldn't trigger a network call ideally.
+// Let's optimize: only call fetchUsers if role or status changes.
+
 onMounted(async () => {
   window.addEventListener('click', handleGlobalClick)
-  window.addEventListener('keydown', handleGlobalKeydown) // Register Listener
+  window.addEventListener('keydown', handleGlobalKeydown)
 
   if (!(await isLoggedIn())) router.push('/signin')
   if ((await getRole()) !== 'administrator') {
-    showErrorPopup('Unauthorized', 'You must be an Administrator!')
     router.push('/signin')
     return
   }
@@ -284,7 +324,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   window.removeEventListener('click', handleGlobalClick)
-  window.removeEventListener('keydown', handleGlobalKeydown) // Cleanup Listener
+  window.removeEventListener('keydown', handleGlobalKeydown)
 })
 </script>
 
@@ -387,7 +427,6 @@ onUnmounted(() => {
           </svg>
           <input
             v-model="searchQuery"
-            @input="onFilterChange"
             type="text"
             placeholder="Search by name, username or email..."
             class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#256EB1] focus:border-transparent transition"
@@ -423,7 +462,7 @@ onUnmounted(() => {
       </div>
 
       <div
-        v-else-if="users.length === 0"
+        v-else-if="filteredUsers.length === 0"
         class="text-center py-20 bg-white rounded-xl border border-gray-200 shadow-sm"
       >
         <p class="text-lg text-gray-500 font-medium">No users found</p>
@@ -432,7 +471,7 @@ onUnmounted(() => {
       <template v-else>
         <div class="lg:hidden grid grid-cols-1 md:grid-cols-2 gap-4">
           <div
-            v-for="user in users"
+            v-for="user in filteredUsers"
             :key="user.id"
             class="bg-white rounded-xl p-5 border border-gray-200 shadow-sm flex flex-col gap-4"
           >
@@ -501,7 +540,7 @@ onUnmounted(() => {
             </button>
           </div>
           <div class="col-span-1 md:col-span-2 text-center text-xs text-gray-500 mt-2">
-            Showing {{ users.length }} results
+            Showing {{ filteredUsers.length }} results
           </div>
         </div>
 
@@ -518,7 +557,7 @@ onUnmounted(() => {
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-100">
-              <tr v-for="user in users" :key="user.id" class="hover:bg-gray-50 transition-colors group">
+              <tr v-for="user in filteredUsers" :key="user.id" class="hover:bg-gray-50 transition-colors group">
                 <td class="px-6 py-4">
                   <div class="flex items-center gap-4">
                     <div class="h-10 w-10 rounded-full bg-gray-100 shrink-0 overflow-hidden border border-gray-200">
@@ -592,7 +631,7 @@ onUnmounted(() => {
           <div
             class="bg-gray-50 px-6 py-3 border-t border-gray-200 text-xs text-gray-500 flex justify-between items-center"
           >
-            <span>Showing {{ users.length }} results</span>
+            <span>Showing {{ filteredUsers.length }} results</span>
           </div>
         </div>
       </template>
@@ -668,7 +707,6 @@ onUnmounted(() => {
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                 </svg>
               </div>
-
               <div
                 class="absolute bottom-1 right-1 bg-[#256EB1] text-white p-1.5 rounded-full shadow-lg border-2 border-white group-hover:bg-[#1d5b94] transition-colors"
               >

@@ -61,7 +61,7 @@ const seedMockUsers = async (wasmApp: Application) => {
       username: "admin",
       email: "admin@admin.com",
       password: "password",
-      fullName: "Mock Admin",
+      fullName: "Admin Mock",
     },
 
     // --- Event Managers (Domain: gmail.com) ---
@@ -98,7 +98,7 @@ const seedMockUsers = async (wasmApp: Application) => {
       username: "manager",
       email: "manager@gmail.com",
       password: "password",
-      fullName: "Mock Manager",
+      fullName: "Manager Mock",
     },
 
     // --- Volunteers (Domain: gmail.com) ---
@@ -177,7 +177,7 @@ const seedMockUsers = async (wasmApp: Application) => {
       username: "volunteer",
       email: "volunteer@gmail.com",
       password: "password",
-      fullName: "Mock Volunteer",
+      fullName: "Volunteer Mock",
     },
   ];
 

@@ -344,7 +344,7 @@ onMounted(async () => {
   }
   const role = await getRole()
   if (role !== 'event-manager' && role !== 'administrator') {
-    showErrorPopup('Unauthorized', 'You must be an Event Manager or Administrator!')
+    // showErrorPopup('Unauthorized', 'You must be an Event Manager or Administrator!')
     router.push('/signin')
     return
   }

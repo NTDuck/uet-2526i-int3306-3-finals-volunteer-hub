@@ -16,14 +16,18 @@ interface EventItem {
   imageUrl: string | undefined
 }
 
+// --- State ---
 const events = ref<EventItem[]>([])
 const isLoading = ref(false)
 
 const searchQuery = ref('')
 const startDate = ref('')
 const endDate = ref('')
-const selectedCategories = ref<string[]>([])
+const selectedCategories = ref<string[]>([]) // Stores selected category names
 
+// --- Computed ---
+
+// 1. Extract unique categories from ALL loaded events
 const allCategories = computed(() => {
   const categories = new Set<string>()
   events.value.forEach((event) => {
@@ -32,12 +36,31 @@ const allCategories = computed(() => {
   return Array.from(categories).sort()
 })
 
+// 2. Filter events based on selected categories AND Search Query (Frontend)
 const filteredEvents = computed(() => {
-  if (selectedCategories.value.length === 0) {
-    return events.value
+  let result = events.value
+
+  // A. Category Filter
+  if (selectedCategories.value.length > 0) {
+    result = result.filter((event) => event.categories.some((cat) => selectedCategories.value.includes(cat)))
   }
-  return events.value.filter((event) => event.categories.some((cat) => selectedCategories.value.includes(cat)))
+
+  // B. Search Filter (Frontend)
+  if (searchQuery.value.trim()) {
+    const query = searchQuery.value.toLowerCase().trim()
+    result = result.filter(
+      (event) =>
+        event.name.toLowerCase().includes(query) ||
+        event.location.toLowerCase().includes(query) ||
+        (event.description && event.description.toLowerCase().includes(query)) ||
+        event.categories.some((cat) => cat.toLowerCase().includes(query))
+    )
+  }
+
+  return result
 })
+
+// --- Actions ---
 
 const fetchEvents = async () => {
   isLoading.value = true
@@ -45,9 +68,7 @@ const fetchEvents = async () => {
   try {
     const params = new URLSearchParams()
 
-    if (searchQuery.value) {
-      params.append('q', searchQuery.value)
-    }
+    // REMOVED: params.append('q', searchQuery.value) - Doing this on frontend now
 
     if (startDate.value || endDate.value) {
       const start = startDate.value ? new Date(startDate.value) : new Date(0)
@@ -63,6 +84,7 @@ const fetchEvents = async () => {
       params.append('end', end.toUTCString())
     }
 
+    // console.log("params: ", params.toString())
     const response = await fetch(`http://localhost:4000/api/volunteer/events/discover?${params.toString()}`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
@@ -82,17 +104,10 @@ const fetchEvents = async () => {
   }
 }
 
-let debounceTimer: ReturnType<typeof setTimeout>
-const onSearchInput = () => {
-  clearTimeout(debounceTimer)
-  debounceTimer = setTimeout(() => {
-    fetchEvents()
-  }, 500)
-}
-
 const clearFilters = () => {
   startDate.value = ''
   endDate.value = ''
+  searchQuery.value = '' // Clear search query as well
   selectedCategories.value = []
   fetchEvents()
 }
@@ -104,7 +119,7 @@ onMounted(async () => {
   }
   const role = await getRole()
   if (role !== 'volunteer') {
-    showErrorPopup('Unauthorized', 'You must be a Volunteer!')
+    // showErrorPopup('Unauthorized', 'You must be a Volunteer!')
     router.push('/signin')
     return
   }
@@ -127,7 +142,7 @@ onMounted(async () => {
           <div class="flex justify-between items-center mb-4">
             <h2 class="text-xl font-bold text-gray-800">Filters</h2>
             <button
-              v-if="startDate || endDate || selectedCategories.length > 0"
+              v-if="startDate || endDate || selectedCategories.length > 0 || searchQuery"
               @click="clearFilters"
               class="text-xs font-semibold text-red-500 hover:text-red-700 uppercase tracking-wide hover:cursor-pointer"
             >
@@ -159,6 +174,8 @@ onMounted(async () => {
                 </div>
               </div>
             </div>
+
+            <hr class="border-gray-100" />
 
             <div v-if="allCategories.length > 0">
               <h3 class="font-semibold text-gray-700 mb-3 text-sm uppercase tracking-wide">Categories</h3>
@@ -219,7 +236,6 @@ onMounted(async () => {
           </svg>
           <input
             v-model="searchQuery"
-            @input="onSearchInput"
             type="text"
             placeholder="Search for events by name, location, or keyword..."
             class="flex-1 outline-none text-lg text-gray-700 placeholder-gray-400 bg-transparent h-10"

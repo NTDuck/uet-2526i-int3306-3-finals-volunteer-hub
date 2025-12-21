@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, computed } from 'vue'
 import NavBar from '../components/NavBar.vue'
 import router from '../router'
 import { getRole, isLoggedIn } from '../utils/auth'
@@ -19,6 +19,7 @@ interface EventItem {
   imageUrl: string | undefined
 }
 
+// --- State ---
 const events = ref<EventItem[]>([])
 const isLoading = ref(false)
 const isExporting = ref(false)
@@ -28,12 +29,34 @@ const filterStatus = ref<EventStatus | ''>('')
 const startDate = ref('')
 const endDate = ref('')
 
+// --- Computed ---
+
+// Filter events locally based on search query
+const filteredEvents = computed(() => {
+  let result = events.value
+
+  if (searchQuery.value.trim()) {
+    const query = searchQuery.value.toLowerCase().trim()
+    result = result.filter(
+      (event) =>
+        event.name.toLowerCase().includes(query) ||
+        event.location.toLowerCase().includes(query) ||
+        event.categories.some((cat) => cat.toLowerCase().includes(query))
+    )
+  }
+
+  return result
+})
+
+// --- API Actions ---
+
 const fetchEvents = async () => {
   isLoading.value = true
   try {
     const params = new URLSearchParams()
 
-    if (searchQuery.value) params.append('query', searchQuery.value)
+    // REMOVED: params.append('query', searchQuery.value) - Handled on frontend now
+
     if (filterStatus.value) params.append('statuses', filterStatus.value)
 
     if (startDate.value || endDate.value) {
@@ -167,7 +190,6 @@ onMounted(async () => {
   }
 
   if ((await getRole()) !== 'administrator') {
-    showErrorPopup('Unauthorized', 'You must be an Administrator!')
     router.push('/signin')
     return
   }
@@ -247,7 +269,6 @@ onMounted(async () => {
             </svg>
             <input
               v-model="searchQuery"
-              @input="onFilterChange"
               type="text"
               placeholder="Event name or location..."
               class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -312,7 +333,7 @@ onMounted(async () => {
       </div>
 
       <div
-        v-else-if="events.length === 0"
+        v-else-if="filteredEvents.length === 0"
         class="text-center py-12 bg-white rounded-xl border border-gray-200 shadow-sm"
       >
         <p class="text-gray-500">No events found matching criteria.</p>
@@ -321,7 +342,7 @@ onMounted(async () => {
       <div v-else>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 lg:hidden">
           <div
-            v-for="event in events"
+            v-for="event in filteredEvents"
             :key="event.id"
             class="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex flex-col gap-4"
           >
@@ -382,9 +403,9 @@ onMounted(async () => {
               >
                 {{ cat }}
               </span>
-              <span v-if="event.categories.length > 3" class="text-xs pt-1 text-gray-400">
-                +{{ event.categories.length - 3 }} more
-              </span>
+              <span v-if="event.categories.length > 3" class="text-xs pt-1 text-gray-400"
+                >+{{ event.categories.length - 3 }} more</span
+              >
             </div>
 
             <div class="flex justify-between items-center border-t border-b border-gray-50 py-3">
@@ -424,7 +445,6 @@ onMounted(async () => {
               >
                 Approve
               </button>
-
               <button
                 :disabled="event.status === 'rejected'"
                 @click="moderateEvent(event, 'rejected')"
@@ -455,7 +475,7 @@ onMounted(async () => {
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-100">
-                <tr v-for="event in events" :key="event.id" class="hover:bg-gray-50 transition-colors">
+                <tr v-for="event in filteredEvents" :key="event.id" class="hover:bg-gray-50 transition-colors">
                   <td class="px-6 py-4 min-w-[350px]">
                     <div class="flex items-center gap-4">
                       <div class="h-16 w-24 bg-gray-200 rounded-md overflow-hidden shrink-0">
@@ -519,9 +539,9 @@ onMounted(async () => {
                       >
                         {{ cat }}
                       </span>
-                      <span v-if="event.categories.length > 2" class="text-[1rem] pt-1 text-gray-400">
-                        +{{ event.categories.length - 2 }}
-                      </span>
+                      <span v-if="event.categories.length > 2" class="text-[1rem] pt-1 text-gray-400"
+                        >+{{ event.categories.length - 2 }}</span
+                      >
                     </div>
                   </td>
 
@@ -560,7 +580,6 @@ onMounted(async () => {
                       >
                         Approve
                       </button>
-
                       <button
                         v-if="event.status !== 'rejected'"
                         @click="moderateEvent(event, 'rejected')"
@@ -573,6 +592,11 @@ onMounted(async () => {
                 </tr>
               </tbody>
             </table>
+          </div>
+          <div
+            class="bg-gray-50 px-6 py-3 border-t border-gray-200 text-xs text-gray-500 flex justify-between items-center"
+          >
+            <span>Showing {{ filteredEvents.length }} results</span>
           </div>
         </div>
       </div>
