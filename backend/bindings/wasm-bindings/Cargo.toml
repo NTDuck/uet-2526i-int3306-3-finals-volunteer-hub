@@ -23,8 +23,7 @@ sha2 = { version = "0.10.9" }
 tracing = { workspace = true }
 tracing-wasm = "0.2.1"
 js-sys = "*"
-
-# [target.'cfg(target_arch = "wasm32")'.dependencies]
+surrealdb = "2.4.0"
 console_error_panic_hook = "0.1.7"
 gloo = { version = "0.11.0", features = ["futures", "timers", "utils"] }
 serde = { workspace = true }

@@ -28,7 +28,7 @@ impl ViewEventChannelBoundary for ViewEventChannelInteractor {
             ::core::option::Option::None => return super::err!(AuthenticationTokenInvalid),
             ::core::option::Option::Some(AuthTokenPayload {
                 user_id,
-                user_role: ::domain::UserRole::Volunteer,
+                user_role: ::domain::UserRole::Volunteer | ::domain::UserRole::EventManager,
                 expiry_timestamp,
             }) => {
                 if expiry_timestamp < ::axiom::time::Timestamp::now() {
@@ -44,7 +44,7 @@ impl ViewEventChannelBoundary for ViewEventChannelInteractor {
             ::core::option::Option::Some(AuthTokenPayload { user_role, .. }) =>
                 return super::err!(UserUnauthorized {
                     user_role: user_role.into(),
-                    allowed_user_roles: ::std::vec![UserRole::Volunteer]
+                    allowed_user_roles: ::std::vec![UserRole::Volunteer, UserRole::EventManager],
                 }),
         };
 
