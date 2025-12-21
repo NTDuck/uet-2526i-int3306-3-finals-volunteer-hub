@@ -9,8 +9,7 @@
   Runtime, Windows 11 SDK (10.0.26100.7175), Windows Performance Toolkit, MSVC
   v143 - VS 2022 C++ ARM build tools (v14.44-17.14), MSVC v143 - VS 2022 C++
   x64/x86 build tools (v14.44-17.14)
-- Clang<br>
-  use LLVM
+- Clang<br> use LLVM
 - [wasm-pack](https://drager.github.io/wasm-pack/)<br> run
   `cargo install wasm-pack`
 - [Deno](https://docs.deno.com/runtime/getting_started/installation/)
@@ -243,12 +242,9 @@ $ git push -u origin indev
 
 ## TODO
 
-- Implement the following use cases: `view_self_profile`, `update_self_profile`,
-  `view_user`, `view_event`, `view_published_event`
 - Increase parallelism via e.g. `buffer_unordered(...)` for streams, `rayon`
 - Replace `.filter_map(|transposable| async move { transposable.transpose() })`
   with `.transpose()` via an `axiom` trait
-- Implement push notification
 - Improve performance by collecting into `::smallvec::SmallVec` instead of
   `::std::vec::Vec` in hot loops
 - Improve performance by querying specific column(s)

@@ -1,7 +1,7 @@
 import { Application, ApplicationContext, type Profile } from "@volunteer-hub";
 import { uploadFile } from "$lib/server/persist";
 
-const profile = "dev" satisfies Profile;
+const profile = "prod" satisfies Profile;
 
 // https://developer.mozilla.org/en-US/docs/Glossary/IIFE
 export const app = await (async function () {

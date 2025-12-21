@@ -130,10 +130,13 @@ impl EventRepository for InMemoryEventRepository {
             .into_ok()
     }
 }
-
 #[derive(::bon::Builder)]
 pub struct SurrealDbEventRepository {
     client: ::surrealdb::Surreal<::surrealdb::engine::any::Any>,
+
+    #[builder(into)]
+    table: ::axiom::string::String,
+
     uuid_codec: ::std::sync::Arc<dyn UuidCodec + ::core::marker::Send + ::core::marker::Sync>,
 }
 
@@ -143,8 +146,8 @@ impl EventRepository for SurrealDbEventRepository {
         let event_id = ::std::sync::Arc::clone(&self.uuid_codec).format(event.id).await?;
 
         self.client
-            .create::<::core::option::Option<self::serde::Event>>(("event", &*event_id))
-            .content(event.into_t::<self::serde::Event>())
+            .upsert::<::core::option::Option<::serde::de::IgnoredAny>>((self.table.as_ref(), &*event_id))
+            .content(::core::convert::Into::<self::serde::Event>::into(event))
             .await?;
 
         ::axiom::result::Fallible::Ok(())
@@ -152,7 +155,11 @@ impl EventRepository for SurrealDbEventRepository {
 
     async fn remove(self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid) -> ::axiom::result::Fallible {
         let event_id = ::std::sync::Arc::clone(&self.uuid_codec).format(event_id).await?;
-        self.client.delete::<::core::option::Option<self::serde::Event>>(("event", &*event_id)).await?;
+
+        self.client
+            .delete::<::core::option::Option<::serde::de::IgnoredAny>>((self.table.as_ref(), &*event_id))
+            .await?;
+
         ::axiom::result::Fallible::Ok(())
     }
 
@@ -162,7 +169,7 @@ impl EventRepository for SurrealDbEventRepository {
         let event_id = ::std::sync::Arc::clone(&self.uuid_codec).format(event_id).await?;
 
         self.client
-            .select::<::core::option::Option<self::serde::Event>>(("event", &*event_id))
+            .select::<::core::option::Option<self::serde::Event>>((self.table.as_ref(), &*event_id))
             .await?
             .map(::core::convert::Into::<::domain::Event>::into)
             .into_ok()
@@ -170,9 +177,9 @@ impl EventRepository for SurrealDbEventRepository {
 
     async fn contains_id(self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid) -> ::axiom::result::Fallible<bool> {
         let id = ::std::sync::Arc::clone(&self.uuid_codec).format(event_id).await?;
-        
+
         self.client
-            .select::<::core::option::Option<self::serde::Event>>(("event", &*id))
+            .select::<::core::option::Option<::serde::de::IgnoredAny>>((self.table.as_ref(), &*id))
             .await?
             .is_some()
             .into_ok()
@@ -181,16 +188,17 @@ impl EventRepository for SurrealDbEventRepository {
     async fn search(
         self: ::std::sync::Arc<Self>, filter: EventRepositorySearchFilter,
     ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::Event>> {
-        let mut query = ::std::string::String::from("SELECT * FROM event WHERE true");
+        let mut query = ::std::format!("SELECT * FROM {} WHERE true", self.table.as_ref());
 
         if filter.query.is_some() {
-            query.push_str(" AND (name CONTAINS $query OR description CONTAINS $query OR location CONTAINS $query OR array::join(categories, ' ') CONTAINS $query)");
+            query.push_str(
+                " AND (name CONTAINS $query OR description CONTAINS $query OR location CONTAINS $query OR \
+                 array::join(categories, ' ') CONTAINS $query)",
+            );
         }
-
         if filter.statuses.is_some() {
             query.push_str(" AND array::last(statuses).status INSIDE $statuses");
         }
-
         if filter.timestamps.start.is_some() {
             query.push_str(" AND array::last(statuses).at >= $time_start");
         }
@@ -203,16 +211,16 @@ impl EventRepository for SurrealDbEventRepository {
         if let Some(q) = filter.query {
             query = query.bind(("query", q.trim().to_lowercase()));
         }
-
         if let Some(statuses) = filter.statuses {
-            let bindings = statuses.into_iter().map(|status| status.to_string()).collect::<::std::vec::Vec<_>>();
+            let bindings = statuses
+                .into_iter()
+                .map(|status| status.to_string())
+                .collect::<::std::vec::Vec<_>>();
             query = query.bind(("statuses", bindings));
         }
-
         if let Some(start) = filter.timestamps.start {
             query = query.bind(("time_start", start));
         }
-        
         if let Some(end) = filter.timestamps.end {
             query = query.bind(("time_end", end));
         }
@@ -228,7 +236,7 @@ impl EventRepository for SurrealDbEventRepository {
 
     async fn view(self: ::std::sync::Arc<Self>) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::Event>> {
         self.client
-            .select::<::std::vec::Vec<self::serde::Event>>("event")
+            .select::<::std::vec::Vec<self::serde::Event>>(self.table.as_ref())
             .await?
             .into_iter()
             .map(::core::convert::Into::<::domain::Event>::into)
@@ -700,6 +708,10 @@ impl EventRegistrationRepository for InMemoryEventRegistrationRepository {
 #[derive(::bon::Builder)]
 pub struct SurrealDbEventRegistrationRepository {
     client: ::surrealdb::Surreal<::surrealdb::engine::any::Any>,
+
+    #[builder(into)]
+    table: ::axiom::string::String,
+
     uuid_codec: ::std::sync::Arc<dyn UuidCodec + ::core::marker::Send + ::core::marker::Sync>,
 }
 
@@ -711,8 +723,8 @@ impl EventRegistrationRepository for SurrealDbEventRegistrationRepository {
         let registration_id = ::std::sync::Arc::clone(&self.uuid_codec).format(registration.id).await?;
 
         self.client
-            .create::<::core::option::Option<self::serde::EventRegistration>>(("event_registration", &*registration_id))
-            .content(registration.into_t::<self::serde::EventRegistration>())
+            .upsert::<::core::option::Option<::serde::de::IgnoredAny>>((self.table.as_ref(), &*registration_id))
+            .content(::core::convert::Into::<self::serde::EventRegistration>::into(registration))
             .await?;
 
         ::axiom::result::Fallible::Ok(())
@@ -724,7 +736,7 @@ impl EventRegistrationRepository for SurrealDbEventRegistrationRepository {
         let registration_id = ::std::sync::Arc::clone(&self.uuid_codec).format(id).await?;
 
         self.client
-            .select::<::core::option::Option<self::serde::EventRegistration>>(("event_registration", &*registration_id))
+            .select::<::core::option::Option<self::serde::EventRegistration>>((self.table.as_ref(), &*registration_id))
             .await?
             .map(::core::convert::Into::<::domain::EventRegistration>::into)
             .into_ok()
@@ -737,8 +749,11 @@ impl EventRegistrationRepository for SurrealDbEventRegistrationRepository {
         let user_id = ::std::sync::Arc::clone(&self.uuid_codec).format(user_id).await?;
 
         self.client
-            .query("SELECT * FROM event_registration WHERE event_id = $event_id AND volunteer_id = $volunteer_id LIMIT 1")
-            .bind(("event_id", event_id)) // Assuming persistence model stores raw UUID or codec string
+            .query(::std::format!(
+                "SELECT * FROM {} WHERE event_id = $event_id AND volunteer_id = $volunteer_id LIMIT 1",
+                self.table.as_ref()
+            ))
+            .bind(("event_id", event_id))
             .bind(("volunteer_id", user_id))
             .await?
             .take::<::core::option::Option<self::serde::EventRegistration>>(0)?
@@ -752,7 +767,7 @@ impl EventRegistrationRepository for SurrealDbEventRegistrationRepository {
         let event_id = ::std::sync::Arc::clone(&self.uuid_codec).format(event_id).await?;
 
         self.client
-            .query("SELECT * FROM event_registration WHERE event_id = $event_id")
+            .query(::std::format!("SELECT * FROM {} WHERE event_id = $event_id", self.table.as_ref()))
             .bind(("event_id", event_id))
             .await?
             .take::<::std::vec::Vec<self::serde::EventRegistration>>(0)?
@@ -768,7 +783,7 @@ impl EventRegistrationRepository for SurrealDbEventRegistrationRepository {
         let volunteer_id = ::std::sync::Arc::clone(&self.uuid_codec).format(volunteer_id).await?;
 
         self.client
-            .query("SELECT * FROM event_registration WHERE volunteer_id = $volunteer_id")
+            .query(::std::format!("SELECT * FROM {} WHERE volunteer_id = $volunteer_id", self.table.as_ref()))
             .bind(("volunteer_id", volunteer_id))
             .await?
             .take::<::std::vec::Vec<self::serde::EventRegistration>>(0)?
@@ -831,6 +846,10 @@ impl EventPostRepository for InMemoryEventPostRepository {
 #[derive(::bon::Builder)]
 pub struct SurrealDbEventPostRepository {
     client: ::surrealdb::Surreal<::surrealdb::engine::any::Any>,
+
+    #[builder(into)]
+    table: ::axiom::string::String,
+
     uuid_codec: ::std::sync::Arc<dyn UuidCodec + ::core::marker::Send + ::core::marker::Sync>,
 }
 
@@ -840,8 +859,8 @@ impl EventPostRepository for SurrealDbEventPostRepository {
         let post_id = ::std::sync::Arc::clone(&self.uuid_codec).format(post.id).await?;
 
         self.client
-            .create::<::core::option::Option<self::serde::EventPost>>(("event_post", &*post_id))
-            .content(post.into_t::<self::serde::EventPost>())
+            .upsert::<::core::option::Option<::serde::de::IgnoredAny>>((self.table.as_ref(), &*post_id))
+            .content(::core::convert::Into::<self::serde::EventPost>::into(post))
             .await?;
 
         ::axiom::result::Fallible::Ok(())
@@ -849,9 +868,9 @@ impl EventPostRepository for SurrealDbEventPostRepository {
 
     async fn remove(self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid) -> ::axiom::result::Fallible {
         let post_id = ::std::sync::Arc::clone(&self.uuid_codec).format(post_id).await?;
-        
-        self.client.delete::<::core::option::Option<self::serde::EventPost>>(("event_post", &*post_id)).await?;
-
+        self.client
+            .delete::<::core::option::Option<::serde::de::IgnoredAny>>((self.table.as_ref(), &*post_id))
+            .await?;
         ::axiom::result::Fallible::Ok(())
     }
 
@@ -861,19 +880,22 @@ impl EventPostRepository for SurrealDbEventPostRepository {
         let post_id = ::std::sync::Arc::clone(&self.uuid_codec).format(post_id).await?;
 
         self.client
-            .select::<::core::option::Option<self::serde::EventPost>>(("event_post", &*post_id))
+            .select::<::core::option::Option<self::serde::EventPost>>((self.table.as_ref(), &*post_id))
             .await?
             .map(::core::convert::Into::<::domain::EventPost>::into)
             .into_ok()
     }
 
     async fn view_by_event_id(
-        self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid,
+        self: ::std::sync::Arc<Self>, event_id_: ::domain::Uuid,
     ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::EventPost>> {
-        let event_id = ::std::sync::Arc::clone(&self.uuid_codec).format(event_id).await?;
+        let event_id = ::std::sync::Arc::clone(&self.uuid_codec).format(event_id_).await?;
 
         self.client
-            .query("SELECT * FROM event_post WHERE event_id = $event_id")
+            .query(::std::format!(
+                "SELECT * FROM {} WHERE event_id = $event_id ORDER BY last_updated_at DESC",
+                self.table.as_ref()
+            ))
             .bind(("event_id", event_id))
             .await?
             .take::<::std::vec::Vec<self::serde::EventPost>>(0)?
@@ -988,6 +1010,10 @@ impl EventPostReactionRepository for InMemoryEventPostReactionRepository {
 #[derive(::bon::Builder)]
 pub struct SurrealDbEventPostReactionRepository {
     client: ::surrealdb::Surreal<::surrealdb::engine::any::Any>,
+
+    #[builder(into)]
+    table: ::axiom::string::String,
+
     uuid_codec: ::std::sync::Arc<dyn UuidCodec + ::core::marker::Send + ::core::marker::Sync>,
 }
 
@@ -997,8 +1023,8 @@ impl EventPostReactionRepository for SurrealDbEventPostReactionRepository {
         let reaction_id = ::std::sync::Arc::clone(&self.uuid_codec).format(reaction.id).await?;
 
         self.client
-            .create::<::core::option::Option<self::serde::EventPostReaction>>(("event_post_reaction", &*reaction_id))
-            .content(reaction.into_t::<self::serde::EventPostReaction>())
+            .upsert::<::core::option::Option<::serde::de::IgnoredAny>>((self.table.as_ref(), &*reaction_id))
+            .content(::core::convert::Into::<self::serde::EventPostReaction>::into(reaction))
             .await?;
 
         ::axiom::result::Fallible::Ok(())
@@ -1006,7 +1032,9 @@ impl EventPostReactionRepository for SurrealDbEventPostReactionRepository {
 
     async fn remove(self: ::std::sync::Arc<Self>, reaction_id: ::domain::Uuid) -> ::axiom::result::Fallible {
         let reaction_id = ::std::sync::Arc::clone(&self.uuid_codec).format(reaction_id).await?;
-        self.client.delete::<::core::option::Option<self::serde::EventPostReaction>>(("event_post_reaction", &*reaction_id)).await?;
+        self.client
+            .delete::<::core::option::Option<::serde::de::IgnoredAny>>((self.table.as_ref(), &*reaction_id))
+            .await?;
         ::axiom::result::Fallible::Ok(())
     }
 
@@ -1016,7 +1044,7 @@ impl EventPostReactionRepository for SurrealDbEventPostReactionRepository {
         let reaction_id = ::std::sync::Arc::clone(&self.uuid_codec).format(reaction_id).await?;
 
         self.client
-            .select::<::core::option::Option<self::serde::EventPostReaction>>(("event_post_reaction", &*reaction_id))
+            .select::<::core::option::Option<self::serde::EventPostReaction>>((self.table.as_ref(), &*reaction_id))
             .await?
             .map(::core::convert::Into::<::domain::EventPostReaction>::into)
             .into_ok()
@@ -1029,9 +1057,12 @@ impl EventPostReactionRepository for SurrealDbEventPostReactionRepository {
         let user_id = ::std::sync::Arc::clone(&self.uuid_codec).format(user_id).await?;
 
         self.client
-            .query("SELECT * FROM event_post_reaction WHERE post_id = $post_id AND author_id = $user_id LIMIT 1")
+            .query(::std::format!(
+                "SELECT * FROM {} WHERE post_id = $post_id AND author_id = $author_id LIMIT 1",
+                self.table.as_ref()
+            ))
             .bind(("post_id", post_id))
-            .bind(("user_id", user_id))
+            .bind(("author_id", user_id))
             .await?
             .take::<::core::option::Option<self::serde::EventPostReaction>>(0)?
             .map(::core::convert::Into::<::domain::EventPostReaction>::into)
@@ -1043,24 +1074,28 @@ impl EventPostReactionRepository for SurrealDbEventPostReactionRepository {
     ) -> ::axiom::result::Fallible<bool> {
         let post_id = ::std::sync::Arc::clone(&self.uuid_codec).format(post_id).await?;
         let user_id = ::std::sync::Arc::clone(&self.uuid_codec).format(user_id).await?;
-        
-        self.client
-            .query("SELECT id FROM event_post_reaction WHERE post_id = $post_id AND author_id = $user_id LIMIT 1")
+
+        let res = self
+            .client
+            .query(::std::format!(
+                "SELECT id FROM {} WHERE post_id = $post_id AND author_id = $author_id LIMIT 1",
+                self.table.as_ref()
+            ))
             .bind(("post_id", post_id))
-            .bind(("user_id", user_id))
+            .bind(("author_id", user_id))
             .await?
-            .take::<::core::option::Option<::surrealdb::sql::Thing>>(0)?
-            .is_some()
-            .into_ok()
+            .take::<::std::vec::Vec<::serde::de::IgnoredAny>>(0)?;
+
+        (!res.is_empty()).into_ok()
     }
 
     async fn view_by_post_id(
-        self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid,
+        self: ::std::sync::Arc<Self>, post_id_: ::domain::Uuid,
     ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::EventPostReaction>> {
-        let post_id = ::std::sync::Arc::clone(&self.uuid_codec).format(post_id).await?;
+        let post_id = ::std::sync::Arc::clone(&self.uuid_codec).format(post_id_).await?;
 
         self.client
-            .query("SELECT * FROM event_post_reaction WHERE post_id = $post_id")
+            .query(::std::format!("SELECT * FROM {} WHERE post_id = $post_id", self.table.as_ref()))
             .bind(("post_id", post_id))
             .await?
             .take::<::std::vec::Vec<self::serde::EventPostReaction>>(0)?
@@ -1071,17 +1106,26 @@ impl EventPostReactionRepository for SurrealDbEventPostReactionRepository {
     }
 
     async fn count_by_post_id(
-        self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid,
+        self: ::std::sync::Arc<Self>, post_id_: ::domain::Uuid,
     ) -> ::axiom::result::Fallible<::core::primitive::u64> {
-        let post_id = ::std::sync::Arc::clone(&self.uuid_codec).format(post_id).await?;
+        let post_id = ::std::sync::Arc::clone(&self.uuid_codec).format(post_id_).await?;
 
-        (self.client
-            .query("SELECT id FROM event_post_reaction WHERE post_id = $post_id")
+        let result = self
+            .client
+            .query(::std::format!("SELECT count() FROM {} WHERE post_id = $post_id GROUP ALL", self.table.as_ref()))
             .bind(("post_id", post_id))
             .await?
-            .take::<::std::vec::Vec<::surrealdb::sql::Thing>>(0)?
-            .len() as ::core::primitive::u64)
-            .into_ok()
+            .take::<::core::option::Option<::surrealdb::sql::Value>>(0)?;
+
+        match result {
+            Some(::surrealdb::sql::Value::Object(obj)) => {
+                if let Some(::surrealdb::sql::Value::Number(n)) = obj.get("count") {
+                    return ::axiom::result::Fallible::Ok(n.to_int() as u64);
+                }
+                ::axiom::result::Fallible::Ok(0)
+            },
+            _ => ::axiom::result::Fallible::Ok(0),
+        }
     }
 }
 
@@ -1191,6 +1235,10 @@ impl EventPostCommentRepository for InMemoryEventPostCommentRepository {
 #[derive(::bon::Builder)]
 pub struct SurrealDbEventPostCommentRepository {
     client: ::surrealdb::Surreal<::surrealdb::engine::any::Any>,
+
+    #[builder(into)]
+    table: ::axiom::string::String,
+
     uuid_codec: ::std::sync::Arc<dyn UuidCodec + ::core::marker::Send + ::core::marker::Sync>,
 }
 
@@ -1200,8 +1248,8 @@ impl EventPostCommentRepository for SurrealDbEventPostCommentRepository {
         let comment_id = ::std::sync::Arc::clone(&self.uuid_codec).format(comment.id).await?;
 
         self.client
-            .create::<::core::option::Option<self::serde::EventPostComment>>(("event_post_comment", &*comment_id))
-            .content(comment.into_t::<self::serde::EventPostComment>())
+            .upsert::<::core::option::Option<::serde::de::IgnoredAny>>((self.table.as_ref(), &*comment_id))
+            .content(::core::convert::Into::<self::serde::EventPostComment>::into(comment))
             .await?;
 
         ::axiom::result::Fallible::Ok(())
@@ -1209,7 +1257,9 @@ impl EventPostCommentRepository for SurrealDbEventPostCommentRepository {
 
     async fn remove(self: ::std::sync::Arc<Self>, comment_id: ::domain::Uuid) -> ::axiom::result::Fallible {
         let comment_id = ::std::sync::Arc::clone(&self.uuid_codec).format(comment_id).await?;
-        self.client.delete::<::core::option::Option<self::serde::EventPostComment>>(("event_post_comment", &*comment_id)).await?;
+        self.client
+            .delete::<::core::option::Option<::serde::de::IgnoredAny>>((self.table.as_ref(), &*comment_id))
+            .await?;
         ::axiom::result::Fallible::Ok(())
     }
 
@@ -1219,7 +1269,7 @@ impl EventPostCommentRepository for SurrealDbEventPostCommentRepository {
         let comment_id = ::std::sync::Arc::clone(&self.uuid_codec).format(comment_id).await?;
 
         self.client
-            .select::<::core::option::Option<self::serde::EventPostComment>>(("event_post_comment", &*comment_id))
+            .select::<::core::option::Option<self::serde::EventPostComment>>((self.table.as_ref(), &*comment_id))
             .await?
             .map(::core::convert::Into::<::domain::EventPostComment>::into)
             .into_ok()
@@ -1227,24 +1277,26 @@ impl EventPostCommentRepository for SurrealDbEventPostCommentRepository {
 
     async fn contains_id(self: ::std::sync::Arc<Self>, comment_id: ::domain::Uuid) -> ::axiom::result::Fallible<bool> {
         let comment_id = ::std::sync::Arc::clone(&self.uuid_codec).format(comment_id).await?;
-        
         self.client
-            .select::<::core::option::Option<self::serde::EventPostComment>>(("event_post_comment", &*comment_id))
+            .select::<::core::option::Option<::serde::de::IgnoredAny>>((self.table.as_ref(), &*comment_id))
             .await?
             .is_some()
             .into_ok()
     }
 
     async fn view_by_post_and_user_id(
-        self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid, user_id: ::domain::Uuid,
+        self: ::std::sync::Arc<Self>, post_id_: ::domain::Uuid, user_id_: ::domain::Uuid,
     ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::EventPostComment>> {
-        let post_id = ::std::sync::Arc::clone(&self.uuid_codec).format(post_id).await?;
-        let user_id = ::std::sync::Arc::clone(&self.uuid_codec).format(user_id).await?;
+        let post_id = ::std::sync::Arc::clone(&self.uuid_codec).format(post_id_).await?;
+        let user_id = ::std::sync::Arc::clone(&self.uuid_codec).format(user_id_).await?;
 
         self.client
-            .query("SELECT * FROM event_post_comment WHERE post_id = $post_id AND author_id = $user_id")
+            .query(::std::format!(
+                "SELECT * FROM {} WHERE post_id = $post_id AND author_id = $author_id ORDER BY last_updated_at DESC",
+                self.table.as_ref()
+            ))
             .bind(("post_id", post_id))
-            .bind(("user_id", user_id))
+            .bind(("author_id", user_id))
             .await?
             .take::<::std::vec::Vec<self::serde::EventPostComment>>(0)?
             .into_iter()
@@ -1254,13 +1306,16 @@ impl EventPostCommentRepository for SurrealDbEventPostCommentRepository {
     }
 
     async fn view_by_post_id(
-        self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid,
+        self: ::std::sync::Arc<Self>, post_id_: ::domain::Uuid,
     ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::EventPostComment>> {
-        let post_id_ = ::std::sync::Arc::clone(&self.uuid_codec).format(post_id).await?;
+        let post_id = ::std::sync::Arc::clone(&self.uuid_codec).format(post_id_).await?;
 
         self.client
-            .query("SELECT * FROM event_post_comment WHERE post_id = $post_id")
-            .bind(("post_id", post_id_))
+            .query(::std::format!(
+                "SELECT * FROM {} WHERE post_id = $post_id ORDER BY last_updated_at DESC",
+                self.table.as_ref()
+            ))
+            .bind(("post_id", post_id))
             .await?
             .take::<::std::vec::Vec<self::serde::EventPostComment>>(0)?
             .into_iter()
@@ -1270,17 +1325,26 @@ impl EventPostCommentRepository for SurrealDbEventPostCommentRepository {
     }
 
     async fn count_by_post_id(
-        self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid,
+        self: ::std::sync::Arc<Self>, post_id_: ::domain::Uuid,
     ) -> ::axiom::result::Fallible<::core::primitive::u64> {
-        let post_id = ::std::sync::Arc::clone(&self.uuid_codec).format(post_id).await?;
+        let post_id = ::std::sync::Arc::clone(&self.uuid_codec).format(post_id_).await?;
 
-        (self.client
-            .query("SELECT id FROM event_post_comment WHERE post_id = $post_id")
+        let result = self
+            .client
+            .query(::std::format!("SELECT count() FROM {} WHERE post_id = $post_id GROUP ALL", self.table.as_ref()))
             .bind(("post_id", post_id))
             .await?
-            .take::<::std::vec::Vec<::surrealdb::sql::Thing>>(0)?
-            .len() as ::core::primitive::u64)
-            .into_ok()
+            .take::<::core::option::Option<::surrealdb::sql::Value>>(0)?;
+
+        match result {
+            Some(::surrealdb::sql::Value::Object(obj)) => {
+                if let Some(::surrealdb::sql::Value::Number(n)) = obj.get("count") {
+                    return ::axiom::result::Fallible::Ok(n.to_int() as u64);
+                }
+                ::axiom::result::Fallible::Ok(0)
+            },
+            _ => ::axiom::result::Fallible::Ok(0),
+        }
     }
 }
 
@@ -1424,6 +1488,9 @@ impl UserRepository for InMemoryUserRepository {
 pub struct SurrealDbUserRepository {
     client: ::surrealdb::Surreal<::surrealdb::engine::any::Any>,
 
+    #[builder(into)]
+    table: ::axiom::string::String,
+
     uuid_codec: ::std::sync::Arc<dyn UuidCodec + ::core::marker::Send + ::core::marker::Sync>,
 }
 
@@ -1432,10 +1499,10 @@ impl UserRepository for SurrealDbUserRepository {
     async fn save(self: ::std::sync::Arc<Self>, user: ::domain::User) -> ::axiom::result::Fallible {
         let user_id = ::std::sync::Arc::clone(&self.uuid_codec).format(user.id).await?;
 
-        self.client.create::<::core::option::Option<self::serde::User>>(("user", &*user_id))
-            .content(user.into_t::<self::serde::User>())
+        self.client
+            .upsert::<::core::option::Option<self::serde::User>>((self.table.as_ref(), &*user_id))
+            .content(::core::convert::Into::<self::serde::User>::into(user))
             .await?;
-
         ::axiom::result::Fallible::Ok(())
     }
 
@@ -1444,14 +1511,18 @@ impl UserRepository for SurrealDbUserRepository {
     ) -> ::axiom::result::Fallible<::core::option::Option<::domain::User>> {
         let user_id = ::std::sync::Arc::clone(&self.uuid_codec).format(user_id).await?;
 
-        self.client.select::<::core::option::Option<self::serde::User>>(("user", &*user_id)).await?.map(::core::convert::Into::<::domain::User>::into).into_ok()
+        self.client
+            .select::<::core::option::Option<self::serde::User>>((self.table.as_ref(), &*user_id))
+            .await?
+            .map(::core::convert::Into::<::domain::User>::into)
+            .into_ok()
     }
 
     async fn get_by_username(
         self: ::std::sync::Arc<Self>, username: ::domain::Username,
     ) -> ::axiom::result::Fallible<::core::option::Option<::domain::User>> {
         self.client
-            .query("SELECT * FROM user WHERE username = $username LIMIT 1")
+            .query(::std::format!("SELECT * FROM {} WHERE username = $username LIMIT 1", self.table.as_ref()))
             .bind(("username", username.to_string()))
             .await?
             .take::<::core::option::Option<self::serde::User>>(0)?
@@ -1463,7 +1534,7 @@ impl UserRepository for SurrealDbUserRepository {
         self: ::std::sync::Arc<Self>, email: ::domain::Email,
     ) -> ::axiom::result::Fallible<::core::option::Option<::domain::User>> {
         self.client
-            .query("SELECT * FROM user WHERE email = $email LIMIT 1")
+            .query(::std::format!("SELECT * FROM {} WHERE email = $email LIMIT 1", self.table.as_ref()))
             .bind(("email", email.to_string()))
             .await?
             .take::<::core::option::Option<self::serde::User>>(0)?
@@ -1475,7 +1546,7 @@ impl UserRepository for SurrealDbUserRepository {
         let user_id = ::std::sync::Arc::clone(&self.uuid_codec).format(user_id).await?;
 
         self.client
-            .select::<::core::option::Option<self::serde::User>>(("user", &*user_id))
+            .select::<::core::option::Option<self::serde::User>>((self.table.as_ref(), &*user_id))
             .await?
             .is_some()
             .into_ok()
@@ -1485,40 +1556,37 @@ impl UserRepository for SurrealDbUserRepository {
         self: ::std::sync::Arc<Self>, username: ::domain::Username,
     ) -> ::axiom::result::Fallible<bool> {
         self.client
-            .query("SELECT id FROM user WHERE username = $username LIMIT 1")
+            .query(::std::format!("SELECT id FROM {} WHERE username = $username LIMIT 1", self.table.as_ref()))
             .bind(("username", username.to_string()))
             .await?
-            .take::<::core::option::Option<::surrealdb::sql::Thing>>(0)?.is_some()
+            .take::<::core::option::Option<::surrealdb::sql::Thing>>(0)?
+            .is_some()
             .into_ok()
     }
 
     async fn contains_email(self: ::std::sync::Arc<Self>, email: ::domain::Email) -> ::axiom::result::Fallible<bool> {
         self.client
-            .query("SELECT id FROM user WHERE email = $email LIMIT 1")
+            .query(::std::format!("SELECT id FROM {} WHERE email = $email LIMIT 1", self.table.as_ref()))
             .bind(("email", email.to_string()))
             .await?
-            .take::<::core::option::Option<::surrealdb::sql::Thing>>(0)?.is_some()
+            .take::<::core::option::Option<::surrealdb::sql::Thing>>(0)?
+            .is_some()
             .into_ok()
     }
 
     async fn search(
         self: ::std::sync::Arc<Self>, filter: UserRepositorySearchFilter,
     ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::User>> {
-        // Matches everything
-        let mut query = ::std::string::String::from("SELECT * FROM user WHERE true");
+        let mut query = ::std::format!("SELECT * FROM {} WHERE true", self.table.as_ref());
 
-        // Mapping Rust `is_subsequence` to SQL `CONTAINS` (substring) for performance/standardization
         if filter.query.is_some() {
             query.push_str(" AND (username CONTAINS $query OR email CONTAINS $query OR full_name CONTAINS $query)");
         }
 
-        // Logic: "last status is inside the provided set"
-        // SurrealQL: array::last(statuses) INSIDE $statuses
         if filter.statuses.is_some() {
             query.push_str(" AND array::last(statuses) INSIDE $statuses");
         }
 
-        // Logic: "role is inside the provided set"
         if filter.roles.is_some() {
             query.push_str(" AND role INSIDE $roles");
         }
@@ -1530,7 +1598,10 @@ impl UserRepository for SurrealDbUserRepository {
         }
 
         if let Some(statuses) = filter.statuses {
-            let bindings = statuses.into_iter().map(|status| status.to_string()).collect::<::std::vec::Vec<_>>();
+            let bindings = statuses
+                .into_iter()
+                .map(|status| status.to_string())
+                .collect::<::std::vec::Vec<_>>();
             query = query.bind(("statuses", bindings));
         }
 
@@ -1550,7 +1621,7 @@ impl UserRepository for SurrealDbUserRepository {
 
     async fn view(self: ::std::sync::Arc<Self>) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::User>> {
         self.client
-            .select::<::std::vec::Vec<self::serde::User>>("user")
+            .select::<::std::vec::Vec<self::serde::User>>(self.table.as_ref())
             .await?
             .into_iter()
             .map(::core::convert::Into::<::domain::User>::into)
@@ -1909,10 +1980,22 @@ mod serde {
         fn from(value: ::domain::Event) -> Self {
             Self::builder()
                 .id(value.id)
-                .statuses(value.statuses.into_iter().map(::core::convert::Into::into).collect::<::std::vec::Vec<_>>())
+                .statuses(
+                    value
+                        .statuses
+                        .into_iter()
+                        .map(::core::convert::Into::into)
+                        .collect::<::std::vec::Vec<_>>(),
+                )
                 .name(value.name)
                 .description(value.description)
-                .categories(value.categories.into_iter().map(::core::convert::Into::into).collect::<::std::vec::Vec<_>>())
+                .categories(
+                    value
+                        .categories
+                        .into_iter()
+                        .map(::core::convert::Into::into)
+                        .collect::<::std::vec::Vec<_>>(),
+                )
                 .location(value.location)
                 .image_url(value.image_url)
                 .build()
@@ -2103,27 +2186,19 @@ mod serde {
             match value {
                 ::domain::EventRegistrationStatus::Pending { pending_at } => Self::Pending { pending_at },
                 ::domain::EventRegistrationStatus::Withdrawn { withdrawn_at } => Self::Withdrawn { withdrawn_at },
-                ::domain::EventRegistrationStatus::Accepted {
-                    accepted_by_manager_id,
-                    accepted_at,
-                } => Self::Accepted {
+                ::domain::EventRegistrationStatus::Accepted { accepted_by_manager_id, accepted_at } => Self::Accepted {
                     accepted_by_manager_id: accepted_by_manager_id.into(),
                     accepted_at,
                 },
-                ::domain::EventRegistrationStatus::Declined {
-                    declined_by_manager_id,
-                    declined_at,
-                } => Self::Declined {
+                ::domain::EventRegistrationStatus::Declined { declined_by_manager_id, declined_at } => Self::Declined {
                     declined_by_manager_id: declined_by_manager_id.into(),
                     declined_at,
                 },
-                ::domain::EventRegistrationStatus::Completed {
-                    completed_by_manager_id,
-                    completed_at,
-                } => Self::Completed {
-                    completed_by_manager_id: completed_by_manager_id.into(),
-                    completed_at,
-                }
+                ::domain::EventRegistrationStatus::Completed { completed_by_manager_id, completed_at } =>
+                    Self::Completed {
+                        completed_by_manager_id: completed_by_manager_id.into(),
+                        completed_at,
+                    },
             }
         }
     }
@@ -2133,27 +2208,18 @@ mod serde {
             match value {
                 EventRegistrationStatus::Pending { pending_at } => Self::Pending { pending_at },
                 EventRegistrationStatus::Withdrawn { withdrawn_at } => Self::Withdrawn { withdrawn_at },
-                EventRegistrationStatus::Accepted {
-                    accepted_by_manager_id,
-                    accepted_at,
-                } => Self::Accepted {
+                EventRegistrationStatus::Accepted { accepted_by_manager_id, accepted_at } => Self::Accepted {
                     accepted_by_manager_id: accepted_by_manager_id.into(),
                     accepted_at,
                 },
-                EventRegistrationStatus::Declined {
-                    declined_by_manager_id,
-                    declined_at,
-                } => Self::Declined {
+                EventRegistrationStatus::Declined { declined_by_manager_id, declined_at } => Self::Declined {
                     declined_by_manager_id: declined_by_manager_id.into(),
                     declined_at,
                 },
-                EventRegistrationStatus::Completed {
-                    completed_by_manager_id,
-                    completed_at,
-                } => Self::Completed {
+                EventRegistrationStatus::Completed { completed_by_manager_id, completed_at } => Self::Completed {
                     completed_by_manager_id: completed_by_manager_id.into(),
                     completed_at,
-                }
+                },
             }
         }
     }
@@ -2268,7 +2334,11 @@ mod serde {
                 .post_id(value.post_id)
                 .author_id(value.author_id)
                 .last_updated_at(value.last_updated_at)
-                .content(unsafe { value.content.map(|value| ::domain::EventPostCommentContent::try_from(value).unwrap_unchecked()) })
+                .content(unsafe {
+                    value
+                        .content
+                        .map(|value| ::domain::EventPostCommentContent::try_from(value).unwrap_unchecked())
+                })
                 .image_url(value.image_url)
                 .build()
         }
@@ -2278,6 +2348,7 @@ mod serde {
     #[serde(rename_all = "camelCase")]
     #[builder(on(_, into))]
     pub struct User {
+        #[serde(rename = "__id")]
         pub id: Uuid,
 
         pub role: UserRole,
@@ -2298,7 +2369,13 @@ mod serde {
             Self::builder()
                 .id(value.id)
                 .role(value.role)
-                .statuses(value.statuses.into_iter().map(::core::convert::Into::into).collect::<::std::vec::Vec<_>>())
+                .statuses(
+                    value
+                        .statuses
+                        .into_iter()
+                        .map(::core::convert::Into::into)
+                        .collect::<::std::vec::Vec<_>>(),
+                )
                 .username(value.username)
                 .email(value.email)
                 .password(value.password)

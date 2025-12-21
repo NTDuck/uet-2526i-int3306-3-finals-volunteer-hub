@@ -38,7 +38,7 @@ pub struct EventRepositorySearchFilter {
     ::core::cmp::Eq,
     ::core::cmp::PartialEq,
     ::core::hash::Hash,
-    ::strum::Display,
+    ::strum::Display
 )]
 pub enum EventRepositorySearchFilterEventStatus {
     Created,
@@ -270,7 +270,7 @@ pub struct UserRepositorySearchFilter {
     ::core::cmp::Eq,
     ::core::cmp::PartialEq,
     ::core::hash::Hash,
-    ::strum::Display,
+    ::strum::Display
 )]
 pub enum UserRepositoryViewFilterUserStatus {
     Created,
@@ -308,7 +308,7 @@ impl ::core::convert::From<&::domain::UserStatus> for UserRepositoryViewFilterUs
     ::core::cmp::Eq,
     ::core::cmp::PartialEq,
     ::core::hash::Hash,
-    ::strum::Display,
+    ::strum::Display
 )]
 pub enum UserRepositoryViewFilterUserRole {
     Volunteer,
