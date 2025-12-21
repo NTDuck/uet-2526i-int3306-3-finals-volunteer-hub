@@ -981,6 +981,145 @@ impl UserRepository for InMemoryUserRepository {
 }
 
 #[derive(::bon::Builder)]
+pub struct SurrealDbUserRepository {
+    client: ::surrealdb::Surreal<::surrealdb::engine::any::Any>,
+
+    uuid_codec: ::std::sync::Arc<dyn UuidCodec + ::core::marker::Send + ::core::marker::Sync>,
+}
+
+#[async_trait]
+impl UserRepository for SurrealDbUserRepository {
+    async fn save(self: ::std::sync::Arc<Self>, user: ::domain::User) -> ::axiom::result::Fallible {
+        let user_id = ::std::sync::Arc::clone(&self.uuid_codec).format(user.id).await?;
+
+        self.client.create::<::core::option::Option<self::serde::User>>(("user", &*user_id))
+            .content(user.into_t::<self::serde::User>())
+            .await?;
+
+        ::axiom::result::Fallible::Ok(())
+    }
+
+    async fn get_by_id(
+        self: ::std::sync::Arc<Self>, user_id: ::domain::Uuid,
+    ) -> ::axiom::result::Fallible<::core::option::Option<::domain::User>> {
+        let user_id = ::std::sync::Arc::clone(&self.uuid_codec).format(user_id).await?;
+
+        self.client.select::<::core::option::Option<self::serde::User>>(("user", &*user_id)).await?.map(::core::convert::Into::<::domain::User>::into).into_ok()
+    }
+
+    async fn get_by_username(
+        self: ::std::sync::Arc<Self>, username: ::domain::Username,
+    ) -> ::axiom::result::Fallible<::core::option::Option<::domain::User>> {
+        self.client
+            .query("SELECT * FROM user WHERE username = $username LIMIT 1")
+            .bind(("username", username.to_string()))
+            .await?
+            .take::<::core::option::Option<self::serde::User>>(0)?
+            .map(::core::convert::Into::<::domain::User>::into)
+            .into_ok()
+    }
+
+    async fn get_by_email(
+        self: ::std::sync::Arc<Self>, email: ::domain::Email,
+    ) -> ::axiom::result::Fallible<::core::option::Option<::domain::User>> {
+        self.client
+            .query("SELECT * FROM user WHERE email = $email LIMIT 1")
+            .bind(("email", email.to_string()))
+            .await?
+            .take::<::core::option::Option<self::serde::User>>(0)?
+            .map(::core::convert::Into::<::domain::User>::into)
+            .into_ok()
+    }
+
+    async fn contains_id(self: ::std::sync::Arc<Self>, user_id: ::domain::Uuid) -> ::axiom::result::Fallible<bool> {
+        let user_id = ::std::sync::Arc::clone(&self.uuid_codec).format(user_id).await?;
+
+        self.client
+            .select::<::core::option::Option<self::serde::User>>(("user", &*user_id))
+            .await?
+            .is_some()
+            .into_ok()
+    }
+
+    async fn contains_username(
+        self: ::std::sync::Arc<Self>, username: ::domain::Username,
+    ) -> ::axiom::result::Fallible<bool> {
+        self.client
+            .query("SELECT id FROM user WHERE username = $username LIMIT 1")
+            .bind(("username", username.to_string()))
+            .await?
+            .take::<::core::option::Option<::surrealdb::sql::Thing>>(0)?.is_some()
+            .into_ok()
+    }
+
+    async fn contains_email(self: ::std::sync::Arc<Self>, email: ::domain::Email) -> ::axiom::result::Fallible<bool> {
+        self.client
+            .query("SELECT id FROM user WHERE email = $email LIMIT 1")
+            .bind(("email", email.to_string()))
+            .await?
+            .take::<::core::option::Option<::surrealdb::sql::Thing>>(0)?.is_some()
+            .into_ok()
+    }
+
+async fn search(
+        self: ::std::sync::Arc<Self>, filter: UserRepositorySearchFilter,
+    ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::User>> {
+        // Matches everything
+        let mut query = ::std::string::String::from("SELECT * FROM user WHERE true");
+
+        // Mapping Rust `is_subsequence` to SQL `CONTAINS` (substring) for performance/standardization
+        if filter.query.is_some() {
+            query.push_str(" AND (username CONTAINS $query OR email CONTAINS $query OR full_name CONTAINS $query)");
+        }
+
+        // Logic: "last status is inside the provided set"
+        // SurrealQL: array::last(statuses) INSIDE $statuses
+        if filter.statuses.is_some() {
+            query.push_str(" AND array::last(statuses) INSIDE $statuses");
+        }
+
+        // Logic: "role is inside the provided set"
+        if filter.roles.is_some() {
+            query.push_str(" AND role INSIDE $roles");
+        }
+
+        let mut query = self.client.query(&query);
+
+        if let Some(q) = filter.query {
+            query = query.bind(("query", q.trim().to_lowercase()));
+        }
+
+        if let Some(statuses) = filter.statuses {
+            let bindings = statuses.into_iter().map(|status| status.to_string()).collect::<::std::vec::Vec<_>>();
+            query = query.bind(("statuses", bindings));
+        }
+
+        if let Some(roles) = filter.roles {
+            let bindings = roles.into_iter().map(|role| role.to_string()).collect::<::std::vec::Vec<_>>();
+            query = query.bind(("roles", bindings));
+        }
+
+        query
+            .await?
+            .take::<::std::vec::Vec<self::serde::User>>(0)?
+            .into_iter()
+            .map(::core::convert::Into::<::domain::User>::into)
+            .collect::<::std::vec::Vec<_>>()
+            .into_ok()
+    }
+
+    async fn view(self: ::std::sync::Arc<Self>) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::User>> {
+        self.client
+            .select::<::std::vec::Vec<self::serde::User>>("user")
+            .await?
+            .into_iter()
+            .map(::core::convert::Into::<::domain::User>::into)
+            .collect::<::std::vec::Vec<_>>()
+            .into_ok()
+    }
+}
+
+#[derive(::bon::Builder)]
 pub struct GenericUserExporter {
     user_repository: ::std::sync::Arc<dyn UserRepository + ::core::marker::Send + ::core::marker::Sync>,
 }
@@ -1433,17 +1572,19 @@ mod serde {
         }
     }
 
-    #[derive(::serde::Serialize, ::bon::Builder)]
+    #[derive(::serde::Serialize, ::serde::Deserialize, ::bon::Builder)]
     #[serde(rename_all = "camelCase")]
     #[builder(on(_, into))]
     pub struct User {
         pub id: Uuid,
 
         pub role: UserRole,
-        pub statuses: ::axiom::string::String,
+        pub statuses: ::std::vec::Vec<UserStatus>,
 
         pub username: ::axiom::string::String,
         pub email: ::axiom::string::String,
+        pub password: ::axiom::string::String,
+
         pub full_name: ::axiom::string::String,
 
         #[builder(required)]
@@ -1455,18 +1596,43 @@ mod serde {
             Self::builder()
                 .id(value.id)
                 .role(value.role)
-                .statuses(
-                    value
-                        .statuses
-                        .into_iter()
-                        .map(::core::convert::Into::<UserStatus>::into)
-                        .map(|status| ::serde_json::to_string(&status).unwrap_or_default())
-                        .collect::<::std::vec::Vec<_>>()
-                        .join("|"),
-                )
+                // .statuses(
+                //     value
+                //         .statuses
+                //         .into_iter()
+                //         .map(::core::convert::Into::<UserStatus>::into)
+                //         .map(|status| ::serde_json::to_string(&status).unwrap_or_default())
+                //         .collect::<::std::vec::Vec<_>>()
+                //         .join("|"),
+                // )
+                .statuses(value.statuses.into_iter().map(::core::convert::Into::into).collect::<::std::vec::Vec<_>>())
                 .username(value.username)
                 .email(value.email)
+                .password(value.password)
                 .full_name(value.full_name)
+                .avatar_url(value.avatar_url)
+                .build()
+        }
+    }
+
+    impl ::core::convert::From<User> for ::domain::User {
+        fn from(value: User) -> Self {
+            Self::builder()
+                .id(value.id)
+                .role(value.role)
+                .statuses({
+                    let statuses = value
+                        .statuses
+                        .into_iter()
+                        .map(::core::convert::Into::into)
+                        .collect::<::std::vec::Vec<_>>();
+
+                    unsafe { ::vec1::Vec1::try_from_vec(statuses).unwrap_unchecked() }
+                })
+                .username(unsafe { ::domain::Username::try_from(value.username).unwrap_unchecked() })
+                .email(unsafe { ::domain::Email::try_from(value.email).unwrap_unchecked() })
+                .full_name(unsafe { ::domain::FullName::try_from(value.full_name).unwrap_unchecked() })
+                .password(value.password)
                 .avatar_url(value.avatar_url)
                 .build()
         }
