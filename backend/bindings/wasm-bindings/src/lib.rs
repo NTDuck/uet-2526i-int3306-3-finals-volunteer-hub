@@ -82,6 +82,10 @@ pub struct Application {
     update_post_boundary: ::std::sync::Arc<dyn UpdateEventPostBoundary + ::core::marker::Send + ::core::marker::Sync>,
 
     #[wasm_bindgen(skip)]
+    update_self_profile_boundary:
+        ::std::sync::Arc<dyn UpdateSelfProfileBoundary + ::core::marker::Send + ::core::marker::Sync>,
+
+    #[wasm_bindgen(skip)]
     view_event_boundary: ::std::sync::Arc<dyn ViewEventBoundary + ::core::marker::Send + ::core::marker::Sync>,
 
     #[wasm_bindgen(skip)]
@@ -129,7 +133,7 @@ pub struct Application {
 impl Application {
     #[wasm_bindgen(js_name = withContext)]
     pub async fn with_profile(context: ApplicationContext) -> Promise<Self> {
-        Gateways::try_from(context)
+        Gateways::try_from(context).await
             .map(::core::convert::Into::<Self>::into)
             .inspect_err(|error| ::tracing::error!("{error}")) // Saves hours of debugging
             .into_promise()
@@ -305,6 +309,14 @@ impl Application {
     pub async fn update_post(&self, request: UpdateEventPostRequest) -> Promise<UpdateEventPostOkResponse> {
         Self::proxy()
             .intercept(|request| ::std::sync::Arc::clone(&self.update_post_boundary).apply(request))
+            .apply(request)
+            .await
+    }
+
+    #[wasm_bindgen(js_name = updateSelfProfile)]
+    pub async fn update_self_profile(&self, request: UpdateSelfProfileRequest) -> Promise<UpdateSelfProfileOkResponse> {
+        Self::proxy()
+            .intercept(|request| ::std::sync::Arc::clone(&self.update_self_profile_boundary).apply(request))
             .apply(request)
             .await
     }
@@ -624,6 +636,14 @@ impl ::core::convert::From<Gateways> for Application {
                     .auth_token_generator(::std::sync::Arc::clone(&gateways.auth_token_generator))
                     .build(),
             ))
+            .update_self_profile_boundary(::std::sync::Arc::new(
+                UpdateSelfProfileInteractor::builder()
+                    .user_repository(::std::sync::Arc::clone(&gateways.user_repository))
+                    .media_repository(::std::sync::Arc::clone(&gateways.media_repository))
+                    .password_hasher(::std::sync::Arc::clone(&gateways.password_hasher))
+                    .auth_token_generator(::std::sync::Arc::clone(&gateways.auth_token_generator))
+                    .build(),
+            ))
             .view_event_channel_boundary(::std::sync::Arc::new(
                 ViewEventChannelInteractor::builder()
                     .event_repository(::std::sync::Arc::clone(&gateways.event_repository))
@@ -781,19 +801,116 @@ struct Gateways {
     password_hasher: ::std::sync::Arc<dyn PasswordHasher + ::core::marker::Send + ::core::marker::Sync>,
 }
 
-impl ::core::convert::TryFrom<ApplicationContext> for Gateways {
-    type Error = ::axiom::result::Error;
-
-    fn try_from(context: ApplicationContext) -> ::core::result::Result<Self, Self::Error> {
+impl Gateways {
+    async fn try_from(context: ApplicationContext) -> ::core::result::Result<Self, ::axiom::result::Error> {
         use ::hmac::Mac as _;
 
         ::console_error_panic_hook::set_once();
         ::tracing_wasm::try_set_as_global_default()?;
 
+        let client = match context.profile {
+            Profile::Dev => ::core::option::Option::None,
+            Profile::Prod => {
+                let client = ::surrealdb::engine::any::connect(::core::env!("SURREALDB_ADDRESS")).await?;
+
+                // client
+                //     .authenticate(::core::env!("SURREALDB_AUTH_TOKEN").
+                // into_t::<::surrealdb::opt::auth::Jwt>())     .await?;
+
+                // We should not do this
+                client
+                    .signin(::surrealdb::opt::auth::Root {
+                        username: ::core::env!("SURREALDB_NAMESPACE"),
+                        password: ::core::env!("SURREALDB_DATABASE"),
+                    })
+                    .await?;
+
+                client
+                    .use_ns(::core::env!("SURREALDB_NAMESPACE"))
+                    .use_db(::core::env!("SURREALDB_DATABASE"))
+                    .await?;
+
+                ::core::option::Option::Some(client)
+            },
+        };
+
+        let uuid_codec: ::std::sync::Arc<dyn UuidCodec + ::core::marker::Send + ::core::marker::Sync> =
+            ::std::sync::Arc::new(LowerUrnUuidCodec::builder().build());
+
         let event_repository: ::std::sync::Arc<dyn EventRepository + ::core::marker::Send + ::core::marker::Sync> =
-            ::std::sync::Arc::new(InMemoryEventRepository::builder().build());
+            match context.profile {
+                Profile::Dev => ::std::sync::Arc::new(InMemoryEventRepository::builder().build()),
+                Profile::Prod => ::std::sync::Arc::new(
+                    SurrealDbEventRepository::builder()
+                        .client(unsafe { client.clone().unwrap_unchecked() })
+                        .table("events")
+                        .uuid_codec(::std::sync::Arc::clone(&uuid_codec))
+                        .build(),
+                ),
+            };
+
+        let event_registration_repository: ::std::sync::Arc<
+            dyn EventRegistrationRepository + ::core::marker::Send + ::core::marker::Sync,
+        > = match context.profile {
+            Profile::Dev => ::std::sync::Arc::new(InMemoryEventRegistrationRepository::builder().build()),
+            Profile::Prod => ::std::sync::Arc::new(
+                SurrealDbEventRegistrationRepository::builder()
+                    .client(unsafe { client.clone().unwrap_unchecked() })
+                    .table("registrations")
+                    .uuid_codec(::std::sync::Arc::clone(&uuid_codec))
+                    .build(),
+            ),
+        };
+
+        let post_repository: ::std::sync::Arc<dyn EventPostRepository + ::core::marker::Send + ::core::marker::Sync> =
+            match context.profile {
+                Profile::Dev => ::std::sync::Arc::new(InMemoryEventPostRepository::builder().build()),
+                Profile::Prod => ::std::sync::Arc::new(
+                    SurrealDbEventPostRepository::builder()
+                        .client(unsafe { client.clone().unwrap_unchecked() })
+                        .table("posts")
+                        .uuid_codec(::std::sync::Arc::clone(&uuid_codec))
+                        .build(),
+                ),
+            };
+
+        let reaction_repository: ::std::sync::Arc<
+            dyn EventPostReactionRepository + ::core::marker::Send + ::core::marker::Sync,
+        > = match context.profile {
+            Profile::Dev => ::std::sync::Arc::new(InMemoryEventPostReactionRepository::builder().build()),
+            Profile::Prod => ::std::sync::Arc::new(
+                SurrealDbEventPostReactionRepository::builder()
+                    .client(unsafe { client.clone().unwrap_unchecked() })
+                    .table("reactions")
+                    .uuid_codec(::std::sync::Arc::clone(&uuid_codec))
+                    .build(),
+            ),
+        };
+
+        let comment_repository: ::std::sync::Arc<
+            dyn EventPostCommentRepository + ::core::marker::Send + ::core::marker::Sync,
+        > = match context.profile {
+            Profile::Dev => ::std::sync::Arc::new(InMemoryEventPostCommentRepository::builder().build()),
+            Profile::Prod => ::std::sync::Arc::new(
+                SurrealDbEventPostCommentRepository::builder()
+                    .client(unsafe { client.clone().unwrap_unchecked() })
+                    .table("comments")
+                    .uuid_codec(::std::sync::Arc::clone(&uuid_codec))
+                    .build(),
+            ),
+        };
+
         let user_repository: ::std::sync::Arc<dyn UserRepository + ::core::marker::Send + ::core::marker::Sync> =
-            ::std::sync::Arc::new(InMemoryUserRepository::builder().build());
+            match context.profile {
+                Profile::Dev => ::std::sync::Arc::new(InMemoryUserRepository::builder().build()),
+                Profile::Prod => ::std::sync::Arc::new(
+                    SurrealDbUserRepository::builder()
+                        .client(unsafe { client.clone().unwrap_unchecked() })
+                        .table("users")
+                        .uuid_codec(::std::sync::Arc::clone(&uuid_codec))
+                        .build(),
+                ),
+            };
 
         let gateways = Self::builder()
             .event_repository(::std::sync::Arc::clone(&event_repository))
@@ -805,30 +922,23 @@ impl ::core::convert::TryFrom<ApplicationContext> for Gateways {
                     .event_repository(::std::sync::Arc::clone(&event_repository))
                     .build(),
             ))
-            .event_registration_repository(::std::sync::Arc::new(
-                InMemoryEventRegistrationRepository::builder().build(),
-            ))
-            .post_repository(::std::sync::Arc::new(InMemoryEventPostRepository::builder().build()))
-            .reaction_repository(::std::sync::Arc::new(InMemoryEventPostReactionRepository::builder().build()))
-            .comment_repository(::std::sync::Arc::new(InMemoryEventPostCommentRepository::builder().build()))
+            .event_registration_repository(::std::sync::Arc::clone(&event_registration_repository))
+            .post_repository(::std::sync::Arc::clone(&post_repository))
+            .reaction_repository(::std::sync::Arc::clone(&reaction_repository))
+            .comment_repository(::std::sync::Arc::clone(&comment_repository))
             .user_repository(::std::sync::Arc::clone(&user_repository))
             .user_exporter(::std::sync::Arc::new(
                 GenericUserExporter::builder()
                     .user_repository(::std::sync::Arc::clone(&user_repository))
                     .build(),
             ))
-            // .media_repository(::std::sync::Arc::new(
-            //     MockMediaRepository::builder()
-            //         .url("https://i.kym-cdn.com/photos/images/original/003/136/289/782.jpg")
-            //         .build(),
-            // ))
             .media_repository(::std::sync::Arc::new(
                 WasmMediaRepository::builder()
                     .upload_file_callable(context.upload_file_callable)
                     .build(),
             ))
             .uuid_generator(::std::sync::Arc::new(UuidV7Generator::builder().build()))
-            .uuid_codec(::std::sync::Arc::new(LowerUrnUuidCodec::builder().build()))
+            .uuid_codec(::std::sync::Arc::clone(&uuid_codec))
             .timestamp_codec(::std::sync::Arc::new(Rfc2822TimestampCodec::builder().build()))
             .auth_token_generator(::std::sync::Arc::new(
                 JsonWebTokenGenerator::builder()
@@ -851,7 +961,7 @@ impl ::core::convert::TryFrom<ApplicationContext> for Gateways {
         ::wasm_bindgen_futures::spawn_local(async {
             use ::futures::StreamExt as _;
 
-            ::gloo::timers::future::IntervalStream::new(4444)
+            ::gloo::timers::future::IntervalStream::new(44444444)
                 .for_each(|_| async move {
                     ::tracing::debug!("PING");
                 })
