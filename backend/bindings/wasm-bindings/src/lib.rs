@@ -814,14 +814,16 @@ impl Gateways {
                 let client = ::surrealdb::engine::any::connect(::core::env!("SURREALDB_ADDRESS")).await?;
 
                 // client
-                //     .authenticate(::core::env!("SURREALDB_AUTH_TOKEN").into_t::<::surrealdb::opt::auth::Jwt>())
-                //     .await?;
-                
+                //     .authenticate(::core::env!("SURREALDB_AUTH_TOKEN").
+                // into_t::<::surrealdb::opt::auth::Jwt>())     .await?;
+
                 // We should not do this
-                client.signin(::surrealdb::opt::auth::Root {
-                    username: ::core::env!("SURREALDB_NAMESPACE"),
-                    password: ::core::env!("SURREALDB_DATABASE"),
-                }).await?;
+                client
+                    .signin(::surrealdb::opt::auth::Root {
+                        username: ::core::env!("SURREALDB_NAMESPACE"),
+                        password: ::core::env!("SURREALDB_DATABASE"),
+                    })
+                    .await?;
 
                 client
                     .use_ns(::core::env!("SURREALDB_NAMESPACE"))
