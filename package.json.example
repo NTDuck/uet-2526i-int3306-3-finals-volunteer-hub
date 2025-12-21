@@ -1,0 +1,7 @@
+{
+  "name": "volunteer-hub-wasm",
+  "version": "1.0.0",
+  "main": "volunteer-hub.js",
+  "types": "volunteer-hub.d.ts",
+  "files": ["volunteer-hub_bg.wasm", "volunteer-hub.js", "volunteer-hub.d.ts"]
+}
