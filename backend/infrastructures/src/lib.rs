@@ -1964,6 +1964,7 @@ mod serde {
     #[serde(rename_all = "camelCase")]
     #[builder(on(_, into))]
     pub struct Event {
+        #[serde(rename = "__id")]
         pub id: Uuid,
 
         pub statuses: ::std::vec::Vec<EventStatus>,
@@ -2115,6 +2116,7 @@ mod serde {
     #[serde(rename_all = "camelCase")]
     #[builder(on(_, into))]
     pub struct EventRegistration {
+        #[serde(rename = "__id")]
         pub id: Uuid,
         pub event_id: Uuid,
         pub volunteer_id: Uuid,
@@ -2228,6 +2230,7 @@ mod serde {
     #[serde(rename_all = "camelCase")]
     #[builder(on(_, into))]
     pub struct EventPost {
+        #[serde(rename = "__id")]
         pub id: Uuid,
         pub event_id: Uuid,
         pub author_id: Uuid,
@@ -2272,6 +2275,7 @@ mod serde {
     #[serde(rename_all = "camelCase")]
     #[builder(on(_, into))]
     pub struct EventPostReaction {
+        #[serde(rename = "__id")]
         pub id: Uuid,
         pub post_id: Uuid,
         pub author_id: Uuid,
@@ -2301,6 +2305,7 @@ mod serde {
     #[serde(rename_all = "camelCase")]
     #[builder(on(_, into))]
     pub struct EventPostComment {
+        #[serde(rename = "__id")]
         pub id: Uuid,
         pub post_id: Uuid,
         pub author_id: Uuid,
