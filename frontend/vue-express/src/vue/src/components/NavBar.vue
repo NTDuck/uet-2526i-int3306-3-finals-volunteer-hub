@@ -2,6 +2,7 @@
 import { computed, onMounted, onUnmounted, ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { getRole } from '../utils/auth'
+import { registerForPushNotifications } from '../utils/random';
 
 const router = useRouter()
 
@@ -63,8 +64,14 @@ const determineNavLinks = (role: string) => {
   } else if (role === 'event-manager') {
     return [...commonLinks, { label: 'Manage Events', to: '/manager/events' }]
   } else {
-    return [...commonLinks, { label: 'Discover Events', to: '/discover' }, { label: 'My History', to: '/history' }]
+    return [...commonLinks, { label: 'Discover', to: '/discover' }, { label: 'My History', to: '/history' }]
   }
+}
+
+const getFullImageUrl = (path: string | undefined) => {
+  if (!path) return ''
+  if (path.startsWith('http')) return path
+  return `http://localhost:4000${path}`
 }
 
 const fetchUserProfile = async () => {
@@ -91,6 +98,7 @@ onMounted(async () => {
   window.addEventListener('click', handleGlobalClick)
   const role = (await getRole()) || 'volunteer'
   navLinks.value = determineNavLinks(role)
+  await registerForPushNotifications()
   await fetchUserProfile()
 })
 
@@ -103,7 +111,7 @@ onUnmounted(() => {
   <header class="h-fit bg-[#256EB1] text-white shadow-md py-3 relative z-50">
     <div class="h-full px-4 flex flex-col lg:flex-row items-center justify-between">
       <div class="flex items-center space-x-2 mb-4 lg:mb-0">
-        <img class="w-8 h-8 rounded-md bg-transparent shadow-inner" src="../../../favicon.png" />
+        <img class="w-8 h-8 rounded-md bg-transparent shadow-inner" src="../../../hand.png" />
         <router-link :to="brandTo" class="text-sm text-white hover:opacity-90">
           <span class="text-[1.2rem] font-medium">
             {{ brandLabel }}
@@ -129,7 +137,7 @@ onUnmounted(() => {
           >
             <img
               v-if="userProfile.avatarUrl"
-              :src="userProfile.avatarUrl"
+              :src="getFullImageUrl(userProfile.avatarUrl)"
               class="h-10 w-10 rounded-full object-cover border-2 border-white/20"
             />
             <div
@@ -148,7 +156,7 @@ onUnmounted(() => {
               <div class="mb-3">
                 <img
                   v-if="userProfile.avatarUrl"
-                  :src="userProfile.avatarUrl"
+                  :src="getFullImageUrl(userProfile.avatarUrl)"
                   class="h-20 w-20 rounded-full object-cover border-4 border-white shadow-sm"
                 />
                 <div

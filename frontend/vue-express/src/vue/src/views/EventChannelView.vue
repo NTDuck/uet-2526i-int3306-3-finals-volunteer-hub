@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import NavBar from '../components/NavBar.vue'
 import { showConfirmationPopup, showErrorPopup } from '../utils/popups'
 import { isLoggedIn } from '../utils/auth'
+import { getFullImageUrl } from '../utils/random'
 
 interface User {
   id: string
@@ -165,7 +166,7 @@ const fetchPosts = async () => {
       const err = await response.json()
       if (err.error === 'UserUnauthorized') {
         showErrorPopup('Fetching Posts', 'You must be a volunteer or manager to discuss events', 100)
-        router.push('/home')
+        router.push(route.path.replace('/channel', ''))
       }
     }
   } catch (error) {
@@ -581,7 +582,7 @@ onUnmounted(() => {
               <div class="flex items-center gap-3">
                 <img
                   v-if="post.author?.avatarUrl"
-                  :src="post.author.avatarUrl"
+                  :src="getFullImageUrl(post.author.avatarUrl)"
                   class="h-10 w-10 rounded-full object-cover border border-gray-200"
                 />
                 <div
@@ -654,7 +655,7 @@ onUnmounted(() => {
                 v-if="post.imageUrl"
                 class="mb-4 rounded-lg overflow-hidden max-h-80 flex items-center justify-center"
               >
-                <img :src="post.imageUrl" alt="Post Image" class="max-w-full max-h-full object-contain" />
+                <img :src="getFullImageUrl(post.imageUrl)" alt="Post Image" class="max-w-full max-h-full object-contain" />
               </div>
             </div>
           </div>
@@ -686,7 +687,7 @@ onUnmounted(() => {
                 <div class="flex gap-3">
                   <img
                     v-if="comment.author?.avatarUrl"
-                    :src="comment.author.avatarUrl"
+                    :src="getFullImageUrl(comment.author.avatarUrl)"
                     class="h-8 w-8 rounded-full object-cover shrink-0 border border-gray-200"
                   />
                   <div
@@ -705,7 +706,7 @@ onUnmounted(() => {
                       ></textarea>
 
                       <div v-if="comment.editImagePreview" class="relative mb-2 inline-block">
-                        <img :src="comment.editImagePreview" class="h-16 w-auto object-cover rounded" />
+                        <img :src="getFullImageUrl(comment.editImagePreview)" class="h-16 w-auto object-cover rounded" />
                         <button
                           @click="removeCommentEditImage(comment)"
                           class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5 hover:cursor-pointer"
@@ -818,7 +819,7 @@ onUnmounted(() => {
                         <p class="text-sm text-gray-700">{{ comment.content }}</p>
                         <img
                           v-if="comment.imageUrl"
-                          :src="comment.imageUrl"
+                          :src="getFullImageUrl(comment.imageUrl)"
                           class="mt-2 rounded-lg w-full h-32 object-cover"
                         />
                       </div>

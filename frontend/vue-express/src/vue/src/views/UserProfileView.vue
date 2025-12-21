@@ -2,6 +2,8 @@
 import { ref, reactive, onMounted, computed } from 'vue'
 import NavBar from '../components/NavBar.vue'
 import { showErrorPopup } from '../utils/popups'
+import { getFullImageUrl } from '../utils/random'
+import router from '../router'
 
 interface UserProfile {
   id: string
@@ -42,8 +44,8 @@ const formattedStatus = computed(() => {
 
 const displayAvatar = computed(() => {
   if (editForm.avatarPreview) return editForm.avatarPreview
-  if (editForm.avatarUrl) return editForm.avatarUrl
-  return profile.value?.avatarUrl
+  if (editForm.avatarUrl) return getFullImageUrl(editForm.avatarUrl)
+  return getFullImageUrl(profile.value?.avatarUrl)
 })
 
 // --- Actions ---
@@ -68,10 +70,12 @@ const fetchProfile = async () => {
       }
     } else {
       showErrorPopup('Profile Error', 'Failed to load user profile')
+      router.push('/signin')
     }
   } catch (e) {
     console.error(e)
     showErrorPopup('Network Error', 'Could not connect to server')
+    router.push('/signin')
   } finally {
     isLoading.value = false
   }
@@ -303,7 +307,24 @@ onMounted(() => {
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1 select-none">Full Name</label>
+              <div class="flex justify-start items-center gap-1 mb-1">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke-width="2"
+                  stroke="currentColor"
+                  class="size-5"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"
+                  />
+                </svg>
+
+                <label class="block pt-[0.5px] text-[0.9rem] font-medium text-gray-700 select-none">Full Name</label>
+              </div>
               <div
                 v-if="!isEditing"
                 class="text-gray-900 font-medium p-3 bg-gray-50 rounded-lg border border-transparent"
@@ -319,7 +340,27 @@ onMounted(() => {
             </div>
 
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+              <div class="flex justify-start items-center gap-1 mb-1">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke-width="1.5"
+                  stroke="currentColor"
+                  class="size-6"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"
+                  />
+                </svg>
+
+                <label class="block pt-[0.4px] text-[0.9rem] font-medium text-gray-700 select-none"
+                  >Email Address</label
+                >
+              </div>
+
               <div
                 v-if="!isEditing"
                 class="text-gray-900 font-medium p-3 bg-gray-50 rounded-lg border border-transparent flex items-center gap-2"
@@ -344,16 +385,45 @@ onMounted(() => {
             </div>
 
             <div>
-              <label class="block text-sm font-medium text-gray-500 mb-1">Username</label>
-              <div class="text-gray-500 bg-gray-100 p-3 rounded-lg border border-gray-200 cursor-not-allowed">
-                @{{ profile.username }}
+              <div class="flex justify-start items-center gap-1 mb-1">
+                <svg fill="#000000" width="20px" height="19px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    d="M12,1a11,11,0,0,0,0,22,1,1,0,0,0,0-2,9,9,0,1,1,9-9v2.857a1.857,1.857,0,0,1-3.714,0V7.714a1,1,0,1,0-2,0v.179A5.234,5.234,0,0,0,12,6.714a5.286,5.286,0,1,0,3.465,9.245A3.847,3.847,0,0,0,23,14.857V12A11.013,11.013,0,0,0,12,1Zm0,14.286A3.286,3.286,0,1,1,15.286,12,3.29,3.29,0,0,1,12,15.286Z"
+                  />
+                </svg>
+                <label class="block pt-0.5 text-[0.9rem] font-medium text-gray-700 select-none">Username</label>
+              </div>
+              <div
+                class="text-gray-500 bg-gray-100 p-3 text-[0.9rem] rounded-lg border border-gray-200 cursor-not-allowed"
+              >
+                {{ profile.username }}
               </div>
             </div>
 
             <div>
-              <label class="block text-sm font-medium text-gray-500 mb-1">User ID</label>
+              <div class="flex justify-start items-center gap-1 mb-1">
+                <svg
+                  class="w-6 h-6 text-gray-800"
+                  aria-hidden="true"
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1.5"
+                    d="m8 8-4 4 4 4m8 0 4-4-4-4m-2-3-4 14"
+                  />
+                </svg>
+
+                <label class="block pt-[0.4px] text-[0.9rem] font-medium text-gray-700 select-none">User ID</label>
+              </div>
               <div
-                class="text-gray-400 bg-gray-100 p-3 rounded-lg border border-gray-200 cursor-not-allowed text-xs font-mono truncate"
+                class="text-gray-400 bg-gray-100 p-3 rounded-lg border border-gray-200 cursor-not-allowed text-[0.9rem] font-mono truncate"
               >
                 {{ profile.id }}
               </div>

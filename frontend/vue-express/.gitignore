@@ -3,6 +3,4 @@ node_modules/
 .vscode/
 .zed/
 .env
-worker_heartbeat
-
-interface/web/public/backups
+static/

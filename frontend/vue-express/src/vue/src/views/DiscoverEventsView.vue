@@ -4,28 +4,25 @@ import NavBar from '../components/NavBar.vue'
 import router from '../router'
 import { isLoggedIn, getRole } from '../utils/auth'
 import { showErrorPopup } from '../utils/popups'
+import { getFullImageUrl } from '../utils/random'
 
-// --- Types ---
 interface EventItem {
   id: string
+  lastUpdatedAt: string
   name: string
-  categories: string[] // Backend returns this, useful for display even if not filtering by it specifically
+  description: string
+  categories: string[]
   location: string
-  imageUrl?: string
-  status: string
-  statusLastUpdatedAt: string
+  imageUrl: string | undefined
 }
 
-// --- State ---
 const events = ref<EventItem[]>([])
 const isLoading = ref(false)
 
-// Filter State
 const searchQuery = ref('')
-const startDate = ref('') // HTML Date input uses YYYY-MM-DD string
+const startDate = ref('')
 const endDate = ref('')
 
-// --- API Fetch Logic ---
 const fetchEvents = async () => {
   isLoading.value = true
   try {
@@ -35,13 +32,17 @@ const fetchEvents = async () => {
       params.append('q', searchQuery.value)
     }
 
-    if (startDate.value) {
-      params.append('start', new Date(startDate.value).toUTCString())
-    }
-    
-    if (endDate.value) {
-      const end = new Date(endDate.value)
-      end.setHours(23, 59, 59, 999)
+    if (startDate.value || endDate.value) {
+      const start = startDate.value ? new Date(startDate.value) : new Date(0)
+      params.append('start', start.toUTCString())
+
+      let end: Date
+      if (endDate.value) {
+        end = new Date(endDate.value)
+        end.setHours(23, 59, 59, 999)
+      } else {
+        end = new Date('9999-12-31T23:59:59')
+      }
       params.append('end', end.toUTCString())
     }
 
@@ -65,7 +66,6 @@ const fetchEvents = async () => {
   }
 }
 
-// Debounce search slightly to avoid spamming API while typing
 let debounceTimer: ReturnType<typeof setTimeout>
 const onSearchInput = () => {
   clearTimeout(debounceTimer)
@@ -74,7 +74,6 @@ const onSearchInput = () => {
   }, 500)
 }
 
-// --- Lifecycle ---
 onMounted(async () => {
   if (!(await isLoggedIn())) {
     router.push('/signin')
@@ -82,25 +81,26 @@ onMounted(async () => {
   }
   const role = await getRole()
   if (role !== 'volunteer') {
-    showErrorPopup("Unauthorized", "You must be a Volunteer!")
-    router.push('/home')
+    showErrorPopup('Unauthorized', 'You must be a Volunteer!')
+    router.push('/signin')
     return
   }
-  
+
   fetchEvents()
 })
 </script>
 
 <template>
   <div class="min-h-screen bg-gray-100 font-sans text-gray-800">
-    <NavBar active="Discover Events" />
-
-    <main class="max-w-[2000px] mx-auto py-8 px-8 flex flex-col md:flex-row gap-6">
+    <NavBar active="Discover" />
+    <div class="m-8 mb-0">
+      <h1 class="text-[2rem] mb-1 font-bold text-gray-900">Browse Events</h1>
+      <p class="text-gray-600 text-[1.1rem]">See all published events and filter by timestamps</p>
+    </div>
+    <main class="max-w-[2000px] mx-auto py-8 px-8 pt-6 flex flex-col md:flex-row gap-6">
       <aside class="w-full md:w-64 shrink-0">
         <div class="bg-white rounded-xl shadow-sm p-6 sticky top-4">
-          <h2 class="text-[1.6rem] font-bold mb-3 flex items-center gap-2">
-            Filters
-          </h2>
+          <h2 class="text-[1.6rem] font-bold mb-3 flex items-center gap-2">Filters</h2>
 
           <div class="space-y-4">
             <h3 class="font-medium text-gray-700">Time Range</h3>
@@ -127,7 +127,11 @@ onMounted(async () => {
 
             <button
               v-if="startDate || endDate"
-              @click="startDate = ''; endDate = ''; fetchEvents()"
+              @click="
+                startDate = '';
+                endDate = '';
+                fetchEvents()
+              "
               class="text-[1.1rem] text-red-500 hover:text-red-700 font-medium pt-2 flex items-center gap-1 hover:cursor-pointer"
             >
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -206,7 +210,7 @@ onMounted(async () => {
             <div class="h-48 bg-gray-200 w-full relative overflow-hidden">
               <img
                 v-if="event.imageUrl"
-                :src="event.imageUrl"
+                :src="getFullImageUrl(event.imageUrl)"
                 alt="Event Cover"
                 class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
@@ -269,9 +273,14 @@ onMounted(async () => {
 
               <div class="mt-auto pt-4 border-t border-gray-100 flex justify-between items-center">
                 <span class="text-xs text-gray-400"
-                  >Updated: {{ new Date(event.statusLastUpdatedAt).toLocaleDateString() }}</span
+                  >Updated: {{ new Date(event.lastUpdatedAt).toLocaleDateString() }}</span
                 >
-                <button @click="router.push(`/events/${event.id.substring(9)}`)" class="text-[#256EB1] font-semibold text-sm hover:cursor-pointer hover:underline">View Details &rarr;</button>
+                <button
+                  @click="router.push(`/events/${event.id.substring(9)}`)"
+                  class="text-[#256EB1] font-semibold text-sm hover:cursor-pointer hover:underline"
+                >
+                  View Details &rarr;
+                </button>
               </div>
             </div>
           </div>

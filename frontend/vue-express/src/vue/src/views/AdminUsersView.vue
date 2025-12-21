@@ -4,6 +4,7 @@ import NavBar from '../components/NavBar.vue'
 import { getRole, isLoggedIn } from '../utils/auth'
 import router from '../router'
 import { showConfirmationPopup, showErrorPopup } from '../utils/popups'
+import { getFullImageUrl, jsonToCsv } from '../utils/random'
 
 type UserRole = 'volunteer' | 'event-manager' | 'administrator'
 type UserStatus = 'created' | 'updated' | 'suspended' | 'unsuspended'
@@ -132,16 +133,30 @@ const exportVolunteers = async (format: ExportFormat) => {
   isExportMenuOpen.value = false
   isExporting.value = true
   try {
-    const response = await fetch(`http://localhost:4000/api/admin/volunteers/export?format=${format}`, {
+    const response = await fetch(`http://localhost:4000/api/admin/volunteers/export?format=json`, {
       method: 'GET',
       credentials: 'include'
     })
 
     if (response.ok) {
       const data = await response.json()
-      const byteArray = new Uint8Array(data.bytes)
-      const mimeType = format === 'json' ? 'application/json' : 'text/csv'
-      const blob = new Blob([byteArray], { type: mimeType })
+
+      const jsonString = new TextDecoder().decode(new Uint8Array(data.bytes))
+
+      let blobData: BlobPart
+      let mimeType: string
+
+      if (format === 'csv') {
+        const jsonData = JSON.parse(jsonString)
+        const csvString = jsonToCsv(jsonData)
+        blobData = csvString
+        mimeType = 'text/csv'
+      } else {
+        blobData = new Uint8Array(data.bytes)
+        mimeType = 'application/json'
+      }
+
+      const blob = new Blob([blobData], { type: mimeType })
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
@@ -261,7 +276,7 @@ onMounted(async () => {
   if (!(await isLoggedIn())) router.push('/signin')
   if ((await getRole()) !== 'administrator') {
     showErrorPopup('Unauthorized', 'You must be an Administrator!')
-    router.push('/home')
+    router.push('/signin')
     return
   }
   fetchUsers()
@@ -423,7 +438,7 @@ onUnmounted(() => {
           >
             <div class="flex items-center gap-4">
               <div class="h-12 w-12 rounded-full bg-gray-100 shrink-0 overflow-hidden border border-gray-200">
-                <img v-if="user.avatarUrl" :src="user.avatarUrl" class="h-full w-full object-cover" />
+                <img v-if="user.avatarUrl" :src="getFullImageUrl(user.avatarUrl)" class="h-full w-full object-cover" />
                 <div
                   v-else
                   class="h-full w-full flex items-center justify-center text-gray-500 font-bold bg-blue-50 text-lg"
@@ -507,7 +522,11 @@ onUnmounted(() => {
                 <td class="px-6 py-4">
                   <div class="flex items-center gap-4">
                     <div class="h-10 w-10 rounded-full bg-gray-100 shrink-0 overflow-hidden border border-gray-200">
-                      <img v-if="user.avatarUrl" :src="user.avatarUrl" class="h-full w-full object-cover" />
+                      <img
+                        v-if="user.avatarUrl"
+                        :src="getFullImageUrl(user.avatarUrl)"
+                        class="h-full w-full object-cover"
+                      />
                       <div
                         v-else
                         class="h-full w-full flex items-center justify-center text-gray-500 font-bold bg-blue-50"

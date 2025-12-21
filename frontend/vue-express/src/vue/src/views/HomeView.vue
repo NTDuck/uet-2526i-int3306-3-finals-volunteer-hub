@@ -4,6 +4,7 @@ import NavBar from '../components/NavBar.vue'
 import { isLoggedIn } from '../utils/auth'
 import router from '../router'
 import { showErrorPopup } from '../utils/popups'
+import { getFullImageUrl } from '../utils/random'
 
 interface EventItem {
   id: string
@@ -22,10 +23,10 @@ const isLoading = ref(false)
 const currentFilter = ref<RecommendationType>('recently-published')
 
 const filterOptions: { label: string; value: RecommendationType }[] = [
-  { label: 'New Events', value: 'recently-published' },
-  { label: 'Trending Events', value: 'trending' },
-  { label: 'Recommended Events', value: 'personalized' },
-  { label: 'Recently Posted Events', value: 'recently-posted' }
+  { label: 'New', value: 'recently-published' },
+  { label: 'Trending', value: 'trending' },
+  { label: 'Recommended', value: 'personalized' },
+  { label: 'Recently Posted', value: 'recently-posted' }
 ]
 
 const fetchEvents = async () => {
@@ -38,7 +39,6 @@ const fetchEvents = async () => {
     })
 
     if (response.status === 200) {
-      // The response json is the events[] array
       const data = await response.json()
       events.value = data
     } else {
@@ -73,7 +73,12 @@ onMounted(async () => {
   <div class="min-h-screen bg-gray-100 font-sans text-gray-800">
     <NavBar active="Home" />
 
-    <main class="mx-auto py-8 px-4">
+    <main class="mx-auto py-8 px-8">
+      <div class="mb-4 border-b border-gray-200 pb-4">
+        <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Homepage</h1>
+        <p class="text-lg text-gray-600">Browse upcoming events and find your next way to help</p>
+      </div>
+
       <div class="mb-8 flex flex-wrap pb-2 gap-3 no-scrollbar">
         <button
           v-for="option in filterOptions"
@@ -106,7 +111,12 @@ onMounted(async () => {
           class="bg-white rounded-xl shadow-sm flex flex-col h-full cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all duration-300 overflow-hidden"
         >
           <div class="h-48 bg-gray-200 w-full object-cover relative">
-            <img v-if="event.imageUrl" :src="event.imageUrl" alt="Event Cover" class="w-full h-full object-cover" />
+            <img
+              v-if="event.imageUrl"
+              :src="getFullImageUrl(event.imageUrl)"
+              alt="Event Cover"
+              class="w-full h-full object-cover"
+            />
             <div v-else class="w-full h-full flex items-center justify-center text-gray-400">
               <span class="text-4xl font-light">Event</span>
             </div>

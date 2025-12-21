@@ -4,35 +4,30 @@ import NavBar from '../components/NavBar.vue'
 import router from '../router'
 import { getRole, isLoggedIn } from '../utils/auth'
 import { showConfirmationPopup, showErrorPopup } from '../utils/popups'
+import { getFullImageUrl, jsonToCsv } from '../utils/random'
 
-// --- Types ---
 type EventStatus = 'created' | 'updated' | 'approved' | 'rejected'
 type ExportFormat = 'csv' | 'json'
 
 interface EventItem {
   id: string
-  name: string
-  status: EventStatus
+  status: 'created' | 'updated' | 'approved' | 'rejected'
   statusLastUpdatedAt: string
+  name: string
   categories: string[]
   location: string
-  imageUrl?: string
+  imageUrl: string | undefined
 }
 
-// --- State ---
 const events = ref<EventItem[]>([])
 const isLoading = ref(false)
 const isExporting = ref(false)
 
-// Filters
 const searchQuery = ref('')
 const filterStatus = ref<EventStatus | ''>('')
 const startDate = ref('')
 const endDate = ref('')
 
-// --- API Helpers ---
-
-// 1. Fetch Events
 const fetchEvents = async () => {
   isLoading.value = true
   try {
@@ -41,17 +36,20 @@ const fetchEvents = async () => {
     if (searchQuery.value) params.append('query', searchQuery.value)
     if (filterStatus.value) params.append('statuses', filterStatus.value)
 
-    // Handle Date conversions to ISO String if values exist
-    if (startDate.value) {
-      params.append('start', new Date(startDate.value).toISOString())
-    }
-    if (endDate.value) {
-      const end = new Date(endDate.value)
-      end.setHours(23, 59, 59, 999)
-      params.append('end', end.toISOString())
+    if (startDate.value || endDate.value) {
+      const start = startDate.value ? new Date(startDate.value) : new Date(0)
+      params.append('start', start.toUTCString())
+
+      let end: Date
+      if (endDate.value) {
+        end = new Date(endDate.value)
+        end.setHours(23, 59, 59, 999)
+      } else {
+        end = new Date('9999-12-31T23:59:59.999Z')
+      }
+      params.append('end', end.toUTCString())
     }
 
-    // Assuming the route is mounted under /api/admin/events based on context
     const response = await fetch(`http://localhost:4000/api/admin/events?${params.toString()}`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
@@ -70,7 +68,6 @@ const fetchEvents = async () => {
   }
 }
 
-// 2. Moderate Event (Approve/Reject)
 const moderateEvent = async (event: EventItem, newStatus: 'approved' | 'rejected') => {
   if (
     !(await showConfirmationPopup(
@@ -90,10 +87,10 @@ const moderateEvent = async (event: EventItem, newStatus: 'approved' | 'rejected
     })
 
     if (response.ok) {
-      await fetchEvents() // Refresh list to show updated status
+      await fetchEvents()
     } else {
       const err = await response.json()
-      if (err.error === "EventStatusNotEligible") {
+      if (err.error === 'EventStatusNotEligible') {
         showErrorPopup('Event Management', 'Cannot reject an already approved event!', 100)
       } else {
         showErrorPopup('Event Management', 'Failed to update event status', 100)
@@ -104,11 +101,10 @@ const moderateEvent = async (event: EventItem, newStatus: 'approved' | 'rejected
   }
 }
 
-// 3. Export Events
 const exportEvents = async (format: ExportFormat) => {
   isExporting.value = true
   try {
-    const response = await fetch(`http://localhost:4000/api/admin/events/export?format=${format}`, {
+    const response = await fetch(`http://localhost:4000/api/admin/events/export?format=json`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include'
@@ -116,10 +112,23 @@ const exportEvents = async (format: ExportFormat) => {
 
     if (response.ok) {
       const data = await response.json()
-      const byteArray = new Uint8Array(data.bytes)
-      const mimeType = format === 'json' ? 'application/json' : 'text/csv'
-      const blob = new Blob([byteArray], { type: mimeType })
 
+      const jsonString = new TextDecoder().decode(new Uint8Array(data.bytes))
+
+      let blobData: BlobPart
+      let mimeType: string
+
+      if (format === 'csv') {
+        const jsonData = JSON.parse(jsonString)
+        const csvString = jsonToCsv(jsonData)
+        blobData = csvString
+        mimeType = 'text/csv'
+      } else {
+        blobData = new Uint8Array(data.bytes)
+        mimeType = 'application/json'
+      }
+
+      const blob = new Blob([blobData], { type: mimeType })
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
@@ -138,8 +147,6 @@ const exportEvents = async (format: ExportFormat) => {
   }
 }
 
-// --- Watchers & Lifecycle ---
-
 let debounceTimer: ReturnType<typeof setTimeout>
 const onFilterChange = () => {
   clearTimeout(debounceTimer)
@@ -153,9 +160,9 @@ onMounted(async () => {
     router.push('/signin')
   }
 
-  if (await getRole() !== 'administrator') {
+  if ((await getRole()) !== 'administrator') {
     showErrorPopup('Unauthorized', 'You must be an Administrator!')
-    router.push('/home')
+    router.push('/signin')
     return
   }
 
@@ -281,9 +288,9 @@ onMounted(async () => {
             v-if="startDate || endDate || filterStatus || searchQuery"
             @click="
               startDate = '';
-            endDate = '';
-            filterStatus = '';
-            searchQuery = '';
+              endDate = '';
+              filterStatus = '';
+              searchQuery = '';
               fetchEvents()
             "
             class="text-red-500 hover:cursor-pointer hover:text-red-700 pt-2 px-2 text-[0.9rem] transition flex hover:underline"
@@ -314,7 +321,7 @@ onMounted(async () => {
           >
             <div class="flex gap-4">
               <div class="h-20 w-24 bg-gray-200 rounded-md overflow-hidden shrink-0">
-                <img v-if="event.imageUrl" :src="event.imageUrl" class="h-full w-full object-cover" />
+                <img v-if="event.imageUrl" :src="getFullImageUrl(event.imageUrl)" class="h-full w-full object-cover" />
                 <div v-else class="h-full w-full flex items-center justify-center text-gray-400 bg-gray-100">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -437,7 +444,7 @@ onMounted(async () => {
                 >
                   <th class="px-6 py-4">Event Details</th>
                   <th class="px-6 py-4">Categories</th>
-                  <th class="px-6 py-4">Status</th>
+                  <th class="px-6 py-4 text-center">Status</th>
                   <th class="px-6 py-4 text-right">Actions</th>
                 </tr>
               </thead>
@@ -446,7 +453,11 @@ onMounted(async () => {
                   <td class="px-6 py-4 min-w-[350px]">
                     <div class="flex items-center gap-4">
                       <div class="h-16 w-24 bg-gray-200 rounded-md overflow-hidden shrink-0">
-                        <img v-if="event.imageUrl" :src="event.imageUrl" class="h-full w-full object-cover" />
+                        <img
+                          v-if="event.imageUrl"
+                          :src="getFullImageUrl(event.imageUrl)"
+                          class="h-full w-full object-cover"
+                        />
                         <div v-else class="h-full w-full flex items-center justify-center text-gray-400 bg-gray-100">
                           <svg
                             xmlns="http://www.w3.org/2000/svg"

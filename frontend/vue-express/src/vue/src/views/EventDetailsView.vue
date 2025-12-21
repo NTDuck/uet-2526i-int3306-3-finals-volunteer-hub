@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import NavBar from '../components/NavBar.vue'
 import { showConfirmationPopup, showErrorPopup } from '../utils/popups'
 import { getRole, isLoggedIn } from '../utils/auth'
+import { getFullImageUrl } from '../utils/random'
 
 type RegistrationStatus = 'pending' | 'withdrawn' | 'accepted' | 'declined' | 'completed' | null
 
@@ -186,7 +187,7 @@ onMounted(async () => {
     <main class="mx-auto max-w-5xl py-8 px-4" v-if="event && !isLoading">
       <div class="bg-white rounded-2xl shadow-sm overflow-hidden mb-8">
         <div class="h-64 md:h-80 w-full relative bg-gray-200">
-          <img v-if="event.imageUrl" :src="event.imageUrl" alt="Event Cover" class="w-full h-full object-cover" />
+          <img v-if="event.imageUrl" :src="getFullImageUrl(event.imageUrl)" alt="Event Cover" class="w-full h-full object-cover" />
           <div v-else class="w-full h-full flex items-center justify-center text-gray-400">
             <span class="text-5xl font-light">Event Image</span>
           </div>

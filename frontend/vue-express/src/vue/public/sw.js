@@ -5,7 +5,7 @@ self.addEventListener('push', function(event) {
 
   self.registration.showNotification(data.title || 'VolunteerHub', {
     body: data.body,
-    icon: '/favicon.png',
+    icon: '/hand.png',
     data: { url: data.url }
   });
 });

@@ -44,6 +44,18 @@ export function createManagerRoutes(wasmApp: Application, notCleanWasmApp: NotCl
     const token = req.cookies["auth-token"];
     if (!token) return res.status(401).json({ error: "AuthenticationTokenInvalid", message: "Missing auth token" });
 
+    // DEBUG LOGS
+    const imgData = req.body.eventImage;
+    console.log(`[Backend] Received Create Event Request`);
+    console.log(`[Backend] Event Name: ${req.body.eventName}`);
+
+    if (Array.isArray(imgData)) {
+      console.log(`[Backend] eventImage received. Length: ${imgData.length}`);
+      console.log(`[Backend] First 5 bytes:`, imgData.slice(0, 5));
+    } else {
+      console.log(`[Backend] eventImage is missing or not an array. Type: ${typeof imgData}`);
+    }
+
     try {
       await wasmApp.createEvent({
         token,
@@ -62,14 +74,14 @@ export function createManagerRoutes(wasmApp: Application, notCleanWasmApp: NotCl
               const userRaw = await notCleanWasmApp.getUserDetails(userId);
               // deno-lint-ignore no-explicit-any
               const user = Object.fromEntries(userRaw as unknown as Map<string, any>);
-              
-              return user.role === 'administrator' ? userId : null;
+
+              return user.role === "administrator" ? userId : null;
             } catch (_e) {
               return null;
             }
           }))).filter((id): id is string => id !== null);
 
-          adminIds.forEach(adminId => {
+          adminIds.forEach((adminId) => {
             sendPushNotification(adminId, {
               title: "New Event Created",
               body: `A manager created: ${req.body.eventName}`,

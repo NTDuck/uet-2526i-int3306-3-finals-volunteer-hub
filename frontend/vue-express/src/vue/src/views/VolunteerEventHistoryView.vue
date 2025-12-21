@@ -4,6 +4,7 @@ import NavBar from '../components/NavBar.vue'
 import router from '../router'
 import { getRole, isLoggedIn } from '../utils/auth'
 import { showErrorPopup } from '../utils/popups'
+import { getFullImageUrl } from '../utils/random'
 
 type RegistrationStatus = 'pending' | 'withdrawn' | 'accepted' | 'declined' | 'completed'
 
@@ -192,7 +193,7 @@ onMounted(async () => {
           >
             <div class="flex gap-4">
               <div class="h-20 w-24 bg-gray-200 rounded-md overflow-hidden shrink-0">
-                <img v-if="event.imageUrl" :src="event.imageUrl" class="h-full w-full object-cover" />
+                <img v-if="event.imageUrl" :src="getFullImageUrl(event.imageUrl)" class="h-full w-full object-cover" />
                 <div v-else class="h-full w-full flex items-center justify-center text-gray-400 bg-gray-100">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -282,7 +283,7 @@ onMounted(async () => {
                   <td class="px-6 py-4 min-w-[350px]">
                     <div class="flex items-center gap-4">
                       <div class="h-16 w-24 bg-gray-200 rounded-md overflow-hidden shrink-0">
-                        <img v-if="event.imageUrl" :src="event.imageUrl" class="h-full w-full object-cover" />
+                        <img v-if="event.imageUrl" :src="getFullImageUrl(event.imageUrl)" class="h-full w-full object-cover" />
                         <div v-else class="h-full w-full flex items-center justify-center text-gray-400 bg-gray-100">
                           <svg
                             xmlns="http://www.w3.org/2000/svg"

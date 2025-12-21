@@ -58,7 +58,7 @@ const onSubmit = async () => {
     <header class="h-16 bg-[#256EB1] text-white shadow-md">
       <div class="h-full px-6 flex items-center justify-between">
         <div class="flex items-center space-x-2">
-          <img class="w-6 h-6 rounded-md bg-transparent shadow-inner" src="../../../favicon.png" />
+          <img class="w-6 h-6 rounded-md bg-transparent shadow-inner" src="../../../hand.png" />
           <router-link to="/signup" class="text-sm text-white">
             <span class="text-xl font-medium">VolunteerHub</span>
           </router-link>

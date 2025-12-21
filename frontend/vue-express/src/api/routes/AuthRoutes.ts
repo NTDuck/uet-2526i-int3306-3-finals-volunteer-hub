@@ -17,7 +17,7 @@ export function createAuthRoutes(wasmApp: Application, notCleanWasmApp: NotClean
         email: req.body.email,
         password: req.body.password,
         fullName: req.body.fullname,
-        avatar: undefined,
+        avatar: req.body.avatar,
       });
       console.log("[AuthRoutes] Created user with id:");
 

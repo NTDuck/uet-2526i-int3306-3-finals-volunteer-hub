@@ -2,7 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { isLoggedIn } from '../utils/auth'
-import { PUBLIC_VAPID_KEY, urlBase64ToUint8Array } from '../utils/random'
+import { PUBLIC_VAPID_KEY, registerForPushNotifications, urlBase64ToUint8Array } from '../utils/random'
 
 const email = ref('')
 const password = ref('')
@@ -10,30 +10,6 @@ const rememberMe = ref(false)
 const errorMessage = ref('')
 const showErrorMessage = ref(false)
 const router = useRouter()
-
-const registerForPushNotifications = async () => {
-  if (!('serviceWorker' in navigator)) return;
-
-  try {
-    const register = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
-    await navigator.serviceWorker.ready;
-
-    const subscription = await register.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(PUBLIC_VAPID_KEY)
-    });
-
-    await fetch('http://localhost:4000/api/notification/subscribe', {
-      method: 'POST',
-      body: JSON.stringify(subscription),
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include'
-    });
-    console.log('Push notification subscribed!');
-  } catch (e) {
-    console.error('Failed to subscribe to push', e);
-  }
-}
 
 onMounted(async () => {
   if (await isLoggedIn()) {
@@ -74,7 +50,7 @@ const onSubmit = async () => {
     <header class="h-16 bg-[#256EB1] text-white shadow-md">
       <div class="h-full px-6 flex items-center justify-between">
         <div class="flex items-center space-x-2">
-          <img class="w-10 h-10 rounded-md bg-transparent shadow-inner" src="../../favicon.png" />
+          <img class="w-10 h-10 rounded-md bg-transparent shadow-inner" src="../../hand.png" />
           <RouterLink to="/signin" class="text-sm text-white">
             <span class="text-[1.4rem] font-medium">VolunteerHub</span>
           </RouterLink>
