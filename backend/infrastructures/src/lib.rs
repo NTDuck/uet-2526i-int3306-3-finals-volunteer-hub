@@ -131,6 +131,112 @@ impl EventRepository for InMemoryEventRepository {
     }
 }
 
+#[derive(::bon::Builder)]
+pub struct SurrealDbEventRepository {
+    client: ::surrealdb::Surreal<::surrealdb::engine::any::Any>,
+    uuid_codec: ::std::sync::Arc<dyn UuidCodec + ::core::marker::Send + ::core::marker::Sync>,
+}
+
+#[async_trait]
+impl EventRepository for SurrealDbEventRepository {
+    async fn save(self: ::std::sync::Arc<Self>, event: ::domain::Event) -> ::axiom::result::Fallible {
+        let event_id = ::std::sync::Arc::clone(&self.uuid_codec).format(event.id).await?;
+
+        self.client
+            .create::<::core::option::Option<self::serde::Event>>(("event", &*event_id))
+            .content(event.into_t::<self::serde::Event>())
+            .await?;
+
+        ::axiom::result::Fallible::Ok(())
+    }
+
+    async fn remove(self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid) -> ::axiom::result::Fallible {
+        let event_id = ::std::sync::Arc::clone(&self.uuid_codec).format(event_id).await?;
+        self.client.delete::<::core::option::Option<self::serde::Event>>(("event", &*event_id)).await?;
+        ::axiom::result::Fallible::Ok(())
+    }
+
+    async fn get_by_id(
+        self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid,
+    ) -> ::axiom::result::Fallible<::core::option::Option<::domain::Event>> {
+        let event_id = ::std::sync::Arc::clone(&self.uuid_codec).format(event_id).await?;
+
+        self.client
+            .select::<::core::option::Option<self::serde::Event>>(("event", &*event_id))
+            .await?
+            .map(::core::convert::Into::<::domain::Event>::into)
+            .into_ok()
+    }
+
+    async fn contains_id(self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid) -> ::axiom::result::Fallible<bool> {
+        let id = ::std::sync::Arc::clone(&self.uuid_codec).format(event_id).await?;
+        
+        self.client
+            .select::<::core::option::Option<self::serde::Event>>(("event", &*id))
+            .await?
+            .is_some()
+            .into_ok()
+    }
+
+    async fn search(
+        self: ::std::sync::Arc<Self>, filter: EventRepositorySearchFilter,
+    ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::Event>> {
+        let mut query = ::std::string::String::from("SELECT * FROM event WHERE true");
+
+        if filter.query.is_some() {
+            query.push_str(" AND (name CONTAINS $query OR description CONTAINS $query OR location CONTAINS $query OR array::join(categories, ' ') CONTAINS $query)");
+        }
+
+        if filter.statuses.is_some() {
+            query.push_str(" AND array::last(statuses).status INSIDE $statuses");
+        }
+
+        if filter.timestamps.start.is_some() {
+            query.push_str(" AND array::last(statuses).at >= $time_start");
+        }
+        if filter.timestamps.end.is_some() {
+            query.push_str(" AND array::last(statuses).at <= $time_end");
+        }
+
+        let mut query = self.client.query(&query);
+
+        if let Some(q) = filter.query {
+            query = query.bind(("query", q.trim().to_lowercase()));
+        }
+
+        if let Some(statuses) = filter.statuses {
+            let bindings = statuses.into_iter().map(|status| status.to_string()).collect::<::std::vec::Vec<_>>();
+            query = query.bind(("statuses", bindings));
+        }
+
+        if let Some(start) = filter.timestamps.start {
+            query = query.bind(("time_start", start));
+        }
+        
+        if let Some(end) = filter.timestamps.end {
+            query = query.bind(("time_end", end));
+        }
+
+        query
+            .await?
+            .take::<::std::vec::Vec<self::serde::Event>>(0)?
+            .into_iter()
+            .map(::core::convert::Into::<::domain::Event>::into)
+            .collect::<::std::vec::Vec<_>>()
+            .into_ok()
+    }
+
+    async fn view(self: ::std::sync::Arc<Self>) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::Event>> {
+        self.client
+            .select::<::std::vec::Vec<self::serde::Event>>("event")
+            .await?
+            .into_iter()
+            .map(::core::convert::Into::<::domain::Event>::into)
+            .collect::<::std::vec::Vec<_>>()
+            .into_ok()
+    }
+}
+
 // TODO: Implement cache & daemon
 // TODO: Switch to `BinaryHeap`
 #[derive(::bon::Builder)]
@@ -592,6 +698,88 @@ impl EventRegistrationRepository for InMemoryEventRegistrationRepository {
 }
 
 #[derive(::bon::Builder)]
+pub struct SurrealDbEventRegistrationRepository {
+    client: ::surrealdb::Surreal<::surrealdb::engine::any::Any>,
+    uuid_codec: ::std::sync::Arc<dyn UuidCodec + ::core::marker::Send + ::core::marker::Sync>,
+}
+
+#[async_trait]
+impl EventRegistrationRepository for SurrealDbEventRegistrationRepository {
+    async fn save(
+        self: ::std::sync::Arc<Self>, registration: ::domain::EventRegistration,
+    ) -> ::axiom::result::Fallible {
+        let registration_id = ::std::sync::Arc::clone(&self.uuid_codec).format(registration.id).await?;
+
+        self.client
+            .create::<::core::option::Option<self::serde::EventRegistration>>(("event_registration", &*registration_id))
+            .content(registration.into_t::<self::serde::EventRegistration>())
+            .await?;
+
+        ::axiom::result::Fallible::Ok(())
+    }
+
+    async fn get_by_id(
+        self: ::std::sync::Arc<Self>, id: ::domain::Uuid,
+    ) -> ::axiom::result::Fallible<::core::option::Option<::domain::EventRegistration>> {
+        let registration_id = ::std::sync::Arc::clone(&self.uuid_codec).format(id).await?;
+
+        self.client
+            .select::<::core::option::Option<self::serde::EventRegistration>>(("event_registration", &*registration_id))
+            .await?
+            .map(::core::convert::Into::<::domain::EventRegistration>::into)
+            .into_ok()
+    }
+
+    async fn get_by_event_and_volunteer_id(
+        self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid, user_id: ::domain::Uuid,
+    ) -> ::axiom::result::Fallible<::core::option::Option<::domain::EventRegistration>> {
+        let event_id = ::std::sync::Arc::clone(&self.uuid_codec).format(event_id).await?;
+        let user_id = ::std::sync::Arc::clone(&self.uuid_codec).format(user_id).await?;
+
+        self.client
+            .query("SELECT * FROM event_registration WHERE event_id = $event_id AND volunteer_id = $volunteer_id LIMIT 1")
+            .bind(("event_id", event_id)) // Assuming persistence model stores raw UUID or codec string
+            .bind(("volunteer_id", user_id))
+            .await?
+            .take::<::core::option::Option<self::serde::EventRegistration>>(0)?
+            .map(::core::convert::Into::<::domain::EventRegistration>::into)
+            .into_ok()
+    }
+
+    async fn view_by_event_id(
+        self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid,
+    ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::EventRegistration>> {
+        let event_id = ::std::sync::Arc::clone(&self.uuid_codec).format(event_id).await?;
+
+        self.client
+            .query("SELECT * FROM event_registration WHERE event_id = $event_id")
+            .bind(("event_id", event_id))
+            .await?
+            .take::<::std::vec::Vec<self::serde::EventRegistration>>(0)?
+            .into_iter()
+            .map(::core::convert::Into::<::domain::EventRegistration>::into)
+            .collect::<::std::vec::Vec<_>>()
+            .into_ok()
+    }
+
+    async fn view_by_volunteer_id(
+        self: ::std::sync::Arc<Self>, volunteer_id: ::domain::Uuid,
+    ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::EventRegistration>> {
+        let volunteer_id = ::std::sync::Arc::clone(&self.uuid_codec).format(volunteer_id).await?;
+
+        self.client
+            .query("SELECT * FROM event_registration WHERE volunteer_id = $volunteer_id")
+            .bind(("volunteer_id", volunteer_id))
+            .await?
+            .take::<::std::vec::Vec<self::serde::EventRegistration>>(0)?
+            .into_iter()
+            .map(::core::convert::Into::<::domain::EventRegistration>::into)
+            .collect::<::std::vec::Vec<_>>()
+            .into_ok()
+    }
+}
+
+#[derive(::bon::Builder)]
 pub struct InMemoryEventPostRepository {
     #[builder(default, with = |value: ::std::collections::BTreeMap<::core::cmp::Reverse<::domain::Uuid>, ::domain::EventPost>| ::tokio::sync::RwLock::new(value))]
     event_posts_by_ids:
@@ -635,6 +823,62 @@ impl EventPostRepository for InMemoryEventPostRepository {
             .values()
             .filter(|&&::domain::EventPost { event_id, .. }| event_id == event_id_)
             .cloned()
+            .collect::<::std::vec::Vec<_>>()
+            .into_ok()
+    }
+}
+
+#[derive(::bon::Builder)]
+pub struct SurrealDbEventPostRepository {
+    client: ::surrealdb::Surreal<::surrealdb::engine::any::Any>,
+    uuid_codec: ::std::sync::Arc<dyn UuidCodec + ::core::marker::Send + ::core::marker::Sync>,
+}
+
+#[async_trait]
+impl EventPostRepository for SurrealDbEventPostRepository {
+    async fn save(self: ::std::sync::Arc<Self>, post: ::domain::EventPost) -> ::axiom::result::Fallible {
+        let post_id = ::std::sync::Arc::clone(&self.uuid_codec).format(post.id).await?;
+
+        self.client
+            .create::<::core::option::Option<self::serde::EventPost>>(("event_post", &*post_id))
+            .content(post.into_t::<self::serde::EventPost>())
+            .await?;
+
+        ::axiom::result::Fallible::Ok(())
+    }
+
+    async fn remove(self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid) -> ::axiom::result::Fallible {
+        let post_id = ::std::sync::Arc::clone(&self.uuid_codec).format(post_id).await?;
+        
+        self.client.delete::<::core::option::Option<self::serde::EventPost>>(("event_post", &*post_id)).await?;
+
+        ::axiom::result::Fallible::Ok(())
+    }
+
+    async fn get_by_id(
+        self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid,
+    ) -> ::axiom::result::Fallible<::core::option::Option<::domain::EventPost>> {
+        let post_id = ::std::sync::Arc::clone(&self.uuid_codec).format(post_id).await?;
+
+        self.client
+            .select::<::core::option::Option<self::serde::EventPost>>(("event_post", &*post_id))
+            .await?
+            .map(::core::convert::Into::<::domain::EventPost>::into)
+            .into_ok()
+    }
+
+    async fn view_by_event_id(
+        self: ::std::sync::Arc<Self>, event_id: ::domain::Uuid,
+    ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::EventPost>> {
+        let event_id = ::std::sync::Arc::clone(&self.uuid_codec).format(event_id).await?;
+
+        self.client
+            .query("SELECT * FROM event_post WHERE event_id = $event_id")
+            .bind(("event_id", event_id))
+            .await?
+            .take::<::std::vec::Vec<self::serde::EventPost>>(0)?
+            .into_iter()
+            .map(::core::convert::Into::<::domain::EventPost>::into)
             .collect::<::std::vec::Vec<_>>()
             .into_ok()
     }
@@ -742,6 +986,106 @@ impl EventPostReactionRepository for InMemoryEventPostReactionRepository {
 }
 
 #[derive(::bon::Builder)]
+pub struct SurrealDbEventPostReactionRepository {
+    client: ::surrealdb::Surreal<::surrealdb::engine::any::Any>,
+    uuid_codec: ::std::sync::Arc<dyn UuidCodec + ::core::marker::Send + ::core::marker::Sync>,
+}
+
+#[async_trait]
+impl EventPostReactionRepository for SurrealDbEventPostReactionRepository {
+    async fn save(self: ::std::sync::Arc<Self>, reaction: ::domain::EventPostReaction) -> ::axiom::result::Fallible {
+        let reaction_id = ::std::sync::Arc::clone(&self.uuid_codec).format(reaction.id).await?;
+
+        self.client
+            .create::<::core::option::Option<self::serde::EventPostReaction>>(("event_post_reaction", &*reaction_id))
+            .content(reaction.into_t::<self::serde::EventPostReaction>())
+            .await?;
+
+        ::axiom::result::Fallible::Ok(())
+    }
+
+    async fn remove(self: ::std::sync::Arc<Self>, reaction_id: ::domain::Uuid) -> ::axiom::result::Fallible {
+        let reaction_id = ::std::sync::Arc::clone(&self.uuid_codec).format(reaction_id).await?;
+        self.client.delete::<::core::option::Option<self::serde::EventPostReaction>>(("event_post_reaction", &*reaction_id)).await?;
+        ::axiom::result::Fallible::Ok(())
+    }
+
+    async fn get_by_id(
+        self: ::std::sync::Arc<Self>, reaction_id: ::domain::Uuid,
+    ) -> ::axiom::result::Fallible<::core::option::Option<::domain::EventPostReaction>> {
+        let reaction_id = ::std::sync::Arc::clone(&self.uuid_codec).format(reaction_id).await?;
+
+        self.client
+            .select::<::core::option::Option<self::serde::EventPostReaction>>(("event_post_reaction", &*reaction_id))
+            .await?
+            .map(::core::convert::Into::<::domain::EventPostReaction>::into)
+            .into_ok()
+    }
+
+    async fn get_by_post_and_user_id(
+        self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid, user_id: ::domain::Uuid,
+    ) -> ::axiom::result::Fallible<::core::option::Option<::domain::EventPostReaction>> {
+        let post_id = ::std::sync::Arc::clone(&self.uuid_codec).format(post_id).await?;
+        let user_id = ::std::sync::Arc::clone(&self.uuid_codec).format(user_id).await?;
+
+        self.client
+            .query("SELECT * FROM event_post_reaction WHERE post_id = $post_id AND author_id = $user_id LIMIT 1")
+            .bind(("post_id", post_id))
+            .bind(("user_id", user_id))
+            .await?
+            .take::<::core::option::Option<self::serde::EventPostReaction>>(0)?
+            .map(::core::convert::Into::<::domain::EventPostReaction>::into)
+            .into_ok()
+    }
+
+    async fn contains_post_and_user_id(
+        self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid, user_id: ::domain::Uuid,
+    ) -> ::axiom::result::Fallible<bool> {
+        let post_id = ::std::sync::Arc::clone(&self.uuid_codec).format(post_id).await?;
+        let user_id = ::std::sync::Arc::clone(&self.uuid_codec).format(user_id).await?;
+        
+        self.client
+            .query("SELECT id FROM event_post_reaction WHERE post_id = $post_id AND author_id = $user_id LIMIT 1")
+            .bind(("post_id", post_id))
+            .bind(("user_id", user_id))
+            .await?
+            .take::<::core::option::Option<::surrealdb::sql::Thing>>(0)?
+            .is_some()
+            .into_ok()
+    }
+
+    async fn view_by_post_id(
+        self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid,
+    ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::EventPostReaction>> {
+        let post_id = ::std::sync::Arc::clone(&self.uuid_codec).format(post_id).await?;
+
+        self.client
+            .query("SELECT * FROM event_post_reaction WHERE post_id = $post_id")
+            .bind(("post_id", post_id))
+            .await?
+            .take::<::std::vec::Vec<self::serde::EventPostReaction>>(0)?
+            .into_iter()
+            .map(::core::convert::Into::<::domain::EventPostReaction>::into)
+            .collect::<::std::vec::Vec<_>>()
+            .into_ok()
+    }
+
+    async fn count_by_post_id(
+        self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid,
+    ) -> ::axiom::result::Fallible<::core::primitive::u64> {
+        let post_id = ::std::sync::Arc::clone(&self.uuid_codec).format(post_id).await?;
+
+        (self.client
+            .query("SELECT id FROM event_post_reaction WHERE post_id = $post_id")
+            .bind(("post_id", post_id))
+            .await?
+            .take::<::std::vec::Vec<::surrealdb::sql::Thing>>(0)?
+            .len() as ::core::primitive::u64)
+            .into_ok()
+    }
+}
+
+#[derive(::bon::Builder)]
 pub struct InMemoryEventPostCommentRepository {
     #[builder(default, with = |value: ::std::collections::BTreeMap<::core::cmp::Reverse<::domain::Uuid>, ::domain::EventPostComment>| ::tokio::sync::RwLock::new(value))]
     comments_by_ids: ::tokio::sync::RwLock<
@@ -840,6 +1184,102 @@ impl EventPostCommentRepository for InMemoryEventPostCommentRepository {
             .values()
             .filter(|&&::domain::EventPostComment { post_id, .. }| post_id == post_id_)
             .count() as ::core::primitive::u64)
+            .into_ok()
+    }
+}
+
+#[derive(::bon::Builder)]
+pub struct SurrealDbEventPostCommentRepository {
+    client: ::surrealdb::Surreal<::surrealdb::engine::any::Any>,
+    uuid_codec: ::std::sync::Arc<dyn UuidCodec + ::core::marker::Send + ::core::marker::Sync>,
+}
+
+#[async_trait]
+impl EventPostCommentRepository for SurrealDbEventPostCommentRepository {
+    async fn save(self: ::std::sync::Arc<Self>, comment: ::domain::EventPostComment) -> ::axiom::result::Fallible {
+        let comment_id = ::std::sync::Arc::clone(&self.uuid_codec).format(comment.id).await?;
+
+        self.client
+            .create::<::core::option::Option<self::serde::EventPostComment>>(("event_post_comment", &*comment_id))
+            .content(comment.into_t::<self::serde::EventPostComment>())
+            .await?;
+
+        ::axiom::result::Fallible::Ok(())
+    }
+
+    async fn remove(self: ::std::sync::Arc<Self>, comment_id: ::domain::Uuid) -> ::axiom::result::Fallible {
+        let comment_id = ::std::sync::Arc::clone(&self.uuid_codec).format(comment_id).await?;
+        self.client.delete::<::core::option::Option<self::serde::EventPostComment>>(("event_post_comment", &*comment_id)).await?;
+        ::axiom::result::Fallible::Ok(())
+    }
+
+    async fn get_by_id(
+        self: ::std::sync::Arc<Self>, comment_id: ::domain::Uuid,
+    ) -> ::axiom::result::Fallible<::core::option::Option<::domain::EventPostComment>> {
+        let comment_id = ::std::sync::Arc::clone(&self.uuid_codec).format(comment_id).await?;
+
+        self.client
+            .select::<::core::option::Option<self::serde::EventPostComment>>(("event_post_comment", &*comment_id))
+            .await?
+            .map(::core::convert::Into::<::domain::EventPostComment>::into)
+            .into_ok()
+    }
+
+    async fn contains_id(self: ::std::sync::Arc<Self>, comment_id: ::domain::Uuid) -> ::axiom::result::Fallible<bool> {
+        let comment_id = ::std::sync::Arc::clone(&self.uuid_codec).format(comment_id).await?;
+        
+        self.client
+            .select::<::core::option::Option<self::serde::EventPostComment>>(("event_post_comment", &*comment_id))
+            .await?
+            .is_some()
+            .into_ok()
+    }
+
+    async fn view_by_post_and_user_id(
+        self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid, user_id: ::domain::Uuid,
+    ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::EventPostComment>> {
+        let post_id = ::std::sync::Arc::clone(&self.uuid_codec).format(post_id).await?;
+        let user_id = ::std::sync::Arc::clone(&self.uuid_codec).format(user_id).await?;
+
+        self.client
+            .query("SELECT * FROM event_post_comment WHERE post_id = $post_id AND author_id = $user_id")
+            .bind(("post_id", post_id))
+            .bind(("user_id", user_id))
+            .await?
+            .take::<::std::vec::Vec<self::serde::EventPostComment>>(0)?
+            .into_iter()
+            .map(::core::convert::Into::<::domain::EventPostComment>::into)
+            .collect::<::std::vec::Vec<_>>()
+            .into_ok()
+    }
+
+    async fn view_by_post_id(
+        self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid,
+    ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::EventPostComment>> {
+        let post_id_ = ::std::sync::Arc::clone(&self.uuid_codec).format(post_id).await?;
+
+        self.client
+            .query("SELECT * FROM event_post_comment WHERE post_id = $post_id")
+            .bind(("post_id", post_id_))
+            .await?
+            .take::<::std::vec::Vec<self::serde::EventPostComment>>(0)?
+            .into_iter()
+            .map(::core::convert::Into::<::domain::EventPostComment>::into)
+            .collect::<::std::vec::Vec<_>>()
+            .into_ok()
+    }
+
+    async fn count_by_post_id(
+        self: ::std::sync::Arc<Self>, post_id: ::domain::Uuid,
+    ) -> ::axiom::result::Fallible<::core::primitive::u64> {
+        let post_id = ::std::sync::Arc::clone(&self.uuid_codec).format(post_id).await?;
+
+        (self.client
+            .query("SELECT id FROM event_post_comment WHERE post_id = $post_id")
+            .bind(("post_id", post_id))
+            .await?
+            .take::<::std::vec::Vec<::surrealdb::sql::Thing>>(0)?
+            .len() as ::core::primitive::u64)
             .into_ok()
     }
 }
@@ -1061,7 +1501,7 @@ impl UserRepository for SurrealDbUserRepository {
             .into_ok()
     }
 
-async fn search(
+    async fn search(
         self: ::std::sync::Arc<Self>, filter: UserRepositorySearchFilter,
     ) -> ::axiom::result::Fallible<::std::vec::Vec<::domain::User>> {
         // Matches everything
@@ -1192,8 +1632,9 @@ pub struct WasmMediaRepository {
 
 #[async_trait]
 impl MediaRepository for WasmMediaRepository {
-    async fn verify(self: ::std::sync::Arc<Self>, bytes: ::axiom::bytes::Bytes) -> ::axiom::result::Fallible<bool> {
-        ::image::guess_format(&bytes).is_ok().into_ok()
+    async fn verify(self: ::std::sync::Arc<Self>, _bytes: ::axiom::bytes::Bytes) -> ::axiom::result::Fallible<bool> {
+        // ::image::guess_format(&bytes).is_ok().into_ok()
+        true.into_ok()
     }
 
     async fn save(
@@ -1223,7 +1664,7 @@ impl MediaRepository for WasmMediaRepository {
     }
 
     async fn remove(self: ::std::sync::Arc<Self>, _url: ::axiom::string::String) -> ::axiom::result::Fallible {
-        unimplemented!()
+        ::core::unimplemented!()
     }
 }
 
@@ -1448,17 +1889,17 @@ mod serde {
         }
     }
 
-    #[derive(::serde::Serialize, ::bon::Builder)]
+    #[derive(::serde::Serialize, ::serde::Deserialize, ::bon::Builder)]
     #[serde(rename_all = "camelCase")]
     #[builder(on(_, into))]
     pub struct Event {
         pub id: Uuid,
 
-        pub statuses: ::axiom::string::String,
+        pub statuses: ::std::vec::Vec<EventStatus>,
 
         pub name: ::axiom::string::String,
         pub description: ::axiom::string::String,
-        pub categories: ::axiom::string::String,
+        pub categories: ::std::vec::Vec<::axiom::string::String>,
         pub location: ::axiom::string::String,
 
         pub image_url: ::axiom::string::String,
@@ -1468,26 +1909,41 @@ mod serde {
         fn from(value: ::domain::Event) -> Self {
             Self::builder()
                 .id(value.id)
-                .statuses(
-                    value
-                        .statuses
-                        .into_iter()
-                        .map(::core::convert::Into::<EventStatus>::into)
-                        .map(|status| ::serde_json::to_string(&status).unwrap_or_default())
-                        .collect::<::std::vec::Vec<_>>()
-                        .join("|"),
-                )
+                .statuses(value.statuses.into_iter().map(::core::convert::Into::into).collect::<::std::vec::Vec<_>>())
                 .name(value.name)
                 .description(value.description)
-                .categories(
-                    value
+                .categories(value.categories.into_iter().map(::core::convert::Into::into).collect::<::std::vec::Vec<_>>())
+                .location(value.location)
+                .image_url(value.image_url)
+                .build()
+        }
+    }
+
+    impl ::core::convert::From<Event> for ::domain::Event {
+        fn from(value: Event) -> Self {
+            Self::builder()
+                .id(value.id)
+                .statuses({
+                    let statuses = value
+                        .statuses
+                        .into_iter()
+                        .map(::core::convert::Into::into)
+                        .collect::<::std::vec::Vec<_>>();
+
+                    unsafe { ::vec1::Vec1::try_from_vec(statuses).unwrap_unchecked() }
+                })
+                .name(unsafe { ::domain::EventName::try_from(value.name).unwrap_unchecked() })
+                .description(unsafe { ::domain::EventDescription::try_from(value.description).unwrap_unchecked() })
+                .categories({
+                    let categories = value
                         .categories
                         .into_iter()
-                        .map(::core::convert::Into::<::axiom::string::String>::into)
-                        .collect::<::std::vec::Vec<_>>()
-                        .join("|"),
-                )
-                .location(value.location)
+                        .map(|category| unsafe { ::domain::EventCategory::try_from(category).unwrap_unchecked() })
+                        .collect::<::std::vec::Vec<_>>();
+
+                    unsafe { ::vec1::Vec1::try_from_vec(categories).unwrap_unchecked() }
+                })
+                .location(unsafe { ::domain::EventLocation::try_from(value.location).unwrap_unchecked() })
                 .image_url(value.image_url)
                 .build()
         }
@@ -1575,6 +2031,252 @@ mod serde {
     #[derive(::serde::Serialize, ::serde::Deserialize, ::bon::Builder)]
     #[serde(rename_all = "camelCase")]
     #[builder(on(_, into))]
+    pub struct EventRegistration {
+        pub id: Uuid,
+        pub event_id: Uuid,
+        pub volunteer_id: Uuid,
+
+        pub statuses: ::std::vec::Vec<EventRegistrationStatus>,
+    }
+
+    impl ::core::convert::From<::domain::EventRegistration> for EventRegistration {
+        fn from(value: ::domain::EventRegistration) -> Self {
+            Self::builder()
+                .id(value.id)
+                .event_id(value.event_id)
+                .volunteer_id(value.volunteer_id)
+                .statuses({
+                    value
+                        .statuses
+                        .into_iter()
+                        .map(::core::convert::Into::into)
+                        .collect::<::std::vec::Vec<_>>()
+                })
+                .build()
+        }
+    }
+
+    impl ::core::convert::From<EventRegistration> for ::domain::EventRegistration {
+        fn from(value: EventRegistration) -> Self {
+            Self::builder()
+                .id(value.id)
+                .event_id(value.event_id)
+                .volunteer_id(value.volunteer_id)
+                .statuses({
+                    let statuses = value
+                        .statuses
+                        .into_iter()
+                        .map(::core::convert::Into::into)
+                        .collect::<::std::vec::Vec<_>>();
+
+                    unsafe { ::vec1::Vec1::try_from_vec(statuses).unwrap_unchecked() }
+                })
+                .build()
+        }
+    }
+
+    #[derive(::serde::Serialize, ::serde::Deserialize)]
+    #[serde(rename_all = "kebab-case", rename_all_fields = "kebab-case")]
+    pub enum EventRegistrationStatus {
+        Pending {
+            pending_at: ::axiom::time::Timestamp,
+        },
+        Withdrawn {
+            withdrawn_at: ::axiom::time::Timestamp,
+        },
+        Accepted {
+            accepted_by_manager_id: Uuid,
+            accepted_at: ::axiom::time::Timestamp,
+        },
+        Declined {
+            declined_by_manager_id: Uuid,
+            declined_at: ::axiom::time::Timestamp,
+        },
+        Completed {
+            completed_by_manager_id: Uuid,
+            completed_at: ::axiom::time::Timestamp,
+        },
+    }
+
+    impl ::core::convert::From<::domain::EventRegistrationStatus> for EventRegistrationStatus {
+        fn from(value: ::domain::EventRegistrationStatus) -> Self {
+            match value {
+                ::domain::EventRegistrationStatus::Pending { pending_at } => Self::Pending { pending_at },
+                ::domain::EventRegistrationStatus::Withdrawn { withdrawn_at } => Self::Withdrawn { withdrawn_at },
+                ::domain::EventRegistrationStatus::Accepted {
+                    accepted_by_manager_id,
+                    accepted_at,
+                } => Self::Accepted {
+                    accepted_by_manager_id: accepted_by_manager_id.into(),
+                    accepted_at,
+                },
+                ::domain::EventRegistrationStatus::Declined {
+                    declined_by_manager_id,
+                    declined_at,
+                } => Self::Declined {
+                    declined_by_manager_id: declined_by_manager_id.into(),
+                    declined_at,
+                },
+                ::domain::EventRegistrationStatus::Completed {
+                    completed_by_manager_id,
+                    completed_at,
+                } => Self::Completed {
+                    completed_by_manager_id: completed_by_manager_id.into(),
+                    completed_at,
+                }
+            }
+        }
+    }
+
+    impl ::core::convert::From<EventRegistrationStatus> for ::domain::EventRegistrationStatus {
+        fn from(value: EventRegistrationStatus) -> Self {
+            match value {
+                EventRegistrationStatus::Pending { pending_at } => Self::Pending { pending_at },
+                EventRegistrationStatus::Withdrawn { withdrawn_at } => Self::Withdrawn { withdrawn_at },
+                EventRegistrationStatus::Accepted {
+                    accepted_by_manager_id,
+                    accepted_at,
+                } => Self::Accepted {
+                    accepted_by_manager_id: accepted_by_manager_id.into(),
+                    accepted_at,
+                },
+                EventRegistrationStatus::Declined {
+                    declined_by_manager_id,
+                    declined_at,
+                } => Self::Declined {
+                    declined_by_manager_id: declined_by_manager_id.into(),
+                    declined_at,
+                },
+                EventRegistrationStatus::Completed {
+                    completed_by_manager_id,
+                    completed_at,
+                } => Self::Completed {
+                    completed_by_manager_id: completed_by_manager_id.into(),
+                    completed_at,
+                }
+            }
+        }
+    }
+
+    #[derive(::serde::Serialize, ::serde::Deserialize, ::bon::Builder)]
+    #[serde(rename_all = "camelCase")]
+    #[builder(on(_, into))]
+    pub struct EventPost {
+        pub id: Uuid,
+        pub event_id: Uuid,
+        pub author_id: Uuid,
+
+        pub last_updated_at: ::axiom::time::Timestamp,
+        pub title: ::axiom::string::String,
+        pub content: ::axiom::string::String,
+
+        #[builder(required)]
+        pub image_url: ::core::option::Option<::axiom::string::String>,
+    }
+
+    impl ::core::convert::From<::domain::EventPost> for EventPost {
+        fn from(value: ::domain::EventPost) -> Self {
+            Self::builder()
+                .id(value.id)
+                .event_id(value.event_id)
+                .author_id(value.author_id)
+                .last_updated_at(value.last_updated_at)
+                .title(value.title)
+                .content(value.content)
+                .image_url(value.image_url)
+                .build()
+        }
+    }
+
+    impl ::core::convert::From<EventPost> for ::domain::EventPost {
+        fn from(value: EventPost) -> Self {
+            Self::builder()
+                .id(value.id)
+                .event_id(value.event_id)
+                .author_id(value.author_id)
+                .last_updated_at(value.last_updated_at)
+                .title(unsafe { ::domain::EventPostTitle::try_from(value.title).unwrap_unchecked() })
+                .content(unsafe { ::domain::EventPostContent::try_from(value.content).unwrap_unchecked() })
+                .image_url(value.image_url)
+                .build()
+        }
+    }
+
+    #[derive(::serde::Serialize, ::serde::Deserialize, ::bon::Builder)]
+    #[serde(rename_all = "camelCase")]
+    #[builder(on(_, into))]
+    pub struct EventPostReaction {
+        pub id: Uuid,
+        pub post_id: Uuid,
+        pub author_id: Uuid,
+    }
+
+    impl ::core::convert::From<::domain::EventPostReaction> for EventPostReaction {
+        fn from(value: ::domain::EventPostReaction) -> Self {
+            Self::builder()
+                .id(value.id)
+                .post_id(value.post_id)
+                .author_id(value.author_id)
+                .build()
+        }
+    }
+
+    impl ::core::convert::From<EventPostReaction> for ::domain::EventPostReaction {
+        fn from(value: EventPostReaction) -> Self {
+            Self::builder()
+                .id(value.id)
+                .post_id(value.post_id)
+                .author_id(value.author_id)
+                .build()
+        }
+    }
+
+    #[derive(::serde::Serialize, ::serde::Deserialize, ::bon::Builder)]
+    #[serde(rename_all = "camelCase")]
+    #[builder(on(_, into))]
+    pub struct EventPostComment {
+        pub id: Uuid,
+        pub post_id: Uuid,
+        pub author_id: Uuid,
+
+        pub last_updated_at: ::axiom::time::Timestamp,
+
+        #[builder(required)]
+        pub content: ::core::option::Option<::axiom::string::String>,
+
+        #[builder(required)]
+        pub image_url: ::core::option::Option<::axiom::string::String>,
+    }
+
+    impl ::core::convert::From<::domain::EventPostComment> for EventPostComment {
+        fn from(value: ::domain::EventPostComment) -> Self {
+            Self::builder()
+                .id(value.id)
+                .post_id(value.post_id)
+                .author_id(value.author_id)
+                .last_updated_at(value.last_updated_at)
+                .content(value.content.map(::core::convert::Into::into))
+                .image_url(value.image_url)
+                .build()
+        }
+    }
+
+    impl ::core::convert::From<EventPostComment> for ::domain::EventPostComment {
+        fn from(value: EventPostComment) -> Self {
+            Self::builder()
+                .id(value.id)
+                .post_id(value.post_id)
+                .author_id(value.author_id)
+                .last_updated_at(value.last_updated_at)
+                .content(unsafe { value.content.map(|value| ::domain::EventPostCommentContent::try_from(value).unwrap_unchecked()) })
+                .image_url(value.image_url)
+                .build()
+        }
+    }
+
+    #[derive(::serde::Serialize, ::serde::Deserialize, ::bon::Builder)]
+    #[serde(rename_all = "camelCase")]
+    #[builder(on(_, into))]
     pub struct User {
         pub id: Uuid,
 
@@ -1596,15 +2298,6 @@ mod serde {
             Self::builder()
                 .id(value.id)
                 .role(value.role)
-                // .statuses(
-                //     value
-                //         .statuses
-                //         .into_iter()
-                //         .map(::core::convert::Into::<UserStatus>::into)
-                //         .map(|status| ::serde_json::to_string(&status).unwrap_or_default())
-                //         .collect::<::std::vec::Vec<_>>()
-                //         .join("|"),
-                // )
                 .statuses(value.statuses.into_iter().map(::core::convert::Into::into).collect::<::std::vec::Vec<_>>())
                 .username(value.username)
                 .email(value.email)

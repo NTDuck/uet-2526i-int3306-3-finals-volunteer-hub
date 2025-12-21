@@ -129,7 +129,7 @@ pub struct Application {
 impl Application {
     #[wasm_bindgen(js_name = withContext)]
     pub async fn with_profile(context: ApplicationContext) -> Promise<Self> {
-        Gateways::try_from(context)
+        Gateways::try_from(context).await
             .map(::core::convert::Into::<Self>::into)
             .inspect_err(|error| ::tracing::error!("{error}")) // Saves hours of debugging
             .into_promise()
@@ -781,19 +781,41 @@ struct Gateways {
     password_hasher: ::std::sync::Arc<dyn PasswordHasher + ::core::marker::Send + ::core::marker::Sync>,
 }
 
-impl ::core::convert::TryFrom<ApplicationContext> for Gateways {
-    type Error = ::axiom::result::Error;
-
-    fn try_from(context: ApplicationContext) -> ::core::result::Result<Self, Self::Error> {
+impl Gateways {
+    async fn try_from(context: ApplicationContext) -> ::core::result::Result<Self, ::axiom::result::Error> {
         use ::hmac::Mac as _;
 
         ::console_error_panic_hook::set_once();
         ::tracing_wasm::try_set_as_global_default()?;
 
+        let uuid_codec: ::std::sync::Arc<dyn UuidCodec + ::core::marker::Send + ::core::marker::Sync> =
+            ::std::sync::Arc::new(LowerUrnUuidCodec::builder().build());
+
         let event_repository: ::std::sync::Arc<dyn EventRepository + ::core::marker::Send + ::core::marker::Sync> =
             ::std::sync::Arc::new(InMemoryEventRepository::builder().build());
+        // let user_repository: ::std::sync::Arc<dyn UserRepository + ::core::marker::Send + ::core::marker::Sync> =
+        //     ::std::sync::Arc::new(InMemoryUserRepository::builder().build());
+
         let user_repository: ::std::sync::Arc<dyn UserRepository + ::core::marker::Send + ::core::marker::Sync> =
-            ::std::sync::Arc::new(InMemoryUserRepository::builder().build());
+            ::std::sync::Arc::new(SurrealDbUserRepository::builder()
+                .client({
+                    let client = ::surrealdb::engine::any::connect(::core::env!("SURREALDB_ADDRESS")).await?;
+
+                    client
+                        .authenticate(::core::env!("SURREALDB_AUTH_TOKEN").into_t::<::surrealdb::opt::auth::Jwt>())
+                        .await?;
+
+                    // client.signin(::surrealdb::opt::auth::Root {
+                    //     username: ::core::env!("SURREALDB_HOSTNAME"),
+                    //     password: ::core::env!("SURREALDB_AUTH_TOKEN"),
+                    // }).await?;
+
+                    client.use_ns(::core::env!("SURREALDB_NAMESPACE")).use_db(::core::env!("SURREALDB_USER_DATABASE")).await?;
+
+                    client
+                })
+                .uuid_codec(::std::sync::Arc::clone(&uuid_codec))
+                .build());
 
         let gateways = Self::builder()
             .event_repository(::std::sync::Arc::clone(&event_repository))
@@ -828,7 +850,7 @@ impl ::core::convert::TryFrom<ApplicationContext> for Gateways {
                     .build(),
             ))
             .uuid_generator(::std::sync::Arc::new(UuidV7Generator::builder().build()))
-            .uuid_codec(::std::sync::Arc::new(LowerUrnUuidCodec::builder().build()))
+            .uuid_codec(::std::sync::Arc::clone(&uuid_codec))
             .timestamp_codec(::std::sync::Arc::new(Rfc2822TimestampCodec::builder().build()))
             .auth_token_generator(::std::sync::Arc::new(
                 JsonWebTokenGenerator::builder()
@@ -848,15 +870,15 @@ impl ::core::convert::TryFrom<ApplicationContext> for Gateways {
             .build();
 
         // Cron jobs & daemons go here
-        ::wasm_bindgen_futures::spawn_local(async {
-            use ::futures::StreamExt as _;
+        // ::wasm_bindgen_futures::spawn_local(async {
+        //     use ::futures::StreamExt as _;
 
-            ::gloo::timers::future::IntervalStream::new(4444)
-                .for_each(|_| async move {
-                    ::tracing::debug!("PING");
-                })
-                .await;
-        });
+        //     ::gloo::timers::future::IntervalStream::new(4444)
+        //         .for_each(|_| async move {
+        //             ::tracing::debug!("PING");
+        //         })
+        //         .await;
+        // });
 
         gateways.into_ok()
     }

@@ -37,7 +37,8 @@ pub struct EventRepositorySearchFilter {
     ::core::marker::Copy,
     ::core::cmp::Eq,
     ::core::cmp::PartialEq,
-    ::core::hash::Hash
+    ::core::hash::Hash,
+    ::strum::Display,
 )]
 pub enum EventRepositorySearchFilterEventStatus {
     Created,
