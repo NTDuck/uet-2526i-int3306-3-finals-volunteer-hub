@@ -15,15 +15,12 @@ interface UserProfile {
   status: any[]
 }
 
-// --- State ---
 const isLoading = ref(true)
 const isEditing = ref(false)
 const isSaving = ref(false)
 const isDraggingOverMain = ref(false)
 
-// NEW: Ref for the DOM element to check boundaries
 const dropZoneRef = ref<HTMLElement | null>(null)
-
 const profile = ref<UserProfile | null>(null)
 
 const editForm = reactive({
@@ -31,10 +28,13 @@ const editForm = reactive({
   email: '',
   avatarUrl: '',
   avatarFile: null as File | null,
-  avatarPreview: null as string | null
+  avatarPreview: null as string | null,
+  avatarBytes: null as number[] | null,
+  oldPassword: '',
+  newPassword: '',
+  confirmPassword: ''
 })
 
-// --- Computed ---
 const formattedStatus = computed(() => {
   if (!profile.value || !profile.value.status || profile.value.status.length === 0) return 'Active'
   const latest = profile.value.status[profile.value.status.length - 1]
@@ -48,7 +48,6 @@ const displayAvatar = computed(() => {
   return getFullImageUrl(profile.value?.avatarUrl)
 })
 
-// --- Actions ---
 const fetchProfile = async () => {
   isLoading.value = true
   try {
@@ -88,6 +87,11 @@ const startEditing = () => {
   editForm.avatarUrl = profile.value.avatarUrl || ''
   editForm.avatarFile = null
   editForm.avatarPreview = null
+  editForm.avatarBytes = null
+  editForm.oldPassword = ''
+  editForm.newPassword = ''
+  editForm.confirmPassword = ''
+
   isEditing.value = true
 }
 
@@ -95,8 +99,6 @@ const cancelEditing = () => {
   isEditing.value = false
   isDraggingOverMain.value = false
 }
-
-// --- Drag & Drop Handlers ---
 
 const triggerFileUpload = () => {
   document.getElementById('avatar-upload')?.click()
@@ -109,22 +111,16 @@ const handleFileSelect = (event: Event) => {
   }
 }
 
-// 1. Handle Drag Over (Just set true)
-const handleDragOver = (_event: DragEvent) => {
+const handleDragOver = () => {
   if (!isEditing.value) return
   isDraggingOverMain.value = true
 }
 
-// 2. NEW: Handle Drag Leave (The Fix)
 const handleDragLeave = (event: DragEvent) => {
   if (!isEditing.value) return
-
-  // relatedTarget is the element the mouse is entering.
-  // If we are entering a child element of our dropZone, we are NOT leaving the zone.
   if (dropZoneRef.value && dropZoneRef.value.contains(event.relatedTarget as Node)) {
     return
   }
-
   isDraggingOverMain.value = false
 }
 
@@ -137,36 +133,77 @@ const handleMainDrop = (event: DragEvent) => {
   }
 }
 
-const processFile = (file: File) => {
+const processFile = async (file: File) => {
   if (!file.type.startsWith('image/')) {
     showErrorPopup('Invalid File', 'Please upload an image file')
     return
   }
-  editForm.avatarFile = file
+  
   const reader = new FileReader()
   reader.onload = (e) => {
     editForm.avatarPreview = e.target?.result as string
   }
   reader.readAsDataURL(file)
+
+  const buffer = await file.arrayBuffer()
+  editForm.avatarBytes = Array.from(new Uint8Array(buffer))
 }
 
 const saveProfile = async () => {
   if (!profile.value) return
-  if (!editForm.fullName.trim() || !editForm.email.trim()) {
-    showErrorPopup('Validation Error', 'Name and Email are required')
+
+  if (!editForm.fullName.trim()) {
+    showErrorPopup('Validation Error', 'Full Name is required')
     return
   }
 
+  if (editForm.newPassword || editForm.confirmPassword) {
+    if (!editForm.oldPassword) {
+      showErrorPopup('Validation Error', 'Please enter your current password to set a new one')
+      return
+    }
+    if (editForm.newPassword !== editForm.confirmPassword) {
+      showErrorPopup('Validation Error', 'New passwords do not match')
+      return
+    }
+    if (editForm.newPassword.length < 6) {
+      showErrorPopup('Validation Error', 'New password must be at least 6 characters')
+      return
+    }
+  }
+
   isSaving.value = true
+
   try {
-    await new Promise((r) => setTimeout(r, 800))
-    profile.value.fullName = editForm.fullName
-    profile.value.email = editForm.email
-    if (editForm.avatarPreview) profile.value.avatarUrl = editForm.avatarPreview
-    else if (editForm.avatarUrl) profile.value.avatarUrl = editForm.avatarUrl
-    isEditing.value = false
+    const payload = {
+      fullname: editForm.fullName,
+      avatar: editForm.avatarBytes || undefined,
+      password: editForm.oldPassword || undefined,
+      new_password: editForm.newPassword || undefined
+    }
+
+    const response = await fetch('http://localhost:4000/api/me', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(payload)
+    })
+
+    if (response.ok) {
+      await fetchProfile()
+      window.dispatchEvent(new Event('user-profile-updated'))
+      isEditing.value = false
+    } else {
+      const err = await response.json()
+      console.log(`error:`, err)
+      if (err.error === 'PasswordMismatch' || err.error === 'PasswordInvalid') {
+        showErrorPopup('Update Profile', "Wrong current password, please try again.", 100)
+      } else {
+        showErrorPopup('Update Profile', err.message, 100)
+      }
+    }
   } catch (e) {
-    showErrorPopup('Error', 'Failed to update profile')
+    showErrorPopup('Network Error', 'Failed to connect to server')
   } finally {
     isSaving.value = false
   }
@@ -256,7 +293,6 @@ onMounted(() => {
                 />
               </svg>
             </div>
-
             <input type="file" id="avatar-upload" class="hidden" accept="image/*" @change="handleFileSelect" />
           </div>
 
@@ -322,7 +358,6 @@ onMounted(() => {
                     d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"
                   />
                 </svg>
-
                 <label class="block pt-[0.5px] text-[0.9rem] font-medium text-gray-700 select-none">Full Name</label>
               </div>
               <div
@@ -355,15 +390,12 @@ onMounted(() => {
                     d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"
                   />
                 </svg>
-
                 <label class="block pt-[0.4px] text-[0.9rem] font-medium text-gray-700 select-none"
                   >Email Address</label
                 >
               </div>
-
               <div
-                v-if="!isEditing"
-                class="text-gray-900 font-medium p-3 bg-gray-50 rounded-lg border border-transparent flex items-center gap-2"
+                class="text-gray-500 font-medium p-3 bg-gray-100 rounded-lg border border-gray-200 flex items-center gap-2 cursor-not-allowed"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -376,12 +408,6 @@ onMounted(() => {
                 </svg>
                 {{ profile.email }}
               </div>
-              <input
-                v-else
-                v-model="editForm.email"
-                type="email"
-                class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#256EB1] transition bg-white"
-              />
             </div>
 
             <div>
@@ -396,7 +422,7 @@ onMounted(() => {
               <div
                 class="text-gray-500 bg-gray-100 p-3 text-[0.9rem] rounded-lg border border-gray-200 cursor-not-allowed"
               >
-                {{ profile.username }}
+                @{{ profile.username }}
               </div>
             </div>
 
@@ -419,13 +445,49 @@ onMounted(() => {
                     d="m8 8-4 4 4 4m8 0 4-4-4-4m-2-3-4 14"
                   />
                 </svg>
-
                 <label class="block pt-[0.4px] text-[0.9rem] font-medium text-gray-700 select-none">User ID</label>
               </div>
               <div
                 class="text-gray-400 bg-gray-100 p-3 rounded-lg border border-gray-200 cursor-not-allowed text-[0.9rem] font-mono truncate"
               >
                 {{ profile.id }}
+              </div>
+            </div>
+          </div>
+
+          <div v-if="isEditing" class="mt-8 border-t border-gray-100 pt-6">
+            <h3 class="text-lg font-bold text-gray-900 mb-4">Change Password</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+              <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-1"
+                  >Current Password <span class="text-gray-400 font-normal">(Required to change password)</span></label
+                >
+                <input
+                  v-model="editForm.oldPassword"
+                  type="password"
+                  class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#256EB1] transition bg-white"
+                  placeholder="Enter current password"
+                />
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                <input
+                  v-model="editForm.newPassword"
+                  type="password"
+                  class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#256EB1] transition bg-white"
+                  placeholder="Leave blank to keep unchanged"
+                />
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
+                <input
+                  v-model="editForm.confirmPassword"
+                  type="password"
+                  class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#256EB1] transition bg-white"
+                  placeholder="Confirm new password"
+                />
               </div>
             </div>
           </div>

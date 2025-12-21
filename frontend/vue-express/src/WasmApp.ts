@@ -4,7 +4,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import process from "node:process";
 
-const profile: Profile = "dev";
+const profile: Profile = "prod";
 const context = new ApplicationContext(profile, uploadFile);
 let wasmApp: Application | null = null;
 
@@ -13,8 +13,8 @@ export const getApp = async () => {
     try {
       wasmApp = await Application.withContext(context);
 
-      await seedMockUsers(wasmApp);
-      await seedMockEvents(wasmApp);
+      // await seedMockUsers(wasmApp);
+      // await seedMockEvents(wasmApp);
 
       return wasmApp;
     } catch (error) {

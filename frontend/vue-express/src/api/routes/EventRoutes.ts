@@ -269,7 +269,7 @@ export function createEventRoutes(wasmApp: Application, notCleanWasmApp: NotClea
   return router;
 }
 
-function handleWasmError(error: unknown, res: Response) {
+export function handleWasmError(error: unknown, res: Response) {
   const err = (error as WasmError[])[0];
   if (err) {
     return res.status(400).json(err);

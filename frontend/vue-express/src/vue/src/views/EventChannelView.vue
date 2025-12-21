@@ -3,7 +3,7 @@ import { onUnmounted, onMounted, ref, reactive } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import NavBar from '../components/NavBar.vue'
 import { showConfirmationPopup, showErrorPopup } from '../utils/popups'
-import { isLoggedIn } from '../utils/auth'
+import { getRole, isLoggedIn } from '../utils/auth'
 import { getFullImageUrl } from '../utils/random'
 
 interface User {
@@ -126,13 +126,25 @@ const enrichAuthor = async (author?: User) => {
 
 const fetchEventDetails = async () => {
   try {
-    const response = await fetch(`http://localhost:4000/api/volunteer/events/urn:uuid:${route.params.id}`, {
-      method: 'GET',
-      credentials: 'include'
-    })
-    if (response.ok) {
-      const data = await response.json()
-      eventName.value = data.name
+    if (await getRole() === 'volunteer') {
+      const response = await fetch(`http://localhost:4000/api/volunteer/events/urn:uuid:${route.params.id}`, {
+        method: 'GET',
+        credentials: 'include'
+      })
+      if (response.ok) {
+        const data = await response.json()
+        eventName.value = data.name
+      }
+    }
+    else if (await getRole() === 'event-manager') {
+      const response = await fetch(`http://localhost:4000/api/events/urn:uuid:${route.params.id}`, {
+        method: 'GET',
+        credentials: 'include'
+      })
+      if (response.ok) {
+        const data = await response.json()
+        eventName.value = data.name
+      }
     }
   } catch (e) {
     console.error('Failed to fetch event details', e)
@@ -149,6 +161,7 @@ const fetchPosts = async () => {
 
     if (response.ok) {
       const data = await response.json()
+      console.log(data)
 
       const mappedPosts = data.map((p: any) => {
         ensureInputState(p.id)

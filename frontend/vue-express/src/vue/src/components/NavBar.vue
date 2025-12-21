@@ -96,6 +96,7 @@ const fetchUserProfile = async () => {
 
 onMounted(async () => {
   window.addEventListener('click', handleGlobalClick)
+  window.addEventListener('user-profile-updated', fetchUserProfile)
   const role = (await getRole()) || 'volunteer'
   navLinks.value = determineNavLinks(role)
   await registerForPushNotifications()
@@ -104,6 +105,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   window.removeEventListener('click', handleGlobalClick)
+  window.removeEventListener('user-profile-updated', fetchUserProfile)
 })
 </script>
 

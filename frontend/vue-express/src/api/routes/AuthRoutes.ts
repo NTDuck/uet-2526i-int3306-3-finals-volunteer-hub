@@ -5,6 +5,7 @@ import type { Request, Response } from "express";
 import { Application, SignUpUserRole } from "volunteerhub";
 import { WasmError } from "../Types.ts";
 import { NotCleanWasmApp } from "../../workarounds/NotCleanWasmApp.ts";
+import { handleWasmError } from "./EventRoutes.ts";
 
 export function createAuthRoutes(wasmApp: Application, notCleanWasmApp: NotCleanWasmApp) {
   const router = Router();
@@ -157,6 +158,32 @@ export function createAuthRoutes(wasmApp: Application, notCleanWasmApp: NotClean
         logged_in: false,
         message: "Invalid or expired token",
       });
+    }
+  });
+
+  // Update self profile
+  router.put("/me", async (req: Request, res: Response) => {
+    const token = req.cookies["auth-token"];
+
+    if (!token) {
+      return res.status(401).json({
+        logged_in: false,
+        message: "No authentication token found",
+      });
+    }
+
+    try {
+      await wasmApp.updateSelfProfile({
+        token: token,
+        password: req.body.password,
+        newPassword: req.body.new_password,
+        fullName: req.body.fullname,
+        avatar: req.body.avatar,
+      });
+      console.log("successful")
+      return res.status(200).send();
+    } catch (error) {
+      handleWasmError(error, res);
     }
   });
 
