@@ -94,7 +94,6 @@ const fetchUserDetails = async (userId: string) => {
   if (userCache.has(userId)) return userCache.get(userId)
 
   try {
-    console.log(userId)
     const response = await fetch(`http://localhost:4000/api/users/${userId}`, {
       method: 'GET',
       credentials: 'include'
@@ -161,7 +160,6 @@ const fetchPosts = async () => {
 
     if (response.ok) {
       const data = await response.json()
-      console.log(data)
 
       const mappedPosts = data.map((p: any) => {
         ensureInputState(p.id)
@@ -289,7 +287,8 @@ const createPost = async () => {
       showCreateModal.value = false
       await fetchPosts()
     } else {
-      showErrorPopup('Error', 'Failed to create post')
+      const error = await response.json()
+      showErrorPopup('Create Post', error.message)
     }
   } catch (e) {
     showErrorPopup('Error', 'Network error')
@@ -324,7 +323,8 @@ const updatePost = async () => {
         await fetchPosts()
       }
     } else {
-      showErrorPopup('Error', 'Failed to update post')
+      const error = await response.json()
+      showErrorPopup('Create Post', error.message)
     }
   } catch (e) {
     showErrorPopup('Error', 'Network error')
@@ -380,14 +380,13 @@ const postComment = (post: Post) => {
       if (response.status === 201) {
         await loadPostDetails(post)
       } else {
-        throw new Error('Server returned error')
+        const error = await response.json()
+        inputState.text = payload.commentContent
+        inputState.image = payload.commentImage || null
+        inputState.imagePreview = savedPreview
+        showErrorPopup('Posting comment failed', error.message, 100)
       }
     } catch (e) {
-      console.error(e)
-      inputState.text = payload.commentContent
-      inputState.image = payload.commentImage || null
-      inputState.imagePreview = savedPreview
-      showErrorPopup('Delivery Failed', 'Could not post comment.')
     }
   }, 0)
 }
@@ -423,7 +422,8 @@ const saveEditComment = async (comment: Comment, post: Post) => {
     if (response.ok) {
       await loadPostDetails(post)
     } else {
-      showErrorPopup('Error', 'Failed to update comment')
+      const error = await response.json()
+      showErrorPopup('Posting comment failed', error.message, 100)
     }
   } catch (e) {
     showErrorPopup('Error', 'Network error')
@@ -433,17 +433,13 @@ const saveEditComment = async (comment: Comment, post: Post) => {
 const deleteComment = async (commentId: string, post: Post) => {
   if (!(await showConfirmationPopup('Delete Comment', 'Are you sure?'))) return
 
-  try {
-    const res = await fetch(`http://localhost:4000/api/comments/${commentId}`, {
-      method: 'DELETE',
-      credentials: 'include'
-    })
-    if (res.ok) {
-      post.displayComments = post.displayComments.filter((c) => c.id !== commentId)
-      post.commentCount--
-    }
-  } catch (e) {
-    console.error(e)
+  const res = await fetch(`http://localhost:4000/api/comments/${commentId}`, {
+    method: 'DELETE',
+    credentials: 'include'
+  })
+  if (res.ok) {
+    post.displayComments = post.displayComments.filter((c) => c.id !== commentId)
+    post.commentCount--
   }
 }
 
@@ -452,14 +448,15 @@ const toggleLike = async (post: Post) => {
   post.isReactedByActor = !post.isReactedByActor
   post.reactionCount += post.isReactedByActor ? 1 : -1
 
-  try {
-    await fetch(`http://localhost:4000/api/posts/${post.id}/reactions`, {
-      method: method,
-      credentials: 'include'
-    })
-  } catch (e) {
+  const res = await fetch(`http://localhost:4000/api/posts/${post.id}/reactions`, {
+    method: method,
+    credentials: 'include'
+  })
+  
+  if (!res.ok) {
     post.isReactedByActor = !post.isReactedByActor
     post.reactionCount += post.isReactedByActor ? 1 : -1
+    showErrorPopup("Reaction Error", (await res.json()).message)
   }
 }
 

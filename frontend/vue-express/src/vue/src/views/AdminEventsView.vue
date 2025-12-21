@@ -91,7 +91,13 @@ const moderateEvent = async (event: EventItem, newStatus: 'approved' | 'rejected
     } else {
       const err = await response.json()
       if (err.error === 'EventStatusNotEligible') {
-        showErrorPopup('Event Management', 'Cannot reject an already approved event!', 100)
+        showErrorPopup(
+          'Event Management',
+          newStatus === 'rejected'
+            ? 'Cannot reject an already approved event!'
+            : 'Cannot approve an already rejected event!',
+          100
+        )
       } else {
         showErrorPopup('Event Management', 'Failed to update event status', 100)
       }
@@ -288,9 +294,9 @@ onMounted(async () => {
             v-if="startDate || endDate || filterStatus || searchQuery"
             @click="
               startDate = '';
-              endDate = '';
-              filterStatus = '';
-              searchQuery = '';
+            endDate = '';
+            filterStatus = '';
+            searchQuery = '';
               fetchEvents()
             "
             class="text-red-500 hover:cursor-pointer hover:text-red-700 pt-2 px-2 text-[0.9rem] transition flex hover:underline"

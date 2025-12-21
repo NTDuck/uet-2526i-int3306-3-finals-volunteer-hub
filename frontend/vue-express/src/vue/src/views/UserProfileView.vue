@@ -85,6 +85,7 @@ const startEditing = () => {
   editForm.fullName = profile.value.fullName
   editForm.email = profile.value.email
   editForm.avatarUrl = profile.value.avatarUrl || ''
+
   editForm.avatarFile = null
   editForm.avatarPreview = null
   editForm.avatarBytes = null
@@ -108,6 +109,14 @@ const handleFileSelect = (event: Event) => {
   const input = event.target as HTMLInputElement
   if (input.files && input.files[0]) {
     processFile(input.files[0])
+  }
+}
+
+const handleUrlInput = () => {
+  if (editForm.avatarBytes) {
+    editForm.avatarFile = null
+    editForm.avatarPreview = null
+    editForm.avatarBytes = null
   }
 }
 
@@ -138,7 +147,9 @@ const processFile = async (file: File) => {
     showErrorPopup('Invalid File', 'Please upload an image file')
     return
   }
-  
+
+  editForm.avatarUrl = ''
+
   const reader = new FileReader()
   reader.onload = (e) => {
     editForm.avatarPreview = e.target?.result as string
@@ -175,9 +186,34 @@ const saveProfile = async () => {
   isSaving.value = true
 
   try {
+    let finalAvatarBytes = editForm.avatarBytes
+
+    if (!finalAvatarBytes && editForm.avatarUrl) {
+      const existingUrlFull = getFullImageUrl(profile.value.avatarUrl)
+      const isNewExternalUrl = editForm.avatarUrl.startsWith('http') && editForm.avatarUrl !== existingUrlFull
+
+      if (isNewExternalUrl) {
+        try {
+          const res = await fetch(editForm.avatarUrl)
+          if (!res.ok) throw new Error('Failed to fetch image')
+          const blob = await res.blob()
+          const buffer = await blob.arrayBuffer()
+          finalAvatarBytes = Array.from(new Uint8Array(buffer))
+        } catch (e) {
+          console.error('CORS Error:', e)
+          showErrorPopup(
+            'Image Error',
+            'Cannot process this Image URL due to browser security (CORS). Please download the image and upload it as a file instead.'
+          )
+          isSaving.value = false
+          return
+        }
+      }
+    }
+
     const payload = {
       fullname: editForm.fullName,
-      avatar: editForm.avatarBytes || undefined,
+      avatar: finalAvatarBytes || undefined,
       password: editForm.oldPassword || undefined,
       new_password: editForm.newPassword || undefined
     }
@@ -195,11 +231,10 @@ const saveProfile = async () => {
       isEditing.value = false
     } else {
       const err = await response.json()
-      console.log(`error:`, err)
       if (err.error === 'PasswordMismatch' || err.error === 'PasswordInvalid') {
-        showErrorPopup('Update Profile', "Wrong current password, please try again.", 100)
+        showErrorPopup('Update Profile', 'Wrong current password, please try again.', 100)
       } else {
-        showErrorPopup('Update Profile', err.message, 100)
+        showErrorPopup('Update Profile', err.message || 'Failed to update profile', 100)
       }
     }
   } catch (e) {
@@ -335,6 +370,7 @@ onMounted(() => {
             </div>
             <input
               v-model="editForm.avatarUrl"
+              @input="handleUrlInput"
               type="text"
               placeholder="https://example.com/my-avatar.png"
               class="w-full bg-white border border-blue-200 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
@@ -469,7 +505,6 @@ onMounted(() => {
                   placeholder="Enter current password"
                 />
               </div>
-
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">New Password</label>
                 <input
@@ -479,7 +514,6 @@ onMounted(() => {
                   placeholder="Leave blank to keep unchanged"
                 />
               </div>
-
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
                 <input
